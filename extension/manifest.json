@@ -1,0 +1,57 @@
+{
+  "manifest_version": 3,
+  "name": "Autonomous Career Agent - Live Job Copilot",
+  "version": "2.0.0",
+  "description": "On-page AI Copilot for LinkedIn, Indeed & Upwork. Real-time ATS match scoring, ghost job detection, instant cover letter generation, and auto-form filling.",
+  "permissions": [
+    "activeTab",
+    "scripting",
+    "storage",
+    "cookies"
+  ],
+  "background": {
+    "service_worker": "background.js"
+  },
+  "host_permissions": [
+    "http://localhost:18000/*",
+    "http://127.0.0.1:18000/*",
+    "http://localhost:8000/*",
+    "http://127.0.0.1:8000/*",
+    "http://localhost:13000/*",
+    "http://127.0.0.1:13000/*",
+    "https://*.linkedin.com/*",
+    "https://*.upwork.com/*",
+    "https://*.kosovajob.com/*",
+    "https://*.indeed.com/*",
+    "https://*.fiverr.com/*",
+    "https://*.freelancer.com/*",
+    "https://*.toptal.com/*",
+    "https://*.gjirafa.com/*",
+    "https://*.kariyer.net/*",
+    "https://*.glassdoor.com/*",
+    "https://*.wellfound.com/*"
+  ],
+  "action": {
+    "default_popup": "popup.html",
+    "default_title": "Career Agent Copilot"
+  },
+  "content_scripts": [
+    {
+      "matches": [
+        "https://*.linkedin.com/jobs/*",
+        "https://*.upwork.com/*",
+        "https://*.kosovajob.com/*",
+        "https://*.indeed.com/*",
+        "https://*.fiverr.com/*",
+        "https://*.freelancer.com/*",
+        "https://*.toptal.com/*",
+        "https://*.gjirafa.com/*",
+        "https://*.kariyer.net/*",
+        "https://*.glassdoor.com/*",
+        "https://*.wellfound.com/*"
+      ],
+      "js": ["config.js", "content.js"],
+      "run_at": "document_idle"
+    }
+  ]
+}

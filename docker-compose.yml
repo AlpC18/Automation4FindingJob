@@ -1,0 +1,266 @@
+x-backend-build: &backend-build
+  context: .
+  dockerfile: Dockerfile.backend
+  args:
+    PYTHON_VERSION: ${PYTHON_VERSION:-3.11}
+
+x-backend-environment: &backend-environment
+  PYTHONPATH: /app
+  ENVIRONMENT: ${ENVIRONMENT:-production}
+  LOG_LEVEL: ${LOG_LEVEL:-INFO}
+  API_HOST: ${API_HOST:-0.0.0.0}
+  API_PORT: ${API_PORT:-8000}
+  BACKEND_PUBLIC_URL: ${BACKEND_PUBLIC_URL:-http://localhost:${BACKEND_PORT:-8000}}
+  OPENAI_API_KEY: ${OPENAI_API_KEY:-}
+  ANTHROPIC_API_KEY: ${ANTHROPIC_API_KEY:-}
+  ANTHROPIC_MODEL: ${ANTHROPIC_MODEL:-claude-sonnet-5-5}
+  LLM_DAILY_TOKEN_BUDGET: ${LLM_DAILY_TOKEN_BUDGET:-200000}
+  GEMINI_API_KEY: ${GEMINI_API_KEY:-}
+  DEEPSEEK_API_KEY: ${DEEPSEEK_API_KEY:-}
+  ACTIVE_LLM_PROVIDER: ${ACTIVE_LLM_PROVIDER:-auto}
+  OLLAMA_BASE_URL: ${OLLAMA_BASE_URL:-http://host.docker.internal:11434}
+  OLLAMA_MODEL: ${OLLAMA_MODEL:-llama3}
+  OPENAI_MODEL: ${OPENAI_MODEL:-gpt-4o}
+  VOICE_STT_MODEL: ${VOICE_STT_MODEL:-whisper-1}
+  VOICE_TTS_MODEL: ${VOICE_TTS_MODEL:-tts-1}
+  VOICE_TTS_VOICE: ${VOICE_TTS_VOICE:-alloy}
+  VOICE_TTS_PROVIDER: ${VOICE_TTS_PROVIDER:-openai}
+  VOICE_EDGE_TTS_VOICE: ${VOICE_EDGE_TTS_VOICE:-en-US-AriaNeural}
+  APIFY_API_TOKEN: ${APIFY_API_TOKEN:-}
+  APIFY_ACTOR_LINKEDIN: ${APIFY_ACTOR_LINKEDIN:-}
+  APIFY_ACTOR_UPWORK: ${APIFY_ACTOR_UPWORK:-}
+  APIFY_ACTOR_KOSOVAJOB: ${APIFY_ACTOR_KOSOVAJOB:-}
+  APIFY_INPUT_LINKEDIN: ${APIFY_INPUT_LINKEDIN:-{}}
+  APIFY_INPUT_UPWORK: ${APIFY_INPUT_UPWORK:-{}}
+  APIFY_INPUT_KOSOVAJOB: ${APIFY_INPUT_KOSOVAJOB:-{}}
+  APIFY_TIMEOUT_SECONDS: ${APIFY_TIMEOUT_SECONDS:-90}
+  JOB_SOURCE_TIMEOUT_SECONDS: ${JOB_SOURCE_TIMEOUT_SECONDS:-20}
+  JOB_SOURCE_USER_AGENT: ${JOB_SOURCE_USER_AGENT:-AutonomousCareerAgent/1.0 (job aggregator)}
+  REMOTEOK_API_URL: ${REMOTEOK_API_URL:-https://remoteok.com/api}
+  ARBEITNOW_API_URL: ${ARBEITNOW_API_URL:-https://www.arbeitnow.com/api/job-board-api}
+  COMPANY_BOARDS: ${COMPANY_BOARDS:-}
+  APOLLO_API_KEY: ${APOLLO_API_KEY:-}
+  RESIDENTIAL_PROXY_URL: ${RESIDENTIAL_PROXY_URL:-}
+  SMTP_HOST: ${SMTP_HOST:-}
+  SMTP_PORT: ${SMTP_PORT:-587}
+  SMTP_USER: ${SMTP_USER:-}
+  SMTP_PASS: ${SMTP_PASS:-}
+  SMTP_FROM_EMAIL: ${SMTP_FROM_EMAIL:-}
+  SMTP_USE_TLS: ${SMTP_USE_TLS:-true}
+  API_AUTH_TOKEN: ${API_AUTH_TOKEN:-}
+  APP_ENCRYPTION_KEY: ${APP_ENCRYPTION_KEY:-}
+  CLAMAV_HOST: ${CLAMAV_HOST:-clamav}
+  CLAMAV_PORT: ${CLAMAV_PORT:-3310}
+  CLAMAV_TIMEOUT_SECONDS: ${CLAMAV_TIMEOUT_SECONDS:-20}
+  SENTRY_DSN: ${SENTRY_DSN:-}
+  SENTRY_TRACES_SAMPLE_RATE: ${SENTRY_TRACES_SAMPLE_RATE:-0.05}
+  AUTH_SECRET_KEY: ${AUTH_SECRET_KEY:-}
+  MULTI_TENANT_ENABLED: ${MULTI_TENANT_ENABLED:-true}
+  CORS_ORIGINS: ${CORS_ORIGINS:-http://localhost:3000}
+  STARTUP_SEED_ENABLED: ${STARTUP_SEED_ENABLED:-false}
+  AUTO_START_DAEMON: ${AUTO_START_DAEMON:-false}
+  DEMO_DATA_ENABLED: ${DEMO_DATA_ENABLED:-false}
+  SCRAPER_MODE: ${SCRAPER_MODE:-auto}
+  SCRAPER_PLATFORMS: ${SCRAPER_PLATFORMS:-linkedin,upwork,kosovajob,remote}
+  DEFAULT_SCRAPE_QUERY: ${DEFAULT_SCRAPE_QUERY:-Developer}
+  SCHEDULER_TIMEZONE: ${SCHEDULER_TIMEZONE:-Europe/Belgrade}
+  SCHEDULER_NIGHTLY_TIME: ${SCHEDULER_NIGHTLY_TIME:-03:30}
+  SCHEDULER_MORNING_TIME: ${SCHEDULER_MORNING_TIME:-08:00}
+  DAEMON_POLL_SECONDS: ${DAEMON_POLL_SECONDS:-45}
+  MORNING_MIN_MATCH_SCORE: ${MORNING_MIN_MATCH_SCORE:-75}
+  MORNING_DRAFT_LIMIT: ${MORNING_DRAFT_LIMIT:-3}
+  GOOGLE_CLIENT_ID: ${GOOGLE_CLIENT_ID:-}
+  GOOGLE_CLIENT_SECRET: ${GOOGLE_CLIENT_SECRET:-}
+  GOOGLE_REDIRECT_URI: ${GOOGLE_REDIRECT_URI:-http://localhost:${BACKEND_PORT:-8000}/api/inbox/oauth/google/callback}
+  MICROSOFT_CLIENT_ID: ${MICROSOFT_CLIENT_ID:-}
+  MICROSOFT_CLIENT_SECRET: ${MICROSOFT_CLIENT_SECRET:-}
+  MICROSOFT_REDIRECT_URI: ${MICROSOFT_REDIRECT_URI:-http://localhost:${BACKEND_PORT:-8000}/api/inbox/oauth/microsoft/callback}
+  TELEGRAM_BOT_TOKEN: ${TELEGRAM_BOT_TOKEN:-}
+  TELEGRAM_CHAT_ID: ${TELEGRAM_CHAT_ID:-}
+  NOTION_API_KEY: ${NOTION_API_KEY:-}
+  NOTION_DATABASE_ID: ${NOTION_DATABASE_ID:-}
+
+x-backend-volumes: &backend-volumes
+  - backend-data:/app/backend/data
+
+services:
+  backend:
+    build:
+      <<: *backend-build
+    ports:
+      - "${BACKEND_PORT:-8000}:${API_PORT:-8000}"
+    environment:
+      <<: *backend-environment
+      REDIS_URL: ${COMPOSE_REDIS_URL:-redis://:${REDIS_PASSWORD:?Set REDIS_PASSWORD in .env}@redis:6379/0}
+      USE_CELERY: ${USE_CELERY:-true}
+      DATABASE_URL: ${COMPOSE_DATABASE_URL:-postgresql://career:${POSTGRES_PASSWORD:?Set POSTGRES_PASSWORD in .env}@postgres:5432/career_engine}
+      VECTOR_BACKEND: ${VECTOR_BACKEND:-auto}
+      VECTOR_DIMENSIONS: ${VECTOR_DIMENSIONS:-384}
+      PUBLIC_API_URL: ${PUBLIC_API_URL:-http://localhost:8000/api}
+      FRONTEND_PUBLIC_URL: ${FRONTEND_PUBLIC_URL:-http://localhost:3000}
+    volumes: *backend-volumes
+    command: ["python", "-m", "uvicorn", "backend.app.main:app", "--host", "0.0.0.0", "--port", "${API_PORT:-8000}", "--workers", "${UVICORN_WORKERS:-1}"]
+    networks:
+      - career-net
+    depends_on:
+      redis:
+        condition: service_healthy
+      postgres:
+        condition: service_healthy
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD-SHELL", "python -c \"import os, urllib.request; request = urllib.request.Request('http://localhost:' + os.getenv('API_PORT', '8000') + '/', headers={'X-API-Key': os.getenv('API_AUTH_TOKEN', '')}); urllib.request.urlopen(request)\""]
+      interval: ${HEALTHCHECK_INTERVAL:-30s}
+      timeout: ${HEALTHCHECK_TIMEOUT:-10s}
+      retries: ${HEALTHCHECK_RETRIES:-3}
+
+  redis:
+    image: ${REDIS_IMAGE:-redis:7-alpine}
+    command: ["sh", "-c", "exec redis-server --requirepass \"$$REDIS_PASSWORD\""]
+    environment:
+      REDIS_PASSWORD: ${REDIS_PASSWORD:?Set REDIS_PASSWORD in .env}
+    ports:
+      - "${REDIS_PORT:-6379}:6379"
+    volumes:
+      - redis-data:/data
+    networks:
+      - career-net
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD-SHELL", "redis-cli -a \"$$REDIS_PASSWORD\" ping"]
+      interval: ${REDIS_HEALTHCHECK_INTERVAL:-10s}
+      timeout: ${REDIS_HEALTHCHECK_TIMEOUT:-5s}
+      retries: ${REDIS_HEALTHCHECK_RETRIES:-5}
+
+  clamav:
+    image: ${CLAMAV_IMAGE:-clamav/clamav:stable-debian13-slim}
+    expose:
+      - "3310"
+    volumes:
+      - clamav-signatures:/var/lib/clamav
+    networks:
+      - career-net
+    restart: unless-stopped
+
+  postgres:
+    image: ${POSTGRES_IMAGE:-pgvector/pgvector:pg16}
+    environment:
+      POSTGRES_DB: ${POSTGRES_DB:-career_engine}
+      POSTGRES_USER: ${POSTGRES_USER:-career}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?Set POSTGRES_PASSWORD in .env}
+    ports:
+      - "${POSTGRES_PORT:-5432}:5432"
+    volumes:
+      - postgres-data:/var/lib/postgresql/data
+    networks:
+      - career-net
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U $$POSTGRES_USER -d $$POSTGRES_DB"]
+      interval: ${POSTGRES_HEALTHCHECK_INTERVAL:-10s}
+      timeout: ${POSTGRES_HEALTHCHECK_TIMEOUT:-5s}
+      retries: ${POSTGRES_HEALTHCHECK_RETRIES:-5}
+
+  postgres-backup:
+    image: ${POSTGRES_IMAGE:-postgres:16-alpine}
+    entrypoint: ["/bin/sh", "/app/scripts/backup-postgres.sh"]
+    environment:
+      PGHOST: postgres
+      PGPORT: 5432
+      PGDATABASE: ${POSTGRES_DB:-career_engine}
+      PGUSER: ${POSTGRES_USER:-career}
+      PGPASSWORD: ${POSTGRES_PASSWORD:?Set POSTGRES_PASSWORD in .env}
+      BACKUP_RETENTION_DAYS: ${BACKUP_RETENTION_DAYS:-14}
+      BACKUP_INTERVAL_SECONDS: ${BACKUP_INTERVAL_SECONDS:-86400}
+    volumes:
+      - ./scripts/backup-postgres.sh:/app/scripts/backup-postgres.sh:ro
+      - ./scripts/restore-postgres.sh:/app/scripts/restore-postgres.sh:ro
+      - postgres-backups:/backups
+    depends_on:
+      postgres:
+        condition: service_healthy
+    networks:
+      - career-net
+    restart: unless-stopped
+
+  celery-worker:
+    build:
+      <<: *backend-build
+    command: celery -A backend.app.tasks.celery_app.celery_app worker --loglevel=${CELERY_LOG_LEVEL:-info} -c ${CELERY_WORKER_CONCURRENCY:-2}
+    environment:
+      <<: *backend-environment
+      REDIS_URL: ${COMPOSE_REDIS_URL:-redis://:${REDIS_PASSWORD:?Set REDIS_PASSWORD in .env}@redis:6379/0}
+      USE_CELERY: "true"
+      DATABASE_URL: ${COMPOSE_DATABASE_URL:-postgresql://career:${POSTGRES_PASSWORD:?Set POSTGRES_PASSWORD in .env}@postgres:5432/career_engine}
+      VECTOR_BACKEND: ${VECTOR_BACKEND:-auto}
+      VECTOR_DIMENSIONS: ${VECTOR_DIMENSIONS:-384}
+    volumes: *backend-volumes
+    depends_on:
+      redis:
+        condition: service_healthy
+      postgres:
+        condition: service_healthy
+    networks:
+      - career-net
+    restart: unless-stopped
+
+  daemon-worker:
+    build:
+      <<: *backend-build
+    command: python -m backend.app.tasks.daemon_worker
+    environment:
+      <<: *backend-environment
+      REDIS_URL: ${COMPOSE_REDIS_URL:-redis://:${REDIS_PASSWORD:?Set REDIS_PASSWORD in .env}@redis:6379/0}
+      USE_CELERY: "true"
+      DATABASE_URL: ${COMPOSE_DATABASE_URL:-postgresql://career:${POSTGRES_PASSWORD:?Set POSTGRES_PASSWORD in .env}@postgres:5432/career_engine}
+      VECTOR_BACKEND: ${VECTOR_BACKEND:-auto}
+      VECTOR_DIMENSIONS: ${VECTOR_DIMENSIONS:-384}
+    volumes: *backend-volumes
+    depends_on:
+      redis:
+        condition: service_healthy
+      postgres:
+        condition: service_healthy
+    networks:
+      - career-net
+    restart: unless-stopped
+
+  frontend:
+    build:
+      context: .
+      dockerfile: Dockerfile.frontend
+      args:
+        NODE_VERSION: ${NODE_VERSION:-20}
+        NEXT_PUBLIC_API_URL: ${NEXT_PUBLIC_API_URL:-http://localhost:8000/api}
+    ports:
+      - "${FRONTEND_PORT:-3000}:3000"
+    environment:
+      # Runtime values are written into public/runtime-config.js at startup.
+      RUNTIME_API_URL: ${PUBLIC_API_URL:-http://localhost:8000/api}
+      # Never expose the server's API_AUTH_TOKEN to a browser bundle. This
+      # separate value is only for explicitly configured single-user installs.
+      RUNTIME_API_AUTH_TOKEN: ${PUBLIC_API_AUTH_TOKEN:-}
+      RUNTIME_MULTI_TENANT: ${MULTI_TENANT_ENABLED:-true}
+      NEXT_PUBLIC_API_URL: ${NEXT_PUBLIC_API_URL:-http://localhost:8000/api}
+    depends_on:
+      backend:
+        condition: service_healthy
+    networks:
+      - career-net
+    restart: unless-stopped
+
+volumes:
+  backend-data:
+    driver: local
+  redis-data:
+    driver: local
+  postgres-data:
+    driver: local
+  clamav-signatures:
+    driver: local
+  postgres-backups:
+    driver: local
+
+networks:
+  career-net:
+    driver: bridge

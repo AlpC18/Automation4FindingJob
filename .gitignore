@@ -1,0 +1,50 @@
+# Python
+backend/.venv/
+__pycache__/
+*.pyc
+*.pyo
+*.egg-info/
+dist/
+build/
+
+# Data (local DB & vector store)
+backend/data/
+
+# Node
+frontend/node_modules/
+frontend/.next/
+frontend/out/
+
+# Environment
+.env
+.env.local
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Docker
+backend-data/
+
+# Playwright
+backend/app/modules/scrape/cookies/
+
+# graft's local graph cache — regenerable, not committed (run `graft build`).
+graft/
+
+# Caches & build leftovers
+.npm-cache/
+.pytest_cache/
+frontend/.next-stale-*/
+frontend/test-results/
+frontend/playwright-report/
+*.tsbuildinfo
+
+# Local Claude Code settings
+.claude/settings.local.json
