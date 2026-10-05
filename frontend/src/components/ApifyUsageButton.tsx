@@ -7,7 +7,7 @@ import { fetchFromApi } from "@/lib/api";
 import { useLanguage } from "@/lib/i18n";
 
 type AccountStatus = { slot: number; masked: string; valid: boolean; used_usd: number | null; remaining_usd: number | null; error?: string | null };
-type Quota = { configured_keys: number; valid_keys: number; invalid_keys: number; distinct_accounts: number; budget_usd: number; theoretical_budget_usd: number; used_usd: number; remaining_usd: number; percent_used: number; cycle_end?: string | null; budget_note: string; accounts: AccountStatus[] };
+type Quota = { configured_keys: number; valid_keys: number; invalid_keys: number; distinct_accounts: number; budget_usd: number; theoretical_budget_usd: number; used_usd: number; remaining_usd: number; last_scan_cost_usd: number | null; percent_used: number; cycle_end?: string | null; budget_note: string; accounts: AccountStatus[] };
 type UsageSnapshot = { used_usd: number; budget_usd: number; percent_used: number; checked_at?: string };
 
 export default function ApifyUsageButton() {
@@ -36,7 +36,7 @@ export default function ApifyUsageButton() {
     <div className="relative">
       <button type="button" onClick={() => setOpen((value) => !value)} aria-expanded={open} className="inline-flex h-8 items-center gap-1 rounded-lg border px-2 text-[11px] font-semibold transition-colors" style={{ color: "var(--text)", borderColor: "var(--border)", background: "var(--surface-raised)" }} title={t("Apify kullanım ve hesap durumu")}>
         <Coins className="h-3.5 w-3.5" style={{ color: "var(--accent-strong)" }} />
-        <span>{quota ? `$${quota.used_usd.toFixed(2)} / $${quota.budget_usd.toFixed(0)}` : t("Apify")}</span>
+        <span>{quota ? `$${quota.remaining_usd.toFixed(2)} ${t("Kalan")}` : t("Apify")}</span>
         {quota && <span className="hidden text-[10px] sm:inline" style={{ color: quota.invalid_keys ? "#f59e0b" : "var(--muted)" }}>{quota.valid_keys}/{quota.configured_keys}</span>}
       </button>
       {open && <section className="absolute right-0 top-11 z-50 w-[min(22rem,calc(100vw-1.5rem))] rounded-2xl border p-4 shadow-2xl" style={{ color: "var(--text)", borderColor: "var(--border)", background: "var(--surface-raised)" }} aria-label={t("Apify kullanım durumu")}>
@@ -53,6 +53,7 @@ export default function ApifyUsageButton() {
             <div className="rounded-xl p-2" style={{ background: "var(--surface-muted)" }}><p className="text-[10px]" style={{ color: "var(--muted)" }}>{t("Kalan sınır")}</p><p className="mt-1 text-sm font-bold">${quota.remaining_usd.toFixed(2)}</p></div>
             <div className="rounded-xl p-2" style={{ background: "var(--surface-muted)" }}><p className="text-[10px]" style={{ color: "var(--muted)" }}>{t("Anahtar")}</p><p className="mt-1 text-sm font-bold">{quota.valid_keys}/{quota.configured_keys}</p></div>
           </div>
+          <p className="mt-3 flex items-center justify-between rounded-lg px-2 py-1.5 text-xs" style={{ background: "var(--surface-muted)" }}><span>{t("Son tarama maliyeti")}</span><strong>{quota.last_scan_cost_usd === null ? t("Henüz tarama yapılmadı") : `$${quota.last_scan_cost_usd.toFixed(3)}`}</strong></p>
           <div className="mt-3 h-1.5 overflow-hidden rounded-full" style={{ background: "var(--surface-muted)" }}><div className="h-full rounded-full bg-emerald-500 transition-all" style={{ width: `${quota.percent_used}%` }} /></div>
           <div className="mt-3 max-h-48 space-y-1 overflow-y-auto pr-1">
             {quota.accounts.map((account) => <div key={account.slot} className="flex items-center justify-between gap-2 rounded-lg px-2 py-1.5 text-xs" style={{ background: "var(--surface-muted)" }}>

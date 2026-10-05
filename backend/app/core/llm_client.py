@@ -23,6 +23,13 @@ logger = logging.getLogger(__name__)
 # Room for the model's own reasoning plus the longest reply the app asks for (a CV analysis with a full rewrite).
 ANTHROPIC_MAX_TOKENS = 12000
 ANTHROPIC_TIMEOUT_SECONDS = 240.0
+# USD per million tokens (input, output), Anthropic list prices as of 2026-09; update when the price list changes.
+ANTHROPIC_PRICES_USD_PER_MTOK = {
+    "claude-opus-5-5": (4.0, 20.0),
+    "claude-sonnet-5-5": (2.0, 10.0),
+    "claude-haiku-4-5": (1.0, 5.0),
+    "claude-haiku-4-5-20251001": (1.0, 5.0),
+}
 TEMPLATE_ENGINE_LABELS = ("Fallback", "Deterministic Hybrid Engine")
 
 
@@ -46,15 +53,43 @@ class LLMClient:
         self.provider = settings.ACTIVE_LLM_PROVIDER.lower()
         self.custom_model: Optional[str] = None
         self.ollama_url = settings.OLLAMA_BASE_URL
-        # ponytail: in-memory (day, tokens) counter, resets on restart; persist it if restarts become a loophole.
-        self._tokens_used = (None, 0)
+        # ponytail: in-memory (day, input tokens, output tokens, calls) counter, resets on restart; persist it if restarts become a loophole.
+        self._tokens_used = (None, 0, 0, 0)
+
+    def _usage_today(self) -> tuple:
+        day, tokens_in, tokens_out, calls = self._tokens_used
+        return (tokens_in, tokens_out, calls) if day == date.today() else (0, 0, 0)
 
     def _tokens_used_today(self) -> int:
-        day, used = self._tokens_used
-        return used if day == date.today() else 0
+        tokens_in, tokens_out, _ = self._usage_today()
+        return tokens_in + tokens_out
 
-    def _record_tokens(self, tokens: int) -> None:
-        self._tokens_used = (date.today(), self._tokens_used_today() + tokens)
+    def _record_tokens(self, tokens_in: int, tokens_out: int) -> None:
+        used_in, used_out, calls = self._usage_today()
+        self._tokens_used = (date.today(), used_in + tokens_in, used_out + tokens_out, calls + 1)
+
+    def get_usage_today(self) -> Dict[str, Any]:
+        """Today's Anthropic token use against the daily budget, with a list-price cost estimate."""
+        tokens_in, tokens_out, calls = self._usage_today()
+        model = self.custom_model if self.provider == "anthropic" and self.custom_model else settings.ANTHROPIC_MODEL
+        prices = ANTHROPIC_PRICES_USD_PER_MTOK.get(model)
+        # ponytail: prices every token at the current model; split per model if models get mixed within a day.
+        cost = round((tokens_in * prices[0] + tokens_out * prices[1]) / 1_000_000, 4) if prices else None
+        budget = max(0, settings.LLM_DAILY_TOKEN_BUDGET)
+        used = tokens_in + tokens_out
+        return {
+            "provider": "anthropic",
+            "model": model,
+            "input_tokens": tokens_in,
+            "output_tokens": tokens_out,
+            "tokens_used": used,
+            "budget_tokens": budget,
+            "remaining_tokens": max(0, budget - used) if budget else None,
+            "percent_used": round(min(100.0, used / budget * 100), 1) if budget else 0,
+            "calls": calls,
+            "estimated_cost_usd": cost,
+            "average_cost_per_call_usd": round(cost / calls, 4) if cost is not None and calls else None,
+        }
 
     def detect_available_provider(self) -> str:
         """Auto-detects the first properly configured active provider."""
@@ -153,8 +188,8 @@ class LLMClient:
 
     def set_active_provider(self, provider_id: str, model_name: Optional[str] = None):
         self.provider = provider_id.lower()
-        if model_name:
-            self.custom_model = model_name
+        # A model picked for the previous provider must not carry over to the new one.
+        self.custom_model = model_name or None
 
     async def test_provider_connection(self, provider_id: str) -> Dict[str, Any]:
         """
@@ -408,7 +443,7 @@ class LLMClient:
             # (current models may emit a thinking block first), so keep every text block.
             data = resp.json()
             usage = data.get("usage") or {}
-            self._record_tokens(int(usage.get("input_tokens") or 0) + int(usage.get("output_tokens") or 0))
+            self._record_tokens(int(usage.get("input_tokens") or 0), int(usage.get("output_tokens") or 0))
             if data.get("stop_reason") == "max_tokens":
                 # A cut-off reply usually means broken JSON downstream; make the cause visible.
                 logger.warning("Anthropic reply was cut off at max_tokens=%s.", ANTHROPIC_MAX_TOKENS)

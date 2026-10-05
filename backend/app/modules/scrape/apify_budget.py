@@ -12,6 +12,8 @@ from backend.app.modules.scrape.source_registry import apify_tokens
 FREE_PLAN_ALLOWANCE_USD = 5.0
 USAGE_CACHE_SECONDS = 60
 _cache: dict[str, tuple[float, dict[str, Any]]] = {}
+# ponytail: in-memory; the last-scan figure is unknown after a restart until the next scan runs.
+_last_scan: dict[str, Any] = {}
 
 
 def _fingerprint(token: str) -> str:
@@ -61,6 +63,11 @@ def _tokens(source: str = "linkedin") -> list[str]:
     return list(dict.fromkeys(token.strip() for token in tokens if token and token.strip()))
 
 
+def mark_scan_start() -> None:
+    """Remember usage before a scan. Apify reports spend with a delay, so the scan's cost is read later as 'spend since'."""
+    _last_scan.update(started_at=time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime()), used_before=get_apify_quota_summary()["used_usd"])
+
+
 def get_apify_quota_summary(source: str = "linkedin", force_refresh: bool = False) -> dict[str, Any]:
     tokens = _tokens(source)
     if force_refresh:
@@ -91,6 +98,8 @@ def get_apify_quota_summary(source: str = "linkedin", force_refresh: bool = Fals
             {key: value for key, value in item.items() if key != "account_id"}
             for item in statuses
         ],
+        "last_scan_cost_usd": round(max(0.0, used - _last_scan["used_before"]), 4) if _last_scan else None,
+        "last_scan_started_at": _last_scan.get("started_at"),
         "checked_at": time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime()),
         "budget_note": "Uygulama güvenlik sınırı: hesap başına en fazla 5 USD. Apify plan/kredi bakiyesi değildir.",
     }

@@ -12,6 +12,7 @@ import {
 } from "lucide-react";
 import CandidateHeader from "@/components/CandidateHeader";
 import ApifyUsageButton from "@/components/ApifyUsageButton";
+import LlmUsageButton from "@/components/LlmUsageButton";
 import CommandPalette from "@/components/CommandPalette";
 import NotificationDrawer from "@/components/NotificationDrawer";
 import { useLanguage } from "@/lib/i18n";
@@ -214,6 +215,7 @@ export default function AppShell({ children }: { children: React.ReactNode }) {
           </div>
           <div className="flex shrink-0 items-center gap-1.5 sm:gap-2.5">
             <NotificationDrawer />
+            <LlmUsageButton />
             <ApifyUsageButton />
             <label className="language-picker inline-flex items-center gap-1 rounded-lg border px-2 text-[11px] font-medium" title={t("Dil")}>
               <Globe2 className="h-3.5 w-3.5" />

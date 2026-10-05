@@ -83,6 +83,11 @@ def get_llm_providers():
     return llm_client.get_providers_status()
 
 
+@router.get("/llm/usage")
+def get_llm_usage():
+    return llm_client.get_usage_today()
+
+
 @router.get("/llm/credentials")
 def get_llm_credentials():
     return {"providers": get_provider_credential_status()}

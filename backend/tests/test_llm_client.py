@@ -59,7 +59,7 @@ def test_anthropic_calls_stop_once_the_daily_token_budget_is_spent(monkeypatch, 
     body = {"content": [{"type": "text", "text": "A real model sentence."}], "usage": {"input_tokens": 60, "output_tokens": 50}}
     _client_returning(monkeypatch, 200, body, sent)
     monkeypatch.setattr(module.settings, "LLM_DAILY_TOKEN_BUDGET", 100, raising=False)
-    monkeypatch.setattr(module.llm_client, "_tokens_used", (None, 0), raising=False)
+    monkeypatch.setattr(module.llm_client, "_tokens_used", (None, 0, 0, 0), raising=False)
 
     first = asyncio.run(module.llm_client.generate_text("system", "user", preferred_provider="anthropic", apply_humanizer=False))
     with caplog.at_level(logging.WARNING, logger=module.__name__):
@@ -84,3 +84,33 @@ def test_custom_openai_compatible_provider_calls_the_configured_endpoint(monkeyp
     assert sent[0].headers["authorization"] == "Bearer free-key"
     assert result["text"] == "A free model sentence."
     assert result["provider_used"] == "Custom (some-free-model)"
+
+
+def test_usage_report_counts_tokens_and_estimates_cost_at_list_price(monkeypatch):
+    sent = []
+    body = {"content": [{"type": "text", "text": "A real model sentence."}], "usage": {"input_tokens": 1000, "output_tokens": 500}}
+    _client_returning(monkeypatch, 200, body, sent)
+    monkeypatch.setattr(module.settings, "LLM_DAILY_TOKEN_BUDGET", 6000)
+    monkeypatch.setattr(module.settings, "ANTHROPIC_MODEL", "claude-sonnet-5-5")
+    monkeypatch.setattr(module.llm_client, "provider", "anthropic")
+    monkeypatch.setattr(module.llm_client, "custom_model", None)
+    monkeypatch.setattr(module.llm_client, "_tokens_used", (None, 0, 0, 0))
+
+    for _ in range(2):
+        asyncio.run(module.llm_client.generate_text("system", "user", preferred_provider="anthropic", apply_humanizer=False))
+    usage = module.llm_client.get_usage_today()
+
+    assert (usage["input_tokens"], usage["output_tokens"], usage["calls"]) == (2000, 1000, 2)
+    assert (usage["tokens_used"], usage["remaining_tokens"], usage["percent_used"]) == (3000, 3000, 50.0)
+    # 2000 input at $2/M + 1000 output at $10/M
+    assert usage["estimated_cost_usd"] == 0.014
+    assert usage["average_cost_per_call_usd"] == 0.007
+
+
+def test_switching_provider_drops_the_model_chosen_for_the_previous_one(monkeypatch):
+    monkeypatch.setattr(module.llm_client, "provider", "deepseek")
+    monkeypatch.setattr(module.llm_client, "custom_model", "deepseek-coder")
+    module.llm_client.set_active_provider("anthropic")
+    assert (module.llm_client.provider, module.llm_client.custom_model) == ("anthropic", None)
+    module.llm_client.set_active_provider("anthropic", "claude-haiku-4-5")
+    assert module.llm_client.custom_model == "claude-haiku-4-5"

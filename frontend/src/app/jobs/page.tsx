@@ -27,6 +27,7 @@ import {
   Sliders,
   Check
 } from "lucide-react";
+import AiProviderSelect from "@/components/AiProviderSelect";
 import { buildApiUrl, fetchFromApi, waitForBackgroundJob } from "@/lib/api";
 import { getExternalJobUrl } from "@/lib/job-links";
 import { useLanguage } from "@/lib/i18n";
@@ -610,6 +611,7 @@ export default function JobsPage() {
             </div>
 
             <div className="flex flex-wrap items-center justify-end gap-2">
+              <AiProviderSelect />
               <button
                 onClick={() => void scheduleCurrentSearch()}
                 disabled={scraping || activeSearchCount === 0}

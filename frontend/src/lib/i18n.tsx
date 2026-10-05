@@ -1298,6 +1298,22 @@ const pageTranslations: Record<string, string> = {
 };
 
 const sharedTranslations: Record<string, string> = {
+  "Yapay zekâ listesi alınamadı.": "Could not load the AI list.",
+  "Yapay zekâ değiştirilemedi.": "Could not switch the AI.",
+  "Bu aramada rol eşleştirme ve puanlama için kullanılacak yapay zekâ": "The AI used for role matching and scoring in this search",
+  "Arama için yapay zekâ": "AI for search",
+  "Yapay zekâ token kullanımı": "AI token usage",
+  "Bugünkü yapay zekâ kullanımı": "Today's AI usage",
+  "AI": "AI",
+  "Kullanım bilgisi alınamadı.": "Could not load usage.",
+  "çağrı": "calls",
+  "Kullanılan token": "Tokens used",
+  "Kalan token": "Tokens left",
+  "Tahmini maliyet": "Estimated cost",
+  "Çağrı başına": "Per call",
+  "Günlük sınır dolunca şablon motoru yanıt verir. Sayaç yalnızca Anthropic çağrılarını sayar ve uygulama yeniden başlayınca sıfırlanır.": "When the daily cap is reached the template engine answers. The counter only counts Anthropic calls and resets when the app restarts.",
+  "Anahtarları yönet": "Manage keys",
+  "Son tarama maliyeti": "Last search cost",
   "Ana sayfa": "Home",
   "İlanlar": "Jobs",
   "Alanlar": "Fields",

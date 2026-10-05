@@ -17,6 +17,7 @@ from backend.app.modules.scrape.scrapers.upwork_scraper import UpworkScraper
 from backend.app.modules.scrape.scrapers.kosovajob_scraper import KosovaJobScraper
 from backend.app.modules.scrape.scrapers.remote_scraper import CompanyBoardsScraper, GlobalRemoteScraper
 from backend.app.modules.scrape.scrapers.techcareer_scraper import TechcareerScraper
+from backend.app.modules.scrape.apify_budget import mark_scan_start
 from backend.app.modules.scrape.live_sources import apify_job_source
 from backend.app.modules.scrape.source_registry import (
     ACTOR_SOURCES,
@@ -127,6 +128,8 @@ class UnifiedScraper:
             requested_mode = ""
         active_queries = queries if (queries and len(queries) > 0) else [query or settings.DEFAULT_SCRAPE_QUERY]
         scan_id = create_scan_run(active_queries, platforms_to_run)
+        if any(plat.lower() in ACTOR_SOURCES for plat in platforms_to_run):
+            mark_scan_start()
 
         # Step 1: Scrape items across all active role queries
         for q in active_queries:

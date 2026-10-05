@@ -77,3 +77,19 @@ def test_actor_results_are_kept_by_headline_not_by_a_word_in_the_description():
     assert not _title_matches(dental, "yazılım")
     assert _title_matches(engineer, "software developer")
     assert _title_matches(tagged, "python developer")
+
+
+def test_last_scan_cost_is_the_spend_since_the_scan_started(monkeypatch):
+    from backend.app.modules.scrape import apify_budget
+
+    used = {"usd": 0.25}
+    monkeypatch.setattr(apify_budget, "apify_tokens", lambda source: ["token"])
+    monkeypatch.setattr(apify_budget, "_fetch_status", lambda token, slot: {"valid": True, "account_id": "a", "used_usd": used["usd"], "slot": slot})
+    monkeypatch.setattr(apify_budget, "_last_scan", {})
+
+    assert apify_budget.get_apify_quota_summary()["last_scan_cost_usd"] is None
+    apify_budget.mark_scan_start()
+    used["usd"] = 0.31
+    summary = apify_budget.get_apify_quota_summary()
+    assert summary["last_scan_cost_usd"] == 0.06
+    assert summary["remaining_usd"] == 4.69
