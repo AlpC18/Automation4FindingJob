@@ -133,7 +133,8 @@ Metinler yüksek **Burstiness** (cümle boyu varyasyonu) ve zengin söz dağarc�
 | RemoteOK, Arbeitnow, Remotive, Jobicy, Himalayas | Açık API | Yok |
 | KosovaJob, TechCareer | Doğrudan web taraması | Yok |
 | Greenhouse, Lever, Ashby kullanan şirketler | Açık kariyer sayfası API'si | `/sources` ekranından şirket ekle ya da `COMPANY_BOARDS=greenhouse:stripe,lever:spotify` |
-| LinkedIn, Upwork, Indeed, Glassdoor, Kariyer.net | Apify Actor | `/sources` ekranında Actor ID ve Apify API token |
+| LinkedIn, Upwork, Indeed, Glassdoor, Kariyer.net | Apify Actor (hazır Actor tanımlı) | Apify API token |
+| Fiverr, Freelancer, Toptal, GjirafaWork, Wellfound | Apify Actor | `/sources` ekranında Actor ID ve Apify API token |
 
 **Platform denetimi:** `SCRAPER_PLATFORMS` (varsayılan: `linkedin,upwork,kosovajob,techcareer,remote`) hangi kaynakların etkin olduğunu belirler. Gece otomatik taraması (`SCHEDULER_NIGHTLY_TIME: 03:30`) yalnızca `NIGHTLY_SCAN_PLATFORMS` (varsayılan: `remote,kosovajob,techcareer`) listesindeki kaynaklardır; Apify ücretli kaynakları gece taramasına dahil edilmez. Apify Token olmayan kaynaklar başında tanımlı token reuse'ı kullanır.
 
@@ -153,9 +154,11 @@ Backend testleri yalıtılmış ortamda çalışmalı; düz `pytest` yerel `.env
 
 ```bash
 # Yalıtılmış backend testleri (CI ile aynı)
-T=$(mktemp -d) && PYTHONPATH=. ENVIRONMENT=test MULTI_TENANT_ENABLED=false \
-  DATA_PATH=”$T” DATABASE_URL=”sqlite:///$T/ci.db” \
-  python -m pytest -q backend/tests
+# Sağlayıcı anahtarları boş geçilir; aksi halde yerel .env içindeki gerçek anahtarlar testlere sızar.
+T=$(mktemp -d) && PYTHONPATH=. ENVIRONMENT=test MULTI_TENANT_ENABLED=false API_AUTH_TOKEN= \
+  CORS_ORIGINS=http://localhost:3000 DATA_PATH="$T" DATABASE_URL="sqlite:///$T/ci.db" \
+  ACTIVE_LLM_PROVIDER=auto ANTHROPIC_API_KEY= GEMINI_API_KEY= CUSTOM_LLM_API_KEY= APIFY_API_TOKEN= BACKUP_DIR= \
+  ./backend/.venv/bin/python -m pytest -q backend/tests
 
 # Frontend testleri, linting ve build
 npm --prefix frontend test
