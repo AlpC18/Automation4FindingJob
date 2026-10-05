@@ -13,6 +13,7 @@ import {
 import CandidateHeader from "@/components/CandidateHeader";
 import ApifyUsageButton from "@/components/ApifyUsageButton";
 import LlmUsageButton from "@/components/LlmUsageButton";
+import Toaster from "@/components/Toaster";
 import CommandPalette from "@/components/CommandPalette";
 import NotificationDrawer from "@/components/NotificationDrawer";
 import { useLanguage } from "@/lib/i18n";
@@ -75,7 +76,7 @@ const moreGroups = [
     links: [
       { name: "Hesap güvenliği", href: "/safety", icon: ShieldCheck },
       { name: "Veri ve gizlilik", href: "/privacy", icon: ShieldCheck },
-      { name: "Daemon ayarları", href: "/daemon-settings", icon: Settings2 },
+      { name: "Otomatik çalışma ayarları", href: "/daemon-settings", icon: Settings2 },
       { name: "Raporlar", href: "/reports", icon: FileText },
       { name: "Haftalık bülten", href: "/weekly-digest", icon: Newspaper },
       { name: "Sistem kontrolü", href: "/system-status", icon: Activity },
@@ -108,7 +109,7 @@ export default function AppShell({ children }: { children: React.ReactNode }) {
   function renderGroup(group: (typeof groups)[number]) {
     return (
       <section key={`${group.tone}-${group.links[0].href}`} className={`nav-group nav-group-${group.tone}`}>
-        <h2 className="muted mb-2 px-3 text-[10px] font-bold tracking-[0.16em]">{t(group.label)}</h2>
+        <h2 className="muted mb-2 px-3 text-xs font-bold tracking-[0.16em]">{t(group.label)}</h2>
         <div className="space-y-1">
           {group.links.map((item) => {
             const Icon = item.icon;
@@ -118,7 +119,7 @@ export default function AppShell({ children }: { children: React.ReactNode }) {
                 key={item.href}
                 href={item.href}
                 aria-current={active ? "page" : undefined}
-                className={`nav-link flex items-center gap-2.5 rounded-xl px-2.5 py-2 text-[12px] font-medium transition-colors ${active ? "active" : ""}`}
+                className={`nav-link flex items-center gap-2.5 rounded-xl px-2.5 py-2 text-[13px] font-medium transition-colors ${active ? "active" : ""}`}
               >
                 <Icon className="h-[17px] w-[17px] shrink-0" />
                 <span className="flex-1">{t(item.name)}</span>
@@ -159,6 +160,7 @@ export default function AppShell({ children }: { children: React.ReactNode }) {
   return (
     <div className="app-layout min-h-screen">
       <CommandPalette />
+      <Toaster />
 
       {mobileOpen && <button className="mobile-scrim fixed inset-0 z-40 lg:hidden" onClick={() => setMobileOpen(false)} aria-label={t("Menüyü kapat")} />}
 
@@ -168,7 +170,7 @@ export default function AppShell({ children }: { children: React.ReactNode }) {
             <span className="brand-mark flex h-9 w-9 items-center justify-center rounded-2xl"><Bot className="h-4 w-4" /></span>
             <span>
               <span className="block text-sm font-bold tracking-[0.12em]">CAREER AGENT</span>
-              <span className="muted block pt-0.5 text-[10px] tracking-[0.16em]">{t("KARİYER ÇALIŞMA ALANI")}</span>
+              <span className="muted block pt-0.5 text-xs tracking-[0.16em]">{t("KARİYER ÇALIŞMA ALANI")}</span>
             </span>
           </Link>
           <button onClick={() => setMobileOpen(false)} className="icon-button rounded-lg p-2 lg:hidden" aria-label={t("Menüyü kapat")}><X className="h-4 w-4" /></button>
@@ -181,7 +183,7 @@ export default function AppShell({ children }: { children: React.ReactNode }) {
         <nav className="min-h-0 flex-1 space-y-4 overflow-y-auto px-2.5 py-4" aria-label={t("Ana menü")}>
           {groups.map(renderGroup)}
           <details className="nav-more" open={moreOpen || inMore} onToggle={(event) => setMoreOpen(event.currentTarget.open)}>
-            <summary className="muted flex cursor-pointer items-center gap-2 rounded-xl px-3 py-2 text-[12px] font-semibold">
+            <summary className="muted flex cursor-pointer items-center gap-2 rounded-xl px-3 py-2 text-[13px] font-semibold">
               <ChevronDown className="h-4 w-4 shrink-0" />
               {t("Daha fazla")}
             </summary>
@@ -192,7 +194,7 @@ export default function AppShell({ children }: { children: React.ReactNode }) {
         <div className="sidebar-footer shrink-0 border-t p-3">
           <div className="flex items-center justify-between rounded-xl px-2 py-2">
             <span className="flex items-center gap-2 text-xs font-medium"><span className="status-dot h-2 w-2 rounded-full" />{t("Sistem durumu")}</span>
-            <span className="muted text-[10px]">{t("API bağlı")}</span>
+            <span className="muted text-xs">{t("API bağlı")}</span>
           </div>
           <Link href="/preferences" className="footer-settings mt-1 flex items-center justify-between rounded-xl px-3 py-2.5 text-xs font-medium">
             <span className="flex items-center gap-2"><Settings2 className="h-4 w-4" />{t("Tercihleri düzenle")}</span><ArrowUpRight className="h-3.5 w-3.5" />
@@ -209,13 +211,13 @@ export default function AppShell({ children }: { children: React.ReactNode }) {
             <NotificationDrawer />
             <LlmUsageButton />
             <ApifyUsageButton />
-            <label className="language-picker inline-flex items-center gap-1 rounded-lg border px-2 text-[11px] font-medium" title={t("Dil")}>
+            <label className="language-picker inline-flex items-center gap-1 rounded-lg border px-2 text-xs font-medium" title={t("Dil")}>
               <Globe2 className="h-3.5 w-3.5" />
               <select
                 aria-label={t("Dil")}
                 value={locale}
                 onChange={(event) => setLocale(event.target.value as "tr" | "en")}
-                className="bg-transparent py-1.5 text-[11px] font-semibold outline-none"
+                className="bg-transparent py-1.5 text-xs font-semibold outline-none"
               >
                 <option value="tr">TR</option>
                 <option value="en">EN</option>
@@ -241,7 +243,7 @@ export default function AppShell({ children }: { children: React.ReactNode }) {
         ].map((item) => {
           const Icon = item.icon;
           const active = isActive(pathname, item.href);
-          return <Link key={item.href} href={item.href} aria-current={active ? "page" : undefined} className={`mobile-nav-link flex flex-col items-center gap-1 rounded-xl py-1.5 text-[10px] ${active ? "active" : ""}`}><Icon className="h-[18px] w-[18px]" /><span>{t(item.name)}</span></Link>;
+          return <Link key={item.href} href={item.href} aria-current={active ? "page" : undefined} className={`mobile-nav-link flex flex-col items-center gap-1 rounded-xl py-1.5 text-xs ${active ? "active" : ""}`}><Icon className="h-[18px] w-[18px]" /><span>{t(item.name)}</span></Link>;
         })}
       </nav>
     </div>

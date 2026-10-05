@@ -1,4 +1,5 @@
 "use client";
+import { notify } from "@/lib/notify";
 import { useLanguage } from "@/lib/i18n";
 import { useEffect, useState } from "react";
 import { Mail, Send, ShieldCheck, Copy, Check, Sparkles, RefreshCw, UserCheck } from "lucide-react";
@@ -37,7 +38,7 @@ export default function ColdOutreachPage() {
       const updated = await fetchFromApi("/apply/outreach/list");
       setCampaigns(updated.outreach_list || []);
     } catch (e) {
-      alert(t("Soğuk e-posta oluşturulamadı."));
+      notify(t("Soğuk e-posta oluşturulamadı."));
     } finally {
       setLoading(false);
     }
@@ -54,7 +55,7 @@ export default function ColdOutreachPage() {
       {/* Header */}
       <div>
         <h1 className="text-2xl font-bold text-white flex items-center gap-3">
-          <Mail className="w-7 h-7 text-rose-400" /> {t("Yöneticiye Doğrudan Ulaşma (Cold Outreach Engine)")}</h1>
+          <Mail className="w-7 h-7 text-rose-400" /> {t("Yöneticiye doğrudan ulaş")}</h1>
         <p className="text-slate-400 mt-1">
           {t("İşe alım portallarındaki kuyrukları atlayın: Mühendislik Yöneticisi ve CTO'lara 1-e-1 değer odaklı, spam puanı denetlenmiş kişiselleştirilmiş e-postalar gönderin.")}</p>
       </div>
@@ -69,7 +70,7 @@ export default function ColdOutreachPage() {
 
           <div className="space-y-3">
             <div>
-              <label className="text-[10px] text-slate-400 uppercase font-mono">{t("Yönetici Adı Soyadı")}</label>
+              <label className="text-xs text-slate-400 uppercase font-mono">{t("Yönetici Adı Soyadı")}</label>
               <input
                 value={form.manager_name}
                 onChange={(e) => setForm({ ...form, manager_name: e.target.value })}
@@ -77,7 +78,7 @@ export default function ColdOutreachPage() {
               />
             </div>
             <div>
-              <label className="text-[10px] text-slate-400 uppercase font-mono">{t("Unvanı (Örn: VP of Eng, CTO)")}</label>
+              <label className="text-xs text-slate-400 uppercase font-mono">{t("Unvanı (Örn: VP of Eng, CTO)")}</label>
               <input
                 value={form.manager_title}
                 onChange={(e) => setForm({ ...form, manager_title: e.target.value })}
@@ -85,7 +86,7 @@ export default function ColdOutreachPage() {
               />
             </div>
             <div>
-              <label className="text-[10px] text-slate-400 uppercase font-mono">{t("Şirket")}</label>
+              <label className="text-xs text-slate-400 uppercase font-mono">{t("Şirket")}</label>
               <input
                 value={form.company}
                 onChange={(e) => setForm({ ...form, company: e.target.value })}
@@ -93,7 +94,7 @@ export default function ColdOutreachPage() {
               />
             </div>
             <div>
-              <label className="text-[10px] text-slate-400 uppercase font-mono">{t("Hedef Pozisyonunuz")}</label>
+              <label className="text-xs text-slate-400 uppercase font-mono">{t("Hedef Pozisyonunuz")}</label>
               <input
                 value={form.target_role}
                 onChange={(e) => setForm({ ...form, target_role: e.target.value })}
@@ -101,7 +102,7 @@ export default function ColdOutreachPage() {
               />
             </div>
             <div>
-              <label className="text-[10px] text-slate-400 uppercase font-mono">{t("Şirket Odak Noktası / Kanca")}</label>
+              <label className="text-xs text-slate-400 uppercase font-mono">{t("Şirket Odak Noktası / Kanca")}</label>
               <textarea
                 rows={3}
                 value={form.recent_news_or_stack}
@@ -139,7 +140,7 @@ export default function ColdOutreachPage() {
 
               {/* Subject */}
               <div className="bg-slate-950/80 border border-slate-800 p-3 rounded-xl">
-                <div className="text-[10px] text-slate-500 font-mono">{t("KONU BAŞLIĞI:")}</div>
+                <div className="text-xs text-slate-400 font-mono">{t("KONU BAŞLIĞI:")}</div>
                 <div className="text-xs font-semibold text-white mt-0.5">{generatedOutreach.subject}</div>
               </div>
 
@@ -151,8 +152,8 @@ export default function ColdOutreachPage() {
               {/* 5-day Follow-up Hook */}
               {generatedOutreach.follow_up_note && (
                 <div className="bg-slate-950/60 border border-slate-800/80 p-3 rounded-xl text-xs space-y-1">
-                  <div className="text-amber-400 font-semibold text-[11px]">{t("⏳ 5 Gün Sonraki Yanıt Yok Hatırlatma Notu:")}</div>
-                  <div className="text-slate-400 italic font-mono text-[11px]">{generatedOutreach.follow_up_note}</div>
+                  <div className="text-amber-400 font-semibold text-xs">{t("⏳ 5 Gün Sonraki Yanıt Yok Hatırlatma Notu:")}</div>
+                  <div className="text-slate-400 italic font-mono text-xs">{generatedOutreach.follow_up_note}</div>
                 </div>
               )}
 
@@ -170,8 +171,8 @@ export default function ColdOutreachPage() {
               )}
             </div>
           ) : (
-            <div className="bg-slate-900/40 border border-slate-800 rounded-2xl p-12 text-center text-slate-500 space-y-2">
-              <Mail className="w-8 h-8 text-slate-600 mx-auto" />
+            <div className="bg-slate-900/40 border border-slate-800 rounded-2xl p-12 text-center text-slate-400 space-y-2">
+              <Mail className="w-8 h-8 text-slate-400 mx-auto" />
               <div className="text-xs">{t("Sol taraftaki formu doldurup \"Yönetici E-Postası Üret\" butonuna basın.")}</div>
             </div>
           )}
@@ -186,7 +187,7 @@ export default function ColdOutreachPage() {
                     <div>
                       <strong className="text-white">{c.manager_name}</strong> ({c.manager_title}) • <span className="text-rose-400">{c.company}</span>
                     </div>
-                    <span className="text-[10px] bg-slate-800 text-slate-400 px-2 py-0.5 rounded font-mono uppercase">
+                    <span className="text-xs bg-slate-800 text-slate-400 px-2 py-0.5 rounded font-mono uppercase">
                       {c.status}
                     </span>
                   </div>

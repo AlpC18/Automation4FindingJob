@@ -1,4 +1,5 @@
 "use client";
+import { notify } from "@/lib/notify";
 import { useLanguage } from "@/lib/i18n";
 import { useState } from "react";
 import { UserCheck, Github, Linkedin, Copy, Check, Sparkles, RefreshCw, ExternalLink } from "lucide-react";
@@ -27,7 +28,7 @@ export default function ProfileOptimizerPage() {
       });
       setLinkedinData(res);
     } catch (e) {
-      alert(t("LinkedIn optimizasyonu sırasında hata oluştu."));
+      notify(t("LinkedIn optimizasyonu sırasında hata oluştu."));
     } finally {
       setLoading(false);
     }
@@ -42,7 +43,7 @@ export default function ProfileOptimizerPage() {
       });
       setGithubData(res);
     } catch (e) {
-      alert(t("GitHub denetimi sırasında hata oluştu."));
+      notify(t("GitHub denetimi sırasında hata oluştu."));
     } finally {
       setLoading(false);
     }
@@ -59,7 +60,7 @@ export default function ProfileOptimizerPage() {
       {/* Header */}
       <div>
         <h1 className="text-2xl font-bold text-white flex items-center gap-3">
-          <UserCheck className="w-7 h-7 text-blue-400" /> {t("LinkedIn & GitHub Profil Denetleyicisi")}</h1>
+          <UserCheck className="w-7 h-7 text-blue-400" /> {t("Profil optimizasyonu")}</h1>
         <p className="text-slate-400 mt-1">
           {t("Tersine İşe Alım (Reverse Recruitment): İşe alımcıların size doğrudan ulaşmasını sağlayacak profil yükseltmeleri.")}</p>
       </div>
@@ -153,7 +154,7 @@ export default function ProfileOptimizerPage() {
               {/* Tips */}
               {linkedinData.profile_tips && (
                 <div className="bg-blue-500/5 border border-blue-500/20 rounded-2xl p-4 space-y-2">
-                  <div className="text-xs font-bold text-blue-300">{t("💡 İşe Alımcı Görünürlük Tavsiyeleri:")}</div>
+                  <div className="text-xs font-bold text-blue-300">{t("İşe Alımcı Görünürlük Tavsiyeleri:")}</div>
                   <div className="space-y-1">
                     {linkedinData.profile_tips.map((tip: string, i: number) => (
                       <div key={i} className="text-xs text-slate-300">{t("•")}{tip}</div>

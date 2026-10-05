@@ -1,4 +1,5 @@
 "use client";
+import { notify } from "@/lib/notify";
 import { useLanguage } from "@/lib/i18n";
 
 import { useEffect, useState } from "react";
@@ -187,7 +188,7 @@ export default function KanbanPage() {
         <div>
           <h1 className="text-2xl font-bold text-white flex items-center gap-2">
             <KanbanSquare className="w-6 h-6 text-blue-500" />
-            {t("1.4 & 1.6 Kanban Başvuru Takip Paneli & Human-in-the-Loop")}</h1>
+            {t("Başvurular")}</h1>
           <p className="text-xs text-slate-400 mt-1">
             {t("Multi-Agent orkestrasyonu, İnsansı Doku Puanı (Human Texture Score) onayı ve başvuru takip otomasyonu.")}</p>
         </div>
@@ -237,7 +238,7 @@ export default function KanbanPage() {
           <div>
             <span className="font-semibold text-amber-300">{t("Form Hafıza Yanıtı:")}</span>{" "}
             <span className="text-white font-mono">{questionResult.answer}</span>{" "}
-            <span className="text-slate-400 text-[10px]">({questionResult.source} {t("• Güven: %")} {Math.round(questionResult.confidence * 100)})</span>
+            <span className="text-slate-400 text-xs">({questionResult.source} {t("• Güven: %")} {Math.round(questionResult.confidence * 100)})</span>
           </div>
           <button onClick={() => setQuestionResult(null)} className="text-slate-400 hover:text-white">✕</button>
         </div>
@@ -263,17 +264,17 @@ export default function KanbanPage() {
               {/* Column Header */}
               <div className="flex items-center justify-between pb-3 mb-3 border-b border-slate-800/80">
                 <span className="text-xs font-bold text-slate-200">{stage}</span>
-                <span className="text-[10px] bg-slate-800 text-slate-400 px-2 py-0.5 rounded-full font-mono">
+                <span className="text-xs bg-slate-800 text-slate-400 px-2 py-0.5 rounded-full font-mono">
                   {items.length}
                 </span>
               </div>
-              <div className="text-[9px] text-slate-600 mb-2 uppercase tracking-wider">
+              <div className="text-xs text-slate-400 mb-2 uppercase tracking-wider">
                 {t("Kartları sürükleyip bırakın")}</div>
 
               {/* Cards List */}
               <div className="space-y-3 flex-1 overflow-y-auto max-h-[680px]">
                 {items.length === 0 ? (
-                  <div className="text-[11px] text-slate-600 text-center py-8">{t("İlan yok")}</div>
+                  <div className="text-xs text-slate-400 text-center py-8">{t("İlan yok")}</div>
                 ) : (
                   items.map((job, index) => (
                     <Draggable draggableId={String(job.id)} index={index} key={job.id}>
@@ -287,12 +288,12 @@ export default function KanbanPage() {
                       <div className="flex justify-between items-start gap-1">
                         <span className="text-xs font-bold text-white line-clamp-1">{job.title}</span>
                       </div>
-                      <div className="text-[11px] text-slate-400 font-medium">{job.company}</div>
-                      {getExternalJobUrl(job.url) && <a href={getExternalJobUrl(job.url)!} target="_self" onClick={(event) => event.stopPropagation()} draggable={false} className="inline-flex items-center gap-1 text-[10px] font-semibold text-emerald-300 hover:text-emerald-200">
+                      <div className="text-xs text-slate-400 font-medium">{job.company}</div>
+                      {getExternalJobUrl(job.url) && <a href={getExternalJobUrl(job.url)!} target="_self" onClick={(event) => event.stopPropagation()} draggable={false} className="inline-flex items-center gap-1 text-xs font-semibold text-emerald-300 hover:text-emerald-200">
                         {t("Kaynak ilanda aç")}<ExternalLink className="h-3 w-3" />
                       </a>}
 
-                      <div className="flex items-center justify-between text-[10px] pt-1">
+                      <div className="flex items-center justify-between text-xs pt-1">
                         <span className="text-blue-400 uppercase font-mono">{job.platform}</span>
                         <span className="text-emerald-400 font-bold font-mono">≈ %{job.match_score ?? "—"} {t("Tahmini uyum")}</span>
                       </div>
@@ -302,7 +303,7 @@ export default function KanbanPage() {
                         <button
                           onClick={() => handleGeneratePackage(job.id)}
                           disabled={generating === job.id}
-                          className="w-full mt-2 bg-blue-600 hover:bg-blue-500 text-white text-[11px] font-semibold py-1.5 rounded-lg transition flex items-center justify-center gap-1 shadow-md shadow-blue-600/20 disabled:opacity-50"
+                          className="w-full mt-2 bg-blue-600 hover:bg-blue-500 text-white text-xs font-semibold py-1.5 rounded-lg transition flex items-center justify-center gap-1 shadow-md shadow-blue-600/20 disabled:opacity-50"
                         >
                           <Sparkles className="w-3 h-3" />
                           {generating === job.id ? t("Üretiliyor...") : t("Apply Paketi Üret")}
@@ -311,13 +312,13 @@ export default function KanbanPage() {
 
                       {stage === "Human Review" && (
                         <div className="space-y-1.5 pt-1">
-                          <div className="text-[10px] text-emerald-400 bg-emerald-500/10 px-1.5 py-0.5 rounded flex items-center justify-between">
+                          <div className="text-xs text-emerald-400 bg-emerald-500/10 px-1.5 py-0.5 rounded flex items-center justify-between">
                             <span>{t("İnsansı Doku:")}</span>
                             <strong>%{job.human_texture_score || 88}</strong>
                           </div>
                           <button
                             onClick={() => setSelectedJob(job)}
-                            className="w-full bg-indigo-600 hover:bg-indigo-500 text-white text-[11px] font-semibold py-1.5 rounded-lg transition flex items-center justify-center gap-1"
+                            className="w-full bg-indigo-600 hover:bg-indigo-500 text-white text-xs font-semibold py-1.5 rounded-lg transition flex items-center justify-center gap-1"
                           >
                             <Eye className="w-3 h-3" /> {t("İncele & Onayla")}</button>
                         </div>
@@ -327,7 +328,7 @@ export default function KanbanPage() {
                         <div className="pt-1 flex gap-1">
                           <button
                             onClick={() => handleMoveStage(job.id, "Interview")}
-                            className="flex-1 bg-emerald-600 hover:bg-emerald-500 text-white text-[10px] py-1 rounded transition text-center font-medium"
+                            className="flex-1 bg-emerald-600 hover:bg-emerald-500 text-white text-xs py-1 rounded transition text-center font-medium"
                           >
                             {t("Mülakata Geç →")}</button>
                         </div>
@@ -337,24 +338,24 @@ export default function KanbanPage() {
                         <div className="pt-1 flex gap-1">
                           <button
                             onClick={() => handleMoveStage(job.id, "Offer")}
-                            className="flex-1 bg-amber-600 hover:bg-amber-500 text-white text-[10px] py-1 rounded transition text-center font-medium"
+                            className="flex-1 bg-amber-600 hover:bg-amber-500 text-white text-xs py-1 rounded transition text-center font-medium"
                           >
-                            {t("Teklif Alındı 🎉")}</button>
+                            {t("Teklif Alındı")}</button>
                         </div>
                       )}
 
                       {stage === "Offer" && (
-                        <div className="text-[10px] text-amber-400 text-center font-semibold bg-amber-500/10 py-1 rounded">
+                        <div className="text-xs text-amber-400 text-center font-semibold bg-amber-500/10 py-1 rounded">
                           {t("Pazarlık Ajanı Bekliyor")}</div>
                       )}
 
                       {job.is_template_fallback && (
-                        <div className="rounded bg-red-500/10 px-1.5 py-0.5 text-[10px] font-semibold text-red-300">{t("Şablon metin · yapay zekâ yazmadı")}</div>
+                        <div className="rounded bg-red-500/10 px-1.5 py-0.5 text-xs font-semibold text-red-300">{t("Şablon metin · yapay zekâ yazmadı")}</div>
                       )}
 
                       {(job.next_steps || []).length > 0 && (
                         <div className="border-t border-slate-800 pt-2">
-                          <div className="text-[10px] font-semibold uppercase tracking-wide text-slate-500">{t("Sıradaki adım")}</div>
+                          <div className="text-xs font-semibold uppercase tracking-wide text-slate-400">{t("Sıradaki adım")}</div>
                           <div className="mt-1 flex flex-wrap gap-1">
                             {job.next_steps.map((step: { kind: string; href: string }) => (
                               <Link
@@ -362,7 +363,7 @@ export default function KanbanPage() {
                                 href={step.href}
                                 onClick={(event) => event.stopPropagation()}
                                 draggable={false}
-                                className="rounded bg-slate-800 px-1.5 py-0.5 text-[10px] font-medium text-blue-300 hover:bg-slate-700"
+                                className="rounded bg-slate-800 px-1.5 py-0.5 text-xs font-medium text-blue-300 hover:bg-slate-700"
                               >
                                 {nextStepLabel(step.kind)}
                               </Link>
@@ -392,7 +393,7 @@ export default function KanbanPage() {
               <div>
                 <h2 className="text-base font-bold text-white flex items-center gap-2">
                   <ShieldCheck className="w-5 h-5 text-emerald-400" />
-                  {t("Human-in-the-Loop Onay Odası")}</h2>
+                  {t("Onayını bekleyenler")}</h2>
                 <p className="text-xs text-slate-400 mt-0.5">
                   {t("Anti-AI Humanizer Engine tarafından arındırılmış metin adayın kontrolüne sunulur.")}</p>
               </div>
@@ -409,30 +410,30 @@ export default function KanbanPage() {
               {/* Metrics Badge Row */}
               <div className="grid grid-cols-3 gap-3 p-3.5 rounded-xl bg-slate-900/80 border border-slate-800">
                 <div className="text-center">
-                  <div className="text-[10px] text-slate-400">{t("İnsansı Doku Puanı")}</div>
+                  <div className="text-xs text-slate-400">{t("İnsansı Doku Puanı")}</div>
                   <div className="text-sm font-bold text-emerald-400 font-mono">
                     %{selectedJob.human_texture_score || 92}
                   </div>
                 </div>
                 <div className="text-center">
-                  <div className="text-[10px] text-slate-400">{t("AI Yasaklı Kelime")}</div>
+                  <div className="text-xs text-slate-400">{t("AI Yasaklı Kelime")}</div>
                   <div className="text-sm font-bold text-emerald-400 font-mono">{t("0 (Temiz)")}</div>
                 </div>
                 <div className="text-center">
-                  <div className="text-[10px] text-slate-400">{t("Burstiness (Ritim)")}</div>
+                  <div className="text-xs text-slate-400">{t("Burstiness (Ritim)")}</div>
                   <div className="text-sm font-bold text-indigo-400 font-mono">{t("0.68 (İnsan Seviyesi)")}</div>
                 </div>
               </div>
 
               <section className="rounded-xl border border-slate-800 bg-slate-900/60 p-3">
-                <div className="mb-2 flex items-center gap-2 text-[11px] font-semibold text-slate-200"><Clock className="h-3.5 w-3.5 text-sky-300" />{t("Başvuru geçmişi")}</div>
-                {statusHistory.length === 0 ? <p className="text-[10px] text-slate-500">{t("Henüz durum geçmişi yok")}</p> : <div className="space-y-1.5">{statusHistory.slice(0, 6).map((item) => <div key={item.id} className="flex flex-wrap items-center justify-between gap-2 text-[10px]"><span className="text-slate-300">{item.from_status} → <strong className="text-white">{item.to_status}</strong></span><span className="text-slate-500">{item.created_at}</span></div>)}</div>}
+                <div className="mb-2 flex items-center gap-2 text-xs font-semibold text-slate-200"><Clock className="h-3.5 w-3.5 text-sky-300" />{t("Başvuru geçmişi")}</div>
+                {statusHistory.length === 0 ? <p className="text-xs text-slate-400">{t("Henüz durum geçmişi yok")}</p> : <div className="space-y-1.5">{statusHistory.slice(0, 6).map((item) => <div key={item.id} className="flex flex-wrap items-center justify-between gap-2 text-xs"><span className="text-slate-300">{item.from_status} → <strong className="text-white">{item.to_status}</strong></span><span className="text-slate-400">{item.created_at}</span></div>)}</div>}
               </section>
 
               {/* Cultural Tone & Multilingual Switcher */}
               <div className="space-y-1.5 p-3 rounded-xl bg-slate-900/60 border border-slate-800">
-                <div className="flex justify-between items-center text-[11px]">
-                  <span className="font-semibold text-slate-300">{t("🌍 Bölgesel / Kültürel Dil Adaptasyonu:")}</span>
+                <div className="flex justify-between items-center text-xs">
+                  <span className="font-semibold text-slate-300">{t("Bölgesel / Kültürel Dil Adaptasyonu:")}</span>
                   <div className="flex gap-1.5">
                     <button
                       type="button"
@@ -443,7 +444,7 @@ export default function KanbanPage() {
                         });
                         setSelectedJob({ ...selectedJob, cover_letter: res.cover_letter });
                       }}
-                      className="px-2 py-0.5 rounded bg-slate-800 hover:bg-slate-700 text-slate-200 text-[10px] font-medium"
+                      className="px-2 py-0.5 rounded bg-slate-800 hover:bg-slate-700 text-slate-200 text-xs font-medium"
                     >
                       {t("Kosova (Shqip)")}</button>
                     <button
@@ -455,7 +456,7 @@ export default function KanbanPage() {
                         });
                         setSelectedJob({ ...selectedJob, cover_letter: res.cover_letter });
                       }}
-                      className="px-2 py-0.5 rounded bg-slate-800 hover:bg-slate-700 text-slate-200 text-[10px] font-medium"
+                      className="px-2 py-0.5 rounded bg-slate-800 hover:bg-slate-700 text-slate-200 text-xs font-medium"
                     >
                       {t("Türkiye (Türkçe)")}</button>
                     <button
@@ -467,7 +468,7 @@ export default function KanbanPage() {
                         });
                         setSelectedJob({ ...selectedJob, cover_letter: res.cover_letter });
                       }}
-                      className="px-2 py-0.5 rounded bg-slate-800 hover:bg-slate-700 text-slate-200 text-[10px] font-medium"
+                      className="px-2 py-0.5 rounded bg-slate-800 hover:bg-slate-700 text-slate-200 text-xs font-medium"
                     >
                       {t("Global (English)")}</button>
                   </div>
@@ -476,13 +477,13 @@ export default function KanbanPage() {
 
               {/* Model Provider Info Badge */}
               {selectedJob.provider_used && (
-                <div className="flex items-center justify-between text-[11px] text-slate-400 bg-slate-900/80 px-3.5 py-2 rounded-xl border border-slate-800">
+                <div className="flex items-center justify-between text-xs text-slate-400 bg-slate-900/80 px-3.5 py-2 rounded-xl border border-slate-800">
                   <div className="flex items-center gap-2">
                     <Cpu className="w-3.5 h-3.5 text-blue-400" />
                     <span>{t("Üreten AI Motoru:")}</span>
                     <strong className="text-white font-mono">{selectedJob.provider_used}</strong>
                   </div>
-                  <span className="text-[10px] text-emerald-400 bg-emerald-500/10 px-2 py-0.5 rounded font-mono">
+                  <span className="text-xs text-emerald-400 bg-emerald-500/10 px-2 py-0.5 rounded font-mono">
                     {t("Human-Verified")}</span>
                 </div>
               )}
@@ -494,15 +495,15 @@ export default function KanbanPage() {
                     {t("Özelleştirilmiş Niyet Mektubu (Cover Letter):")}</label>
 
                   {/* PDF Theme & Action Buttons */}
-                  <div className="flex items-center gap-2 text-[11px]">
+                  <div className="flex items-center gap-2 text-xs">
                     <div className="flex items-center gap-1 bg-slate-900 px-2 py-1 rounded-lg border border-slate-800">
-                      <span className="text-[10px] text-slate-400">{t("Tema:")}</span>
+                      <span className="text-xs text-slate-400">{t("Tema:")}</span>
                       {["navy", "charcoal", "slate", "emerald"].map((t) => (
                         <button
                           key={t}
                           type="button"
                           onClick={() => setClPdfTheme(t)}
-                          className={`px-1.5 py-0.5 rounded capitalize text-[10px] transition ${
+                          className={`px-1.5 py-0.5 rounded capitalize text-xs transition ${
                             clPdfTheme === t ? "bg-blue-600 text-white font-semibold" : "text-slate-400 hover:text-white"
                           }`}
                         >
@@ -525,7 +526,7 @@ export default function KanbanPage() {
                       rel="noopener noreferrer"
                       className="bg-blue-600 hover:bg-blue-500 text-white font-semibold px-2.5 py-1 rounded-lg transition flex items-center gap-1 shadow-md shadow-blue-600/20"
                     >
-                      {t("📄 PDF İndir")}</a>
+                      {t("PDF İndir")}</a>
                   </div>
                 </div>
 
@@ -547,7 +548,7 @@ export default function KanbanPage() {
                 <div className="space-y-1.5">
                   <label className="text-xs font-semibold text-slate-300">
                     {t("İlana Özel Micro-Case Study (Micro-Project Synthesizer):")}</label>
-                  <pre className="p-3 bg-slate-950 border border-slate-800 rounded-xl text-[11px] text-slate-300 font-mono whitespace-pre-wrap max-h-36 overflow-y-auto">
+                  <pre className="p-3 bg-slate-950 border border-slate-800 rounded-xl text-xs text-slate-300 font-mono whitespace-pre-wrap max-h-36 overflow-y-auto">
                     {selectedJob.micro_portfolio}
                   </pre>
                 </div>
@@ -556,13 +557,13 @@ export default function KanbanPage() {
 
             {/* Modal Footer */}
             <div className="p-4 border-t border-slate-800 flex items-center justify-between">
-              <span className="text-[11px] text-slate-400">
+              <span className="text-xs text-slate-400">
                 {t("Onay verildiğinde 7. ve 14. gün kibar takip otomasyonu devreye girer.")}</span>
               <div className="flex items-center gap-2">
                 <button
                   type="button"
                   onClick={async () => {
-                    alert(t("Playwright Stealth Browser başlatıldı. Form alanları dolduruluyor..."));
+                    notify(t("Tarayıcı açıldı. Form alanları dolduruluyor..."));
                     await fetchFromApi("/scrape/playwright_apply", {
                       method: "POST",
                       body: JSON.stringify({ job_id: selectedJob.job_id || selectedJob.id })

@@ -65,10 +65,10 @@ export default function SafetyPage() {
         setManualJson("");
         await loadSessionStatus();
       } else {
-        setCookieFeedback(`❌ Hata: ${res.message || "Kaydedilemedi"}`);
+        setCookieFeedback(`Hata: ${res.message || "Kaydedilemedi"}`);
       }
     } catch (e: any) {
-      setCookieFeedback(`❌ Geçersiz JSON formatı: ${e.message}`);
+      setCookieFeedback(`Geçersiz JSON formatı: ${e.message}`);
     } finally {
       setSavingCookies(false);
     }
@@ -95,7 +95,7 @@ export default function SafetyPage() {
       <div>
         <h1 className="text-2xl font-bold text-white flex items-center gap-2">
           <ShieldCheck className="w-6 h-6 text-emerald-400" />
-          {t("Hesap Güvenliği, Kotalar & Stealth Proxy Yönetimi")}</h1>
+          {t("Hesap güvenliği")}</h1>
         <p className="text-xs text-slate-400 mt-1">
           {t("Kullanıcı hesaplarının shadowban ve IP engellemelerine karşı korunması için otonom kota ve gecikme katmanı.")}</p>
       </div>
@@ -106,7 +106,7 @@ export default function SafetyPage() {
           <div key={key} className="p-5 rounded-2xl bg-[#0e1524] border border-slate-800 space-y-3">
             <div className="flex justify-between items-center text-xs">
               <span className="font-bold text-white">{val.platform}</span>
-              <span className={`text-[10px] px-2 py-0.5 rounded-full font-mono ${val.is_safe ? 'bg-emerald-500/10 text-emerald-400 border border-emerald-500/20' : 'bg-rose-500/10 text-rose-400'}`}>
+              <span className={`text-xs px-2 py-0.5 rounded-full font-mono ${val.is_safe ? 'bg-emerald-500/10 text-emerald-400 border border-emerald-500/20' : 'bg-rose-500/10 text-rose-400'}`}>
                 {val.is_safe ? t("GÜVENLİ") : t("LİMİTE ULAŞILDI")}
               </span>
             </div>
@@ -122,7 +122,7 @@ export default function SafetyPage() {
               ></div>
             </div>
 
-            <div className="text-[10px] text-slate-400">
+            <div className="text-xs text-slate-400">
               {t("Bugün kullanılan:")}<strong>{val.used_today}</strong> {t("işlem")}</div>
           </div>
         ))}
@@ -135,34 +135,34 @@ export default function SafetyPage() {
         <div className="p-6 rounded-2xl bg-[#0e1524] border border-slate-800/80 space-y-4">
           <h2 className="text-sm font-semibold text-white flex items-center gap-2">
             <Sliders className="w-4 h-4 text-blue-400" /> {t("İnsan Davranışı Simülasyonu (Jitter Delays)")}</h2>
-          <p className="text-[11px] text-slate-400">
+          <p className="text-xs text-slate-400">
             {t("Ajan istekleri arasına rastgele insansı bekleme süreleri (random jitter) eklenerek bot tespiti engellenir.")}</p>
 
           <div className="space-y-3 text-xs">
             <div className="flex justify-between items-center p-3 rounded-xl bg-slate-900/60 border border-slate-800">
               <div>
                 <div className="font-semibold text-white">{t("İstekler Arası Rastgele Gecikme")}</div>
-                <div className="text-[10px] text-slate-400">{t("1.5sn ile 4.0sn arasında rastgele bekleme")}</div>
+                <div className="text-xs text-slate-400">{t("1.5sn ile 4.0sn arasında rastgele bekleme")}</div>
               </div>
-              <span className="text-[10px] bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 px-2 py-0.5 rounded font-mono">
+              <span className="text-xs bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 px-2 py-0.5 rounded font-mono">
                 {t("Aktif")}</span>
             </div>
 
             <div className="flex justify-between items-center p-3 rounded-xl bg-slate-900/60 border border-slate-800">
               <div>
                 <div className="font-semibold text-white">{t("Tarayıcı Parmak İzi Gizleme")}</div>
-                <div className="text-[10px] text-slate-400">{t("navigator.webdriver ve Canvas fingerprint spoofing")}</div>
+                <div className="text-xs text-slate-400">{t("navigator.webdriver ve Canvas fingerprint spoofing")}</div>
               </div>
-              <span className="text-[10px] bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 px-2 py-0.5 rounded font-mono">
+              <span className="text-xs bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 px-2 py-0.5 rounded font-mono">
                 {t("Aktif")}</span>
             </div>
 
             <div className="flex justify-between items-center p-3 rounded-xl bg-slate-900/60 border border-slate-800">
               <div>
                 <div className="font-semibold text-white">{t("Maksimum Günlük Kota Kilidi")}</div>
-                <div className="text-[10px] text-slate-400">{t("Kotaya ulaşıldığında otonom duraklatma")}</div>
+                <div className="text-xs text-slate-400">{t("Kotaya ulaşıldığında otonom duraklatma")}</div>
               </div>
-              <span className="text-[10px] bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 px-2 py-0.5 rounded font-mono">
+              <span className="text-xs bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 px-2 py-0.5 rounded font-mono">
                 {t("Devrede")}</span>
             </div>
           </div>
@@ -172,12 +172,12 @@ export default function SafetyPage() {
         <div className="p-6 rounded-2xl bg-[#0e1524] border border-slate-800/80 space-y-4">
           <h2 className="text-sm font-semibold text-white flex items-center gap-2">
             <Globe className="w-4 h-4 text-emerald-400" /> {t("Konut Tipi Proxy (Residential Proxy)")}</h2>
-          <p className="text-[11px] text-slate-400">
+          <p className="text-xs text-slate-400">
             {t("LinkedIn ve yerel portalların IP banlarını aşmak için konut proxy rotasyonu.")}</p>
 
           <div className="space-y-3 text-xs">
             <div>
-              <label className="text-[10px] font-semibold text-slate-400 uppercase">{t("Proxy URL / Gateway")}</label>
+              <label className="text-xs font-semibold text-slate-400 uppercase">{t("Proxy URL / Gateway")}</label>
               <input
                 type="text"
                 defaultValue="http://residential-eu-pool.proxy.io:8080"
@@ -189,7 +189,7 @@ export default function SafetyPage() {
               <CheckCircle2 className="w-5 h-5 text-emerald-400 shrink-0" />
               <div>
                 <div className="font-bold text-white">{t("Proxy Durumu: Hazır")}</div>
-                <div className="text-[10px] text-slate-400">{t("IP çıkış bölgesi: Frankfurt / Amsterdam (Düşük Gecikme)")}</div>
+                <div className="text-xs text-slate-400">{t("IP çıkış bölgesi: Frankfurt / Amsterdam (Düşük Gecikme)")}</div>
               </div>
             </div>
           </div>
@@ -217,33 +217,33 @@ export default function SafetyPage() {
 
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
           <div className="p-4 rounded-xl bg-slate-900/70 border border-slate-800 space-y-1">
-            <div className="text-[10px] text-slate-400 uppercase font-semibold">{t("Oturum Durumu")}</div>
+            <div className="text-xs text-slate-400 uppercase font-semibold">{t("Oturum Durumu")}</div>
             <div className="flex items-center gap-2">
               <span className={`w-2.5 h-2.5 rounded-full ${sessionStatus?.is_synced && sessionStatus?.has_li_at ? "bg-emerald-400 animate-pulse" : "bg-rose-500"}`}></span>
               <span className="text-sm font-bold text-white">
                 {sessionStatus?.is_synced && sessionStatus?.has_li_at ? "Aktif & Senkronize" : "Senkronize Edilmedi"}
               </span>
             </div>
-            <div className="text-[10px] text-slate-400">
+            <div className="text-xs text-slate-400">
               {sessionStatus?.has_li_at ? t("✓ li_at (Anahtar oturum çerezi) mevcut") : "li_at oturumu eksik"}
             </div>
           </div>
 
           <div className="p-4 rounded-xl bg-slate-900/70 border border-slate-800 space-y-1">
-            <div className="text-[10px] text-slate-400 uppercase font-semibold">{t("Kayıtlı Çerez Sayısı")}</div>
+            <div className="text-xs text-slate-400 uppercase font-semibold">{t("Kayıtlı Çerez Sayısı")}</div>
             <div className="text-sm font-bold text-white font-mono">
               {sessionStatus?.cookie_count || 0} {t("Çerez")}</div>
-            <div className="text-[10px] text-slate-400">
+            <div className="text-xs text-slate-400">
               {t("Son Senkronizasyon:")}{sessionStatus?.last_synced_at || "Yok"}
             </div>
           </div>
 
           <div className="p-4 rounded-xl bg-slate-900/70 border border-slate-800 space-y-1">
-            <div className="text-[10px] text-slate-400 uppercase font-semibold">{t("Playwright Entegrasyonu")}</div>
+            <div className="text-xs text-slate-400 uppercase font-semibold">{t("Playwright Entegrasyonu")}</div>
             <div className="text-sm font-bold text-emerald-400">
-              {sessionStatus?.is_synced ? t("Stealth Worker Hazır") : "Beklemede"}
+              {sessionStatus?.is_synced ? t("Tarayıcı otomasyonu hazır") : "Beklemede"}
             </div>
-            <div className="text-[10px] text-slate-400">
+            <div className="text-xs text-slate-400">
               {sessionStatus?.expires_at ? `Bitiş: ${sessionStatus.expires_at}` : t("Eklenti 'Handshake' butonuna basınız")}
             </div>
           </div>
@@ -257,7 +257,7 @@ export default function SafetyPage() {
             {sessionStatus?.is_synced && (
               <button
                 onClick={handleClearSession}
-                className="text-[10px] text-rose-400 hover:text-rose-300 font-semibold underline"
+                className="text-xs text-rose-400 hover:text-rose-300 font-semibold underline"
               >
                 {t("Oturumu Temizle")}</button>
             )}
@@ -268,7 +268,7 @@ export default function SafetyPage() {
               placeholder='[{"name": "li_at", "value": "AQED...", "domain": ".linkedin.com"}]'
               value={manualJson}
               onChange={(e) => setManualJson(e.target.value)}
-              className="flex-1 bg-slate-950 border border-slate-800 rounded-xl px-3 py-2 text-xs text-white font-mono placeholder:text-slate-600 focus:outline-none focus:border-blue-500"
+              className="flex-1 bg-slate-950 border border-slate-800 rounded-xl px-3 py-2 text-xs text-white font-mono placeholder:text-slate-500 focus:outline-none focus:border-blue-500"
             />
             <button
               onClick={handleSaveManualCookies}

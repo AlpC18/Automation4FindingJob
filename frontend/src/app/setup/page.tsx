@@ -200,9 +200,9 @@ export default function SetupPage() {
       <div>
         <h1 className="text-2xl font-bold text-white flex items-center gap-2">
           <UserCheck className="w-6 h-6 text-blue-500" />
-          {t("1.1 Profil Oluşturma, Stil Analizi & RAG Hafızası (/setup)")}</h1>
+          {t("Profilim")}</h1>
         <p className="text-xs text-slate-400 mt-1">
-          {t("ATS format standartlaştırma, kişisel üslup (Stylometry) profilleme ve RAG vektör hafızası yönetimi.")}</p>
+          {t("CV'ni, yazım tarzını ve projelerini buraya ekle; başvurular bu bilgilerle hazırlanır.")}</p>
       </div>
 
       {/* Grid: 2 Columns */}
@@ -216,7 +216,7 @@ export default function SetupPage() {
               <HelpCircle className="w-5 h-5 text-amber-400" />
               <h2 className="text-sm font-semibold text-white">{t("Dinamik Mülakat Akışı (Eksik Veri Tespiti)")}</h2>
             </div>
-            <p className="text-[11px] text-slate-400">
+            <p className="text-xs text-slate-400">
               {t("Yapay zeka, özgeçmişinizdeki eksik ve yüksek etkili alanları tespit ederek sorular üretir:")}</p>
 
             <div className="space-y-3">
@@ -227,7 +227,7 @@ export default function SetupPage() {
                 questions.map((q: any, i: number) => (
                   <div key={i} className="p-3.5 rounded-xl bg-slate-900/60 border border-slate-800 space-y-2">
                     <div className="flex justify-between items-center">
-                      <span className="text-[10px] text-amber-400 font-mono uppercase bg-amber-400/10 px-2 py-0.5 rounded">
+                      <span className="text-xs text-amber-400 font-mono uppercase bg-amber-400/10 px-2 py-0.5 rounded">
                         {t("Kategori:")}{q.category}
                       </span>
                     </div>
@@ -250,34 +250,34 @@ export default function SetupPage() {
                 <FileText className="w-5 h-5 text-blue-400" />
                 <h2 className="text-sm font-semibold text-white">{t("ATS PDF İndirme & Önizleme Motoru")}</h2>
               </div>
-              <span className="text-[10px] bg-emerald-500/10 text-emerald-400 px-2 py-0.5 rounded-full font-mono w-fit">
+              <span className="text-xs bg-emerald-500/10 text-emerald-400 px-2 py-0.5 rounded-full font-mono w-fit">
                 {t("%100 ATS Uyumlu Tek Kolon")}</span>
             </div>
 
-            <p className="text-[11px] text-slate-400 leading-relaxed">
+            <p className="text-xs text-slate-400 leading-relaxed">
               {t("ReportLab ile üretilen, ATS tarayıcılarına %100 uyumlu, seçilebilir metinli, sağa hizalı tarihli ve tipografik hiyerarşiye sahip standart PDF.")}</p>
 
             <div className="space-y-2 rounded-xl border border-slate-800 bg-slate-900/50 p-3">
               <div className="flex flex-wrap items-center justify-between gap-2">
                 <label htmlFor="profile-cv-text" className="text-xs font-semibold text-slate-200">{t("CV metni / PDF içe aktar")}</label>
-                <label className="cursor-pointer rounded-lg border border-slate-700 px-3 py-1.5 text-[11px] font-medium text-slate-200">
+                <label className="cursor-pointer rounded-lg border border-slate-700 px-3 py-1.5 text-xs font-medium text-slate-200">
                   {cvBusy ? t("CV okunuyor…") : t("PDF / DOCX yükle")}
                   <input type="file" accept=".pdf,.docx" className="hidden" disabled={cvBusy} onChange={async (event) => { const input = event.currentTarget; await importCv(input.files?.[0]); input.value = ""; }} />
                 </label>
               </div>
-              <label className="flex items-start gap-2 text-[11px] leading-relaxed text-slate-400">
+              <label className="flex items-start gap-2 text-xs leading-relaxed text-slate-400">
                 <input type="checkbox" checked={useAiCvExtraction} onChange={(event) => setUseAiCvExtraction(event.target.checked)} className="mt-0.5" />
                 <span>{t("AI ile çıkarım seçilirse CV metni Ayarlar'da seçili AI sağlayıcısında işlenir; bulut sağlayıcısıysa metin cihazından çıkar. Kapalıysa yalnızca yerel çıkarım kullanılır.")}</span>
               </label>
               <textarea id="profile-cv-text" rows={5} value={cvText} onChange={(event) => setCvText(event.target.value)} placeholder={t("CV metnini buraya yapıştır veya PDF dosyası yükle.")} className="w-full rounded-lg border border-slate-700 bg-slate-950 p-3 text-xs text-slate-200" />
-              {cvMessage && <p role="status" className="text-[11px] text-slate-400">{cvMessage}</p>}
+              {cvMessage && <p role="status" className="text-xs text-slate-400">{cvMessage}</p>}
               {cvSuggestions && <CvImportReview fields={cvSuggestions.fields} originalText={cvSuggestions.text} quality={cvSuggestions.quality} analysis={cvSuggestions.analysis} optimizedCvText={cvSuggestions.optimized_cv_text} aiWarning={cvSuggestions.ai_warning} aiUsed={cvSuggestions.ai_used} applying={cvBusy} onApply={applyCvFields} onCancel={() => setCvSuggestions(null)} />}
               <button type="button" onClick={saveCvText} disabled={cvBusy} className="rounded-lg bg-blue-600 px-3 py-2 text-xs font-semibold text-white disabled:opacity-50">{t("CV metnini profile kaydet")}</button>
             </div>
 
             {/* Theme Picker */}
             <div className="p-3 rounded-xl bg-slate-900/60 border border-slate-800 flex flex-wrap items-center justify-between gap-2 text-xs">
-              <span className="text-slate-400 text-[11px] font-medium">{t("Tema / Renk Paleti:")}</span>
+              <span className="text-slate-400 text-xs font-medium">{t("Tema / Renk Paleti:")}</span>
               <div className="flex items-center gap-1.5">
                 {[
                   { id: "navy", label: "Navy Executive", color: "bg-blue-600" },
@@ -288,7 +288,7 @@ export default function SetupPage() {
                   <button
                     key={t.id}
                     onClick={() => setPdfTheme(t.id)}
-                    className={`px-2 py-1 rounded text-[10px] font-medium flex items-center gap-1.5 transition ${
+                    className={`px-2 py-1 rounded text-xs font-medium flex items-center gap-1.5 transition ${
                       pdfTheme === t.id
                         ? "bg-slate-800 text-white border border-blue-500/50"
                         : "text-slate-400 hover:text-white"
@@ -329,7 +329,7 @@ export default function SetupPage() {
 
             {showPdfPreview && <PdfJsPreview src={buildApiUrl(`/setup/preview_ats_cv?theme=${pdfTheme}`)} />}
 
-            <pre className="p-4 rounded-xl bg-slate-950 border border-slate-800 text-[11px] font-mono text-slate-300 h-52 overflow-y-auto whitespace-pre-wrap">
+            <pre className="p-4 rounded-xl bg-slate-950 border border-slate-800 text-xs font-mono text-slate-300 h-52 overflow-y-auto whitespace-pre-wrap">
               {profile.clean_ats_cv_text || t("ATS Metni oluşturuluyor...")}
             </pre>
           </div>
@@ -343,7 +343,7 @@ export default function SetupPage() {
               <Brain className="w-5 h-5 text-indigo-400" />
               <h2 className="text-sm font-semibold text-white">{t("Yazım Üslubu (Human Stylometry) Profilleme")}</h2>
             </div>
-            <p className="text-[11px] text-slate-400">
+            <p className="text-xs text-slate-400">
               {t("Daha önce yazdığınız gerçek e-posta veya metinleri yapıştırın. Sistem burstiness (ritim) ve söz dağarcığınızı çıkararak Kişisel Ses Profilinizi oluştursun.")}</p>
 
             <textarea
@@ -370,15 +370,15 @@ export default function SetupPage() {
                 </div>
                 <div className="grid grid-cols-3 gap-2 text-center">
                   <div className="p-2 rounded bg-slate-900 border border-slate-800">
-                    <div className="text-[10px] text-slate-400">{t("Burstiness")}</div>
+                    <div className="text-xs text-slate-400">{t("Burstiness")}</div>
                     <div className="text-xs font-bold text-white">{stylometryResult.burstiness_index || "0.68"}</div>
                   </div>
                   <div className="p-2 rounded bg-slate-900 border border-slate-800">
-                    <div className="text-[10px] text-slate-400">{t("Söz Dağarcığı")}</div>
+                    <div className="text-xs text-slate-400">{t("Söz Dağarcığı")}</div>
                     <div className="text-xs font-bold text-white">{stylometryResult.lexical_diversity || "0.74"}</div>
                   </div>
                   <div className="p-2 rounded bg-slate-900 border border-slate-800">
-                    <div className="text-[10px] text-slate-400">{t("Resmiyet")}</div>
+                    <div className="text-xs text-slate-400">{t("Resmiyet")}</div>
                     <div className="text-xs font-bold text-white">%{stylometryResult.formality_score || "75"}</div>
                   </div>
                 </div>
@@ -391,10 +391,10 @@ export default function SetupPage() {
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-2">
                 <Database className="w-5 h-5 text-emerald-400" />
-                <h2 className="text-sm font-semibold text-white">{t("RAG Vektör Hafızası (")}{ragProjects.length} {t("Proje)")}</h2>
+                <h2 className="text-sm font-semibold text-white">{t("Kayıtlı projeler (")}{ragProjects.length} {t("Proje)")}</h2>
               </div>
             </div>
-            <p className="text-[11px] text-slate-400">
+            <p className="text-xs text-slate-400">
               {t("İlana en uygun gerçek proje deneyimlerini otomatik seçip başvuru metnine zerk eden semantik hafıza.")}</p>
 
             <div className="space-y-3 max-h-56 overflow-y-auto">
@@ -402,12 +402,12 @@ export default function SetupPage() {
                 <div key={p.id} className="p-3 rounded-xl bg-slate-900/60 border border-slate-800 space-y-1">
                   <div className="flex justify-between items-center">
                     <span className="text-xs font-semibold text-white">{p.title}</span>
-                    <span className="text-[10px] text-emerald-400 font-mono bg-emerald-500/10 px-2 py-0.5 rounded">
+                    <span className="text-xs text-emerald-400 font-mono bg-emerald-500/10 px-2 py-0.5 rounded">
                       {p.metrics || "Metrikli"}
                     </span>
                   </div>
-                  <p className="text-[11px] text-slate-400 line-clamp-2">{p.content}</p>
-                  <div className="text-[10px] text-slate-500 font-mono">
+                  <p className="text-xs text-slate-400 line-clamp-2">{p.content}</p>
+                  <div className="text-xs text-slate-400 font-mono">
                     {t("Stack:")}{p.tech_stack?.join(", ")}
                   </div>
                 </div>
@@ -451,7 +451,7 @@ export default function SetupPage() {
                 disabled={addingProj || !newTitle || !newContent}
                 className="w-full bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-semibold py-2 rounded-xl transition flex items-center justify-center gap-1"
               >
-                <Plus className="w-3.5 h-3.5" /> {t("RAG Vektör Hafızasına Kaydet")}</button>
+                <Plus className="w-3.5 h-3.5" /> {t("Projeyi kaydet")}</button>
             </div>
           </div>
 

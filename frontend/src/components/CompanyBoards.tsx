@@ -84,14 +84,14 @@ export default function CompanyBoards() {
         </div>
       )}
       {boards.length === 0 ? (
-        <p className="mt-4 text-xs text-slate-500">{t("Henüz takip edilen şirket yok.")}</p>
+        <p className="mt-4 text-xs text-slate-400">{t("Henüz takip edilen şirket yok.")}</p>
       ) : (
         <ul className="mt-4 space-y-2">
           {boards.map((board) => (
             <li key={`${board.provider}:${board.slug}`} className="flex items-center justify-between gap-3 rounded-xl border border-slate-800 px-4 py-2">
               <span className="text-sm text-white">{board.slug} <span className="text-xs text-slate-400">· {board.provider}</span></span>
               {board.origin === "env" ? (
-                <span className="text-[11px] text-slate-500">{t(".env dosyasından")}</span>
+                <span className="text-xs text-slate-400">{t(".env dosyasından")}</span>
               ) : (
                 <button
                   type="button"

@@ -86,11 +86,11 @@ export default function SetupSteps() {
         <Link key={step.title} href={step.href} aria-current={index === nextIndex ? "step" : undefined} className={`group rounded-2xl border bg-[#0e1524] p-4 transition hover:border-blue-500/50 ${index === nextIndex ? "border-blue-500/50" : "border-slate-800"}`}>
           <div className="flex items-center justify-between">
             <span className="font-mono text-xs font-bold text-blue-400">{String(index + 1).padStart(2, "0")}</span>
-            <span className={`inline-flex items-center gap-1 text-[10px] font-semibold ${step.done ? "text-emerald-300" : "text-amber-300"}`}>{step.done && <Check className="h-3 w-3" />}{step.done ? t("Tamam") : index === nextIndex ? t("Sıradaki adım") : t("Eksik")}</span>
+            <span className={`inline-flex items-center gap-1 text-xs font-semibold ${step.done ? "text-emerald-300" : "text-amber-300"}`}>{step.done && <Check className="h-3 w-3" />}{step.done ? t("Tamam") : index === nextIndex ? t("Sıradaki adım") : t("Eksik")}</span>
           </div>
           <h2 className="mt-2 text-sm font-semibold text-white">{step.title}</h2>
           {step.missing.length > 0 && <p className="mt-1 text-xs text-amber-200">{t("Eksik:")} {step.missing.join(" · ")}</p>}
-          <p className="mt-1 text-[11px] text-slate-400">{step.note}</p>
+          <p className="mt-1 text-xs text-slate-400">{step.note}</p>
           {!step.done && <span className="mt-3 inline-flex items-center gap-1.5 text-xs font-semibold text-blue-300">{step.action}<ArrowRight className="h-3.5 w-3.5 transition group-hover:translate-x-1" /></span>}
         </Link>
       ))}

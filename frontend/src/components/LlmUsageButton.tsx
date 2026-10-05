@@ -35,17 +35,17 @@ export default function LlmUsageButton() {
 
   const tile = (label: string, value: string) => (
     <div className="rounded-xl p-2" style={{ background: "var(--surface-muted)" }}>
-      <p className="text-[10px]" style={{ color: "var(--muted)" }}>{label}</p>
+      <p className="text-xs" style={{ color: "var(--muted)" }}>{label}</p>
       <p className="mt-1 text-sm font-bold">{value}</p>
     </div>
   );
 
   return (
     <div className="relative">
-      <button type="button" onClick={() => setOpen((value) => !value)} aria-expanded={open} className="inline-flex h-8 items-center gap-1 rounded-lg border px-2 text-[11px] font-semibold transition-colors" style={{ color: "var(--text)", borderColor: "var(--border)", background: "var(--surface-raised)" }} title={t("Yapay zekâ token kullanımı")}>
+      <button type="button" onClick={() => setOpen((value) => !value)} aria-expanded={open} className="inline-flex h-8 items-center gap-1 rounded-lg border px-2 text-xs font-semibold transition-colors" style={{ color: "var(--text)", borderColor: "var(--border)", background: "var(--surface-raised)" }} title={t("Yapay zekâ token kullanımı")}>
         <Cpu className="h-3.5 w-3.5" style={{ color: "var(--accent-strong)" }} />
         <span>{usage ? `${compact(usage.tokens_used)}${usage.budget_tokens ? ` / ${compact(usage.budget_tokens)}` : ""}` : t("AI")}</span>
-        {usage && usage.estimated_cost_usd !== null && <span className="hidden text-[10px] sm:inline" style={{ color: "var(--muted)" }}>{dollars(usage.estimated_cost_usd)}</span>}
+        {usage && usage.estimated_cost_usd !== null && <span className="hidden text-xs sm:inline" style={{ color: "var(--muted)" }}>{dollars(usage.estimated_cost_usd)}</span>}
       </button>
       {open && <section className="absolute right-0 top-11 z-50 w-[min(22rem,calc(100vw-1.5rem))] rounded-2xl border p-4 shadow-2xl" style={{ color: "var(--text)", borderColor: "var(--border)", background: "var(--surface-raised)" }} aria-label={t("Yapay zekâ token kullanımı")}>
         <div className="flex items-start justify-between gap-3">
@@ -63,7 +63,7 @@ export default function LlmUsageButton() {
             {tile(t("Çağrı başına"), dollars(usage.average_cost_per_call_usd))}
           </div>
           <div className="mt-3 h-1.5 overflow-hidden rounded-full" style={{ background: "var(--surface-muted)" }}><div className={`h-full rounded-full transition-all ${usage.percent_used >= 90 ? "bg-amber-500" : "bg-emerald-500"}`} style={{ width: `${usage.percent_used}%` }} /></div>
-          <p className="mt-3 text-[10px] leading-relaxed" style={{ color: "var(--muted)" }}>{t("Günlük sınır yalnızca Claude için geçerlidir; dolunca şablon motoru yanıt verir. Maliyet yalnızca fiyatı bilinen modellerde gösterilir.")}</p>
+          <p className="mt-3 text-xs leading-relaxed" style={{ color: "var(--muted)" }}>{t("Günlük sınır yalnızca Claude için geçerlidir; dolunca şablon motoru yanıt verir. Maliyet yalnızca fiyatı bilinen modellerde gösterilir.")}</p>
         </>}
         {error && <p role="status" className="mt-3 text-xs text-red-500">{error}</p>}
         <Link href="/llm" onClick={() => setOpen(false)} className="mt-3 block rounded-lg border px-3 py-2 text-center text-xs font-semibold" style={{ borderColor: "var(--border)" }}>{t("Anahtarları yönet")}</Link>

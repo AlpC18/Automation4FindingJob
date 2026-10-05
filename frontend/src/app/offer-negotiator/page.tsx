@@ -1,4 +1,5 @@
 "use client";
+import { notify } from "@/lib/notify";
 import { useLanguage } from "@/lib/i18n";
 import { useState } from "react";
 import { DollarSign, ShieldAlert, Award, TrendingUp, Copy, Check, Sparkles, RefreshCw, Layers } from "lucide-react";
@@ -48,7 +49,7 @@ export default function OfferNegotiatorPage() {
       });
       setEvalResult(res);
     } catch (e) {
-      alert(t("Teklif değerlendirilemedi."));
+      notify(t("Teklif değerlendirilemedi."));
     } finally {
       setLoading(false);
     }
@@ -63,7 +64,7 @@ export default function OfferNegotiatorPage() {
       });
       setCounterResult(res);
     } catch (e) {
-      alert(t("Karşı teklif mektubu oluşturulamadı."));
+      notify(t("Karşı teklif mektubu oluşturulamadı."));
     } finally {
       setLoading(false);
     }
@@ -88,7 +89,7 @@ export default function OfferNegotiatorPage() {
       {/* Header */}
       <div>
         <h1 className="text-2xl font-bold text-white flex items-center gap-3">
-          <DollarSign className="w-7 h-7 text-emerald-400" /> {t("Teklif & Maaş Pazarlık Koçu (Offer Negotiator)")}</h1>
+          <DollarSign className="w-7 h-7 text-emerald-400" /> {t("İş teklifi pazarlığı")}</h1>
         <p className="text-slate-400 mt-1">
           {t("Kariyerinizin en yüksek çarpanlı anı: Toplam Tazminat (TC) analizi yapın, profesyonel karşı teklif mektubu üretin ve işe alımcı itirazlarını ustalıkla yönetin.")}</p>
       </div>
@@ -133,7 +134,7 @@ export default function OfferNegotiatorPage() {
           <div className="bg-slate-900/60 border border-slate-800 rounded-2xl p-5 space-y-3">
             <div className="text-xs font-bold text-white">{t("Teklif Parametreleri")}</div>
             <div>
-              <label className="text-[10px] text-slate-400 uppercase font-mono">{t("Şirket")}</label>
+              <label className="text-xs text-slate-400 uppercase font-mono">{t("Şirket")}</label>
               <input
                 value={evalForm.company}
                 onChange={(e) => setEvalForm({ ...evalForm, company: e.target.value })}
@@ -141,7 +142,7 @@ export default function OfferNegotiatorPage() {
               />
             </div>
             <div>
-              <label className="text-[10px] text-slate-400 uppercase font-mono">{t("Baz Yıllık Maaş (Base)")}</label>
+              <label className="text-xs text-slate-400 uppercase font-mono">{t("Baz Yıllık Maaş (Base)")}</label>
               <input
                 type="number"
                 value={evalForm.base_salary}
@@ -151,7 +152,7 @@ export default function OfferNegotiatorPage() {
             </div>
             <div className="grid grid-cols-2 gap-2">
               <div>
-                <label className="text-[10px] text-slate-400 uppercase font-mono">{t("Yıllık Prim (% Bonus)")}</label>
+                <label className="text-xs text-slate-400 uppercase font-mono">{t("Yıllık Prim (% Bonus)")}</label>
                 <input
                   type="number"
                   value={evalForm.annual_bonus_pct}
@@ -160,7 +161,7 @@ export default function OfferNegotiatorPage() {
                 />
               </div>
               <div>
-                <label className="text-[10px] text-slate-400 uppercase font-mono">{t("Hisse / Yıllık RSU ($)")}</label>
+                <label className="text-xs text-slate-400 uppercase font-mono">{t("Hisse / Yıllık RSU ($)")}</label>
                 <input
                   type="number"
                   value={evalForm.equity_annual_value}
@@ -170,7 +171,7 @@ export default function OfferNegotiatorPage() {
               </div>
             </div>
             <div>
-              <label className="text-[10px] text-slate-400 uppercase font-mono">{t("İmza Bonusu (Signing Bonus)")}</label>
+              <label className="text-xs text-slate-400 uppercase font-mono">{t("İmza Bonusu (Signing Bonus)")}</label>
               <input
                 type="number"
                 value={evalForm.signing_bonus}
@@ -193,19 +194,19 @@ export default function OfferNegotiatorPage() {
               <div className="space-y-4">
                 <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
                   <div className="bg-slate-900/60 border border-slate-800 p-4 rounded-xl">
-                    <div className="text-[11px] text-slate-400">{t("1. Yıl Toplam Paket (TC)")}</div>
+                    <div className="text-xs text-slate-400">{t("1. Yıl Toplam Paket (TC)")}</div>
                     <div className="text-xl font-bold text-emerald-400 mt-1">
                       {evalResult.currency} {evalResult.first_year_tc?.toLocaleString()}
                     </div>
                   </div>
                   <div className="bg-slate-900/60 border border-slate-800 p-4 rounded-xl">
-                    <div className="text-[11px] text-slate-400">{t("Sürekli Yıllık Gelir")}</div>
+                    <div className="text-xs text-slate-400">{t("Sürekli Yıllık Gelir")}</div>
                     <div className="text-xl font-bold text-white mt-1">
                       {evalResult.currency} {evalResult.ongoing_annual_tc?.toLocaleString()}
                     </div>
                   </div>
                   <div className="bg-slate-900/60 border border-slate-800 p-4 rounded-xl">
-                    <div className="text-[11px] text-slate-400">{t("Pazarlık Kaldıraç Skoru")}</div>
+                    <div className="text-xs text-slate-400">{t("Pazarlık Kaldıraç Skoru")}</div>
                     <div className="text-xl font-bold text-blue-400 mt-1 font-mono">
                       %{evalResult.negotiation_leverage_score}
                     </div>
@@ -218,11 +219,11 @@ export default function OfferNegotiatorPage() {
                     ✓ {evalResult.comparison_verdict}
                   </div>
                   <div className="text-xs text-slate-400 pt-2">
-                    💡 <strong>{t("Önerilen Karşı Teklif Hedefi:")}</strong> {evalResult.currency} {evalResult.recommended_counter_target?.toLocaleString()} {t("(Standart %12 stratejik yükseltme)")}</div>
+                    <strong>{t("Önerilen Karşı Teklif Hedefi:")}</strong> {evalResult.currency} {evalResult.recommended_counter_target?.toLocaleString()} {t("(Standart %12 stratejik yükseltme)")}</div>
                 </div>
               </div>
             ) : (
-              <div className="bg-slate-900/40 border border-slate-800 rounded-2xl p-12 text-center text-slate-500">
+              <div className="bg-slate-900/40 border border-slate-800 rounded-2xl p-12 text-center text-slate-400">
                 {t("Sol taraftaki teklif detaylarını girip değerlendirme butonuna basın.")}</div>
             )}
           </div>
@@ -235,7 +236,7 @@ export default function OfferNegotiatorPage() {
           <div className="bg-slate-900/60 border border-slate-800 rounded-2xl p-5 space-y-3">
             <div className="text-xs font-bold text-white">{t("Karşı Teklif Parametreleri")}</div>
             <div>
-              <label className="text-[10px] text-slate-400 uppercase font-mono">{t("Mevcut Teklif Edilen")}</label>
+              <label className="text-xs text-slate-400 uppercase font-mono">{t("Mevcut Teklif Edilen")}</label>
               <input
                 type="number"
                 value={counterForm.offered_base}
@@ -244,7 +245,7 @@ export default function OfferNegotiatorPage() {
               />
             </div>
             <div>
-              <label className="text-[10px] text-slate-400 uppercase font-mono">{t("Talep Edilen Hedef")}</label>
+              <label className="text-xs text-slate-400 uppercase font-mono">{t("Talep Edilen Hedef")}</label>
               <input
                 type="number"
                 value={counterForm.target_base}
@@ -253,7 +254,7 @@ export default function OfferNegotiatorPage() {
               />
             </div>
             <div>
-              <label className="text-[10px] text-slate-400 uppercase font-mono">{t("Pazarlık Kaldıraç Dayanağı")}</label>
+              <label className="text-xs text-slate-400 uppercase font-mono">{t("Pazarlık Kaldıraç Dayanağı")}</label>
               <select
                 value={counterForm.primary_leverage}
                 onChange={(e) => setCounterForm({ ...counterForm, primary_leverage: e.target.value })}
@@ -304,7 +305,7 @@ export default function OfferNegotiatorPage() {
                 )}
               </div>
             ) : (
-              <div className="bg-slate-900/40 border border-slate-800 rounded-2xl p-12 text-center text-slate-500">
+              <div className="bg-slate-900/40 border border-slate-800 rounded-2xl p-12 text-center text-slate-400">
                 {t("Parametreleri girip \"Karşı Teklif Mektubu Yaz\" butonuna basın.")}</div>
             )}
           </div>
@@ -344,7 +345,7 @@ export default function OfferNegotiatorPage() {
                 <div className="italic">"{objectionData.candidate_response}"</div>
               </div>
               <div className="text-xs text-amber-400 bg-amber-500/10 p-3 rounded-lg border border-amber-500/20">
-                🎯 <strong>{t("Hedef Alternatif Kazanım:")}</strong> {objectionData.alternative_ask}
+                <strong>{t("Hedef Alternatif Kazanım:")}</strong> {objectionData.alternative_ask}
               </div>
             </div>
           )}

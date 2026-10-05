@@ -1,4 +1,5 @@
 "use client";
+import { notify } from "@/lib/notify";
 import { useLanguage } from "@/lib/i18n";
 import { useEffect, useState } from "react";
 import { Activity, Play, Square, RefreshCw, Send, CheckCircle2, AlertCircle, Radio, Bell } from "lucide-react";
@@ -37,7 +38,7 @@ export default function DaemonSettingsPage() {
       await fetchFromApi(`/daemon/${action}`, { method: "POST" });
       await loadStatus();
     } catch (e) {
-      alert(t("Daemon durumu değiştirilemedi."));
+      notify(t("Otomatik çalışma durumu değiştirilemedi."));
     } finally {
       setActionLoading(false);
     }
@@ -47,17 +48,17 @@ export default function DaemonSettingsPage() {
     try {
       setActionLoading(true);
       const res = await fetchFromApi(`/daemon/trigger_${sweepType}`, { method: "POST" });
-      alert(t("{sweep} completed!", { sweep: t(sweepType === "nightly" ? "Gece taraması" : "Sabah başvuru hazırlığı") }));
+      notify(t("{sweep} completed!", { sweep: t(sweepType === "nightly" ? "Gece taraması" : "Sabah başvuru hazırlığı") }));
       await loadStatus();
     } catch (e) {
-      alert(t("Tetikleme başarısız."));
+      notify(t("Tetikleme başarısız."));
     } finally {
       setActionLoading(false);
     }
   }
 
   async function handleTestSlack() {
-    if (!slackUrl) return alert(t("Lütfen Slack Webhook URL girin."));
+    if (!slackUrl) return notify(t("Lütfen Slack Webhook URL girin."));
     try {
       const res = await fetchFromApi("/webhook/slack", {
         method: "POST",
@@ -76,7 +77,7 @@ export default function DaemonSettingsPage() {
   }
 
   async function handleTestDiscord() {
-    if (!discordUrl) return alert(t("Lütfen Discord Webhook URL girin."));
+    if (!discordUrl) return notify(t("Lütfen Discord Webhook URL girin."));
     try {
       const res = await fetchFromApi("/webhook/discord", {
         method: "POST",
@@ -100,7 +101,7 @@ export default function DaemonSettingsPage() {
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
           <h1 className="text-2xl font-bold text-white flex items-center gap-3">
-            <Radio className="w-7 h-7 text-emerald-400" /> {t("7/24 Otonom Arka Plan Daemon & Webhook Hub")}</h1>
+            <Radio className="w-7 h-7 text-emerald-400" /> {t("Otomatik çalışma ayarları")}</h1>
           <p className="text-slate-400 mt-1">
             {t("Kullanıcı arayüzü kapalıyken bile arka planda çalışan zamanlanmış otonom taramaları ve Slack/Discord entegrasyonlarını yönetin.")}</p>
         </div>
@@ -123,7 +124,7 @@ export default function DaemonSettingsPage() {
             />
             <div>
               <div className="text-sm font-bold text-white">
-                {status?.is_running ? t("Daemon 7/24 Aktif & Çalışıyor") : "Daemon Durduruldu"}
+                {status?.is_running ? t("Otomatik çalışma açık") : "Otomatik çalışma kapalı"}
               </div>
               <div className="text-xs text-slate-400">
                 {t("Toplam Tamamlanan Kontrol Döngüsü:")}<strong className="text-white">{status?.total_cycles_executed || 0}</strong>
@@ -147,7 +148,7 @@ export default function DaemonSettingsPage() {
                 className="px-4 py-2 bg-emerald-600 hover:bg-emerald-500 text-white rounded-xl text-xs font-semibold flex items-center gap-1.5 transition-colors shadow-lg shadow-emerald-600/20"
               >
                 <Play className="w-3.5 h-3.5" />
-                {t("Daemon'u Başlat")}</button>
+                {t("Otomatik çalışmayı başlat")}</button>
             )}
           </div>
         </div>
@@ -158,11 +159,11 @@ export default function DaemonSettingsPage() {
             <div key={i} className="bg-slate-950/80 border border-slate-800 p-4 rounded-xl space-y-1.5">
               <div className="flex items-center justify-between">
                 <span className="text-xs font-bold text-white">{sch.name}</span>
-                <span className="text-[10px] font-mono text-emerald-400 bg-emerald-500/10 px-2 py-0.5 rounded">
+                <span className="text-xs font-mono text-emerald-400 bg-emerald-500/10 px-2 py-0.5 rounded">
                   {sch.time || sch.interval}
                 </span>
               </div>
-              <div className="text-[11px] text-slate-400 leading-relaxed">{sch.purpose}</div>
+              <div className="text-xs text-slate-400 leading-relaxed">{sch.purpose}</div>
             </div>
           ))}
         </div>
@@ -194,7 +195,7 @@ export default function DaemonSettingsPage() {
 
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           <div className="space-y-2">
-            <label className="text-[10px] text-slate-400 uppercase font-mono">{t("Slack Incoming Webhook URL")}</label>
+            <label className="text-xs text-slate-400 uppercase font-mono">{t("Slack Incoming Webhook URL")}</label>
             <div className="flex gap-2">
               <input
                 value={slackUrl}
@@ -211,7 +212,7 @@ export default function DaemonSettingsPage() {
           </div>
 
           <div className="space-y-2">
-            <label className="text-[10px] text-slate-400 uppercase font-mono">{t("Discord Webhook URL")}</label>
+            <label className="text-xs text-slate-400 uppercase font-mono">{t("Discord Webhook URL")}</label>
             <div className="flex gap-2">
               <input
                 value={discordUrl}

@@ -58,7 +58,7 @@ export default function STARPrepPage() {
                 ? "bg-orange-600/15 border-orange-500/40 text-orange-200"
                 : "bg-slate-800/50 border-slate-700/40 text-slate-300 hover:border-orange-500/20"}`}>
               <div className="text-sm font-medium">{val.name}</div>
-              <div className="text-xs text-slate-500 mt-1">{val.questions?.length || 0} {t("soru")}</div>
+              <div className="text-xs text-slate-400 mt-1">{val.questions?.length || 0} {t("soru")}</div>
             </button>
           ))}
         </div>
@@ -79,15 +79,15 @@ export default function STARPrepPage() {
       {/* STAR Stubs from CV */}
       {stubs.length > 0 && (
         <div>
-          <h2 className="text-lg font-semibold text-white mb-3">{t("📝 CV'nizden Çıkarılan STAR Adayları")}</h2>
+          <h2 className="text-lg font-semibold text-white mb-3">{t("CV'nizden Çıkarılan STAR Adayları")}</h2>
           <div className="space-y-2">
             {stubs.map((stub: any, i: number) => (
               <div key={i} className="bg-slate-800/50 border border-slate-700/40 rounded-xl p-4">
                 <div className="text-sm font-medium text-white">{stub.title}</div>
-                <div className="text-xs text-slate-500 mt-0.5">{stub.source}</div>
+                <div className="text-xs text-slate-400 mt-0.5">{stub.source}</div>
                 <div className="flex gap-1 mt-2">
                   {stub.suggested_categories?.map((cat: string) => (
-                    <span key={cat} className="text-[10px] bg-orange-500/10 text-orange-400 px-2 py-0.5 rounded-full">{cat}</span>
+                    <span key={cat} className="text-xs bg-orange-500/10 text-orange-400 px-2 py-0.5 rounded-full">{cat}</span>
                   ))}
                 </div>
               </div>
@@ -98,7 +98,7 @@ export default function STARPrepPage() {
 
       {/* STAR Answer Practice */}
       <div className="bg-slate-800/60 border border-slate-700/40 rounded-2xl p-6 space-y-4">
-        <h2 className="text-lg font-semibold text-white">{t("🎯 STAR Cevap Pratik Alanı")}</h2>
+        <h2 className="text-lg font-semibold text-white">{t("STAR Cevap Pratik Alanı")}</h2>
         {(["situation", "task", "action", "result"] as const).map((field) => (
           <div key={field}>
             <label className="text-xs font-mono text-orange-400 uppercase mb-1 block">{field}</label>

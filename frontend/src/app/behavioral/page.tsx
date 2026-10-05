@@ -116,12 +116,12 @@ export default function BehavioralProfilePage() {
                   }`}
               >
                 <span className="font-medium">{t(opt.label)}</span>
-                <ChevronRight className="w-4 h-4 text-slate-500 group-hover:text-purple-400 transition-colors" />
+                <ChevronRight className="w-4 h-4 text-slate-400 group-hover:text-purple-400 transition-colors" />
               </button>
             ))}
           </div>
           {step > 0 && (
-            <button onClick={() => setStep(step - 1)} className="mt-4 text-sm text-slate-500 hover:text-slate-300">
+            <button onClick={() => setStep(step - 1)} className="mt-4 text-sm text-slate-400 hover:text-slate-300">
               {t("← Geri")}</button>
           )}
         </div>
@@ -144,7 +144,7 @@ export default function BehavioralProfilePage() {
 
       {profile && (
         <div className="bg-slate-800/60 border border-slate-700/60 rounded-2xl p-8 space-y-6">
-          <h2 className="text-xl font-semibold text-white">{t("📊 Davranışsal Profiliniz")}</h2>
+          <h2 className="text-xl font-semibold text-white">{t("Davranışsal Profiliniz")}</h2>
           <p className="text-sm text-slate-400 bg-slate-900/60 rounded-lg p-3 font-mono">{profile.summary}</p>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             {Object.entries(profile.dimensions || {}).map(([key, val]: [string, any]) => (
@@ -155,7 +155,7 @@ export default function BehavioralProfilePage() {
             ))}
           </div>
           <button onClick={() => { setProfile(null); setStep(0); setAnswers({}); }}
-            className="text-sm text-slate-500 hover:text-slate-300">{t("Tekrar Başla")}</button>
+            className="text-sm text-slate-400 hover:text-slate-300">{t("Tekrar Başla")}</button>
         </div>
       )}
     </div>

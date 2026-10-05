@@ -154,7 +154,7 @@ export default function SessionGate({ children }: { children: ReactNode }) {
           </label>
           <label className="block text-xs text-slate-400">{t("Parola")}
             <input required type="password" minLength={registering ? 12 : 1} autoComplete={registering ? "new-password" : "current-password"} value={password} onChange={(event) => setPassword(event.target.value)} className="mt-1 w-full rounded-xl border border-slate-700 bg-slate-950 px-3 py-2.5 text-sm text-white" />
-            {registering && <span className="mt-1 block text-[11px] text-slate-500">{t("En az 12 karakter")}</span>}
+            {registering && <span className="mt-1 block text-xs text-slate-400">{t("En az 12 karakter")}</span>}
           </label>
           {error && <p role="alert" className="text-xs text-rose-300">{t(error)}</p>}
           <button disabled={busy} className="w-full rounded-xl bg-blue-600 px-4 py-2.5 text-sm font-semibold disabled:opacity-50">
@@ -164,7 +164,7 @@ export default function SessionGate({ children }: { children: ReactNode }) {
             {registering ? t("Zaten hesabınız var mı? Giriş yapın") : t("Yeni hesap oluştur")}
           </button>
           {!registering && <a href="/reset-password" className="block text-center text-xs text-slate-400 hover:text-blue-300">{t("Parolamı unuttum")}</a>}
-          {!registering && <button type="button" onClick={resendVerification} className="w-full text-xs text-slate-500 hover:text-blue-300">{t("Doğrulama e-postasını yeniden gönder")}</button>}
+          {!registering && <button type="button" onClick={resendVerification} className="w-full text-xs text-slate-400 hover:text-blue-300">{t("Doğrulama e-postasını yeniden gönder")}</button>}
         </form>
       </main>
     );
@@ -173,7 +173,7 @@ export default function SessionGate({ children }: { children: ReactNode }) {
   return (
     <>
       {required && user && (
-        <div className="fixed bottom-3 right-3 z-50 flex items-center gap-2 rounded-lg border border-slate-700 bg-slate-900/90 p-1.5 text-[11px]">
+        <div className="fixed bottom-3 right-3 z-50 flex items-center gap-2 rounded-lg border border-slate-700 bg-slate-900/90 p-1.5 text-xs">
           <span className="px-1.5 text-slate-300">{user.email}</span>
           <button onClick={signOut} className="rounded px-2 py-1 text-slate-300 hover:bg-slate-800">{t("Çıkış")}</button>
           <button onClick={deleteAccount} className="rounded px-2 py-1 text-rose-300 hover:bg-rose-950/40">{t("Hesabı sil")}</button>

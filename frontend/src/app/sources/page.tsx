@@ -163,7 +163,7 @@ export default function SourcesPage() {
           <label className="block text-sm text-slate-300">{t("Onaylamak için RESTORE yaz")}<input value={restoreConfirmation} onChange={(event) => setRestoreConfirmation(event.target.value)} autoComplete="off" className="mt-2 block w-full rounded-lg border border-slate-700 bg-slate-950 px-3 py-2 text-sm text-white" /></label>
           <button onClick={restoreBackup} disabled={restoreBusy || !restoreFile || restoreConfirmation.trim() !== "RESTORE"} className="inline-flex items-center justify-center gap-2 rounded-lg bg-amber-500 px-4 py-2 text-sm font-semibold text-slate-950 disabled:cursor-not-allowed disabled:opacity-40"><Upload size={16} />{restoreBusy ? t("Geri yükleniyor…") : t("Yedeği geri yükle")}</button>
         </div>
-        <p className="text-xs text-slate-500">{t("Yalnızca uygulamanın indirdiği SQLite hesap yedekleri desteklenir. Şifreli otomatik yedekler için aynı uygulama şifreleme anahtarı gerekir.")}</p>
+        <p className="text-xs text-slate-400">{t("Yalnızca uygulamanın indirdiği SQLite hesap yedekleri desteklenir. Şifreli otomatik yedekler için aynı uygulama şifreleme anahtarı gerekir.")}</p>
       </section>
       {notice && <div role="status" className="rounded-xl border border-slate-700 bg-slate-900 p-3 text-sm text-slate-200">{notice}</div>}
       <CompanyBoards />
@@ -183,7 +183,7 @@ export default function SourcesPage() {
             {config.token_needs_reentry && <p role="alert" className="mb-4 rounded-lg border border-amber-500/30 bg-amber-950/30 p-3 text-sm text-amber-200">{t("Kayıtlı token bu uygulamanın şifreleme anahtarıyla açılamıyor. Taramanın bu hesabı kullanabilmesi için Apify tokenlarını yeniden girip kaydedin.")}</p>}
             <div className="grid gap-4 md:grid-cols-2">
               <label className="text-sm text-slate-300">{t("Apify Actor ID")}<input value={config.actor_id} onChange={(e) => setConfigs((s) => ({ ...s, [provider.id]: { ...config, actor_id: e.target.value } }))} className="mt-1 w-full rounded-lg border border-slate-700 bg-slate-950 px-3 py-2 text-white" placeholder="username/actor-name" /></label>
-              <label className="text-sm text-slate-300">{t("Apify API tokenları")} {config.token_configured && <span className="text-emerald-400">· {config.token_count} {t("kayıtlı")}</span>}<textarea rows={3} autoComplete="off" spellCheck={false} value={tokens[provider.id] || ""} onChange={(e) => setTokens((s) => ({ ...s, [provider.id]: e.target.value }))} className="mt-1 w-full resize-y rounded-lg border border-slate-700 bg-slate-950 px-3 py-2 font-mono text-xs text-white" placeholder={config.token_configured ? t("Yenilemek için anahtarları satır satır gir") : "apify_api_…"} /><span className="mt-1 block text-xs text-slate-500">{t("Her satıra bir token gir. Kaydettikten sonra aşağıdaki listeden tokenları görüntüleyebilir; yalnızca doğrulanmış hesapların kullanıldığını görebilirsin.")}</span></label>
+              <label className="text-sm text-slate-300">{t("Apify API tokenları")} {config.token_configured && <span className="text-emerald-400">· {config.token_count} {t("kayıtlı")}</span>}<textarea rows={3} autoComplete="off" spellCheck={false} value={tokens[provider.id] || ""} onChange={(e) => setTokens((s) => ({ ...s, [provider.id]: e.target.value }))} className="mt-1 w-full resize-y rounded-lg border border-slate-700 bg-slate-950 px-3 py-2 font-mono text-xs text-white" placeholder={config.token_configured ? t("Yenilemek için anahtarları satır satır gir") : "apify_api_…"} /><span className="mt-1 block text-xs text-slate-400">{t("Her satıra bir token gir. Kaydettikten sonra aşağıdaki listeden tokenları görüntüleyebilir; yalnızca doğrulanmış hesapların kullanıldığını görebilirsin.")}</span></label>
             </div>
             {config.token_configured && <div className="mt-4 rounded-xl border border-slate-800 bg-slate-950/50 p-3">
               <div className="mb-2 flex items-center justify-between gap-3">
@@ -192,7 +192,7 @@ export default function SourcesPage() {
                   {revealedTokens[provider.id] ? <EyeOff size={14} /> : <Eye size={14} />}{revealBusy === provider.id ? t("Yükleniyor…") : revealedTokens[provider.id] ? t("Gizle") : t("Tam tokenları göster")}
                 </button>
               </div>
-              <p className="mb-3 text-xs text-slate-500">{t("Tokenlar varsayılan olarak maskelenir. Tam değerler yalnızca bu yerel ekranda isteyince görünür ve sayfadan çıkınca temizlenir.")}</p>
+              <p className="mb-3 text-xs text-slate-400">{t("Tokenlar varsayılan olarak maskelenir. Tam değerler yalnızca bu yerel ekranda isteyince görünür ve sayfadan çıkınca temizlenir.")}</p>
               <ul className="space-y-2">{Array.from({ length: Math.max(config.token_count, revealedTokens[provider.id]?.length || 0) }, (_, index) => {
                 const account = provider.id === "linkedin" ? quotaAccounts[index] : undefined;
                 const token = revealedTokens[provider.id]?.[index];

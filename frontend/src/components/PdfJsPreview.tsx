@@ -48,7 +48,7 @@ export default function PdfJsPreview({ src }: PdfJsPreviewProps) {
 
   return (
     <div className="space-y-2 rounded-xl border border-slate-700 bg-slate-950/80 p-3">
-      <div className="flex items-center justify-between text-[10px] text-slate-400">
+      <div className="flex items-center justify-between text-xs text-slate-400">
         <span>{t(status || "PDF.js önizleme hazır")}</span>
         {pageCount > 0 && <span>{pageCount} {t("sayfa")}</span>}
       </div>

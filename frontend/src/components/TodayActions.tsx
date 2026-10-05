@@ -42,7 +42,7 @@ export default function TodayActions() {
           <h2 id="today-actions-title" className="flex items-center gap-2 text-sm font-semibold text-white">
             <ListChecks className="h-4 w-4 text-blue-400" /> {t("Bugünün işleri")}
           </h2>
-          <p className="mt-1 text-[11px] text-slate-400">{t("Sırayla ilerle; her satır seni ilgili adıma götürür.")}</p>
+          <p className="mt-1 text-xs text-slate-400">{t("Sırayla ilerle; her satır seni ilgili adıma götürür.")}</p>
         </div>
         {today.total > 0 && <span className="rounded-full bg-blue-600/20 px-2.5 py-1 text-xs font-semibold text-blue-300">{today.total}</span>}
       </div>
@@ -59,17 +59,17 @@ export default function TodayActions() {
                 <div className="min-w-0">
                   <div className="text-xs font-semibold text-white">{label(action)}</div>
                   {(action.title || action.company) && (
-                    <div className="mt-0.5 truncate text-[11px] text-slate-400">{[action.title, action.company].filter(Boolean).join(" — ")}</div>
+                    <div className="mt-0.5 truncate text-xs text-slate-400">{[action.title, action.company].filter(Boolean).join(" — ")}</div>
                   )}
                 </div>
-                <ArrowRight className="h-3.5 w-3.5 shrink-0 text-slate-500 group-hover:text-blue-300" />
+                <ArrowRight className="h-3.5 w-3.5 shrink-0 text-slate-400 group-hover:text-blue-300" />
               </Link>
             </li>
           ))}
         </ol>
       )}
       {today.total > today.actions.length && (
-        <p className="mt-3 text-[11px] text-slate-500">{t("Toplam {total} iş bekliyor; en öncelikliler gösteriliyor.", { total: today.total })}</p>
+        <p className="mt-3 text-xs text-slate-400">{t("Toplam {total} iş bekliyor; en öncelikliler gösteriliyor.", { total: today.total })}</p>
       )}
     </section>
   );

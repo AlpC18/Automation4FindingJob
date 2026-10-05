@@ -1,4 +1,5 @@
 "use client";
+import { notify } from "@/lib/notify";
 import { useLanguage } from "@/lib/i18n";
 import { useEffect, useState } from "react";
 import { Calendar, Clock, Mail, Copy, Check, ExternalLink, AlertCircle, CalendarPlus } from "lucide-react";
@@ -28,7 +29,7 @@ export default function FollowUpPage() {
 
   async function handleCreateCalendarLink() {
     if (!calendarForm.company.trim() || !calendarForm.title.trim()) {
-      alert(t("Şirket ve pozisyon alanlarını doldurun."));
+      notify(t("Şirket ve pozisyon alanlarını doldurun."));
       return;
     }
     try {
@@ -38,7 +39,7 @@ export default function FollowUpPage() {
       });
       setCalendarUrl(res.calendar_url);
     } catch (e) {
-      alert(t("Takvim linki oluşturulamadı."));
+      notify(t("Takvim linki oluşturulamadı."));
     }
   }
 
@@ -47,7 +48,7 @@ export default function FollowUpPage() {
       await fetchFromApi(`/outcome/follow_up/${encodeURIComponent(jobId)}/resolve`, { method: "POST" });
       setPendingList((items) => items.filter((item) => item.job_key !== jobId));
     } catch {
-      alert(t("Hatırlatma kapatılamadı. Tekrar deneyin."));
+      notify(t("Hatırlatma kapatılamadı. Tekrar deneyin."));
     }
   }
 
@@ -62,7 +63,7 @@ export default function FollowUpPage() {
       {/* Header */}
       <div>
         <h1 className="text-2xl font-bold text-white flex items-center gap-3">
-          <Calendar className="w-7 h-7 text-amber-400" /> {t("Akıllı Takip & Mülakat Takvim Senkronizasyonu")}</h1>
+          <Calendar className="w-7 h-7 text-amber-400" /> {t("Takip takvimi")}</h1>
         <p className="text-slate-400 mt-1">
           {t("Başvurusu yapılan rollerin yanıt sürelerini takip edin, 3 aşamalı nazik takip e-postalarını kopyalayın ve mülakatları takvime işleyin.")}</p>
       </div>
@@ -79,10 +80,10 @@ export default function FollowUpPage() {
           </div>
 
           {loading ? (
-            <div className="text-center py-16 text-slate-500">{t("Yükleniyor...")}</div>
+            <div className="text-center py-16 text-slate-400">{t("Yükleniyor...")}</div>
           ) : pendingList.length === 0 ? (
             <div className="bg-slate-900/40 border border-slate-800 rounded-2xl p-8 text-center">
-              <AlertCircle className="w-8 h-8 text-slate-600 mx-auto mb-2" />
+              <AlertCircle className="w-8 h-8 text-slate-400 mx-auto mb-2" />
               <div className="text-xs text-slate-400">{t("Şu anda zamanı gelmiş bekleyen takip bulunmuyor.")}</div>
             </div>
           ) : (
@@ -105,7 +106,7 @@ export default function FollowUpPage() {
 
                   {/* Cadence Steps */}
                   <div className="space-y-2">
-                    <div className="text-[11px] font-semibold text-slate-400">{t("Önerilen Takip Şablonları:")}</div>
+                    <div className="text-xs font-semibold text-slate-400">{t("Önerilen Takip Şablonları:")}</div>
                     <div className="grid grid-cols-1 gap-2">
                       {item.cadence.map((c: any, i: number) => (
                         <div
@@ -116,7 +117,7 @@ export default function FollowUpPage() {
                             <span className="font-semibold text-slate-300">{c.stage} — {c.purpose}</span>
                             <button
                               onClick={() => copyText(c.body, `${item.job_key}-${i}`)}
-                              className="text-slate-400 hover:text-white flex items-center gap-1 text-[11px]"
+                              className="text-slate-400 hover:text-white flex items-center gap-1 text-xs"
                             >
                               {copiedKey === `${item.job_key}-${i}` ? (
                                 <Check className="w-3 h-3 text-emerald-400" />
@@ -125,7 +126,7 @@ export default function FollowUpPage() {
                               )}
                               {t("Kopyala")}</button>
                           </div>
-                          <div className="text-[11px] text-slate-400 whitespace-pre-wrap font-sans max-h-24 overflow-y-auto bg-slate-900/50 p-2 rounded-lg">
+                          <div className="text-xs text-slate-400 whitespace-pre-wrap font-sans max-h-24 overflow-y-auto bg-slate-900/50 p-2 rounded-lg">
                             {c.body}
                           </div>
                         </div>
@@ -157,7 +158,7 @@ export default function FollowUpPage() {
 
             <div className="space-y-3">
               <div>
-                <label className="text-[10px] text-slate-400 uppercase font-mono">{t("Şirket")}</label>
+                <label className="text-xs text-slate-400 uppercase font-mono">{t("Şirket")}</label>
                 <input
                   value={calendarForm.company}
                   onChange={(e) => setCalendarForm({ ...calendarForm, company: e.target.value })}
@@ -165,7 +166,7 @@ export default function FollowUpPage() {
                 />
               </div>
               <div>
-                <label className="text-[10px] text-slate-400 uppercase font-mono">{t("Pozisyon")}</label>
+                <label className="text-xs text-slate-400 uppercase font-mono">{t("Pozisyon")}</label>
                 <input
                   value={calendarForm.title}
                   onChange={(e) => setCalendarForm({ ...calendarForm, title: e.target.value })}
@@ -173,7 +174,7 @@ export default function FollowUpPage() {
                 />
               </div>
               <div>
-                <label className="text-[10px] text-slate-400 uppercase font-mono">{t("Tarih & Saat")}</label>
+                <label className="text-xs text-slate-400 uppercase font-mono">{t("Tarih & Saat")}</label>
                 <input
                   type="datetime-local"
                   value={calendarForm.interview_time_iso}
@@ -182,7 +183,7 @@ export default function FollowUpPage() {
                 />
               </div>
               <div>
-                <label className="text-[10px] text-slate-400 uppercase font-mono">{t("Toplantı Linki")}</label>
+                <label className="text-xs text-slate-400 uppercase font-mono">{t("Toplantı Linki")}</label>
                 <input
                   value={calendarForm.meeting_link}
                   onChange={(e) => setCalendarForm({ ...calendarForm, meeting_link: e.target.value })}

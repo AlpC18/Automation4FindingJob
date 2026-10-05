@@ -219,7 +219,7 @@ export default function InboxPage() {
         <div>
           <h1 className="text-2xl font-bold text-white flex items-center gap-2">
             <Inbox className="w-6 h-6 text-blue-500" />
-            {t("Gelen Kutu (Inbox AI) & Telegram Mobil Komuta Merkezi")}</h1>
+            {t("Gelen kutusu")}</h1>
           <p className="text-xs text-slate-400 mt-1">
             {t("İşverenlerden gelen yanıtları sınıflandırın, mülakat randevularını takviminizle senkronize edin ve tüm süreci Telegram'dan yönetin.")}</p>
         </div>
@@ -256,7 +256,7 @@ export default function InboxPage() {
             ["Başarısız", ["failed"]],
           ].map(([label, statuses]: any) => (
             <div key={label} className="rounded-lg border border-slate-800 bg-slate-950/60 px-3 py-2">
-              <div className="text-[10px] uppercase tracking-wide text-slate-500">{t(label)}</div>
+              <div className="text-xs uppercase tracking-wide text-slate-400">{t(label)}</div>
               <div className="mt-1 text-lg font-semibold text-slate-100">
                 {backgroundJobs.filter((job) => statuses.includes(job.status)).length}
               </div>
@@ -264,12 +264,12 @@ export default function InboxPage() {
           ))}
         </div>
         {queueStatus?.durable_jobs && (
-          <p className="text-[11px] text-slate-500">
+          <p className="text-xs text-slate-400">
             {t("Kalıcı kuyruk")}: {queueStatus.durable_jobs.queued + queueStatus.durable_jobs.retrying} {t("bekliyor")} · {queueStatus.durable_jobs.running} {t("çalışıyor")} · {queueStatus.durable_jobs.failed} {t("başarısız")}
           </p>
         )}
         {backgroundJobs.length === 0 ? (
-          <p className="rounded-lg border border-dashed border-slate-800 p-4 text-xs text-slate-500">{t("Henüz kaydedilmiş bir iş yok.")}</p>
+          <p className="rounded-lg border border-dashed border-slate-800 p-4 text-xs text-slate-400">{t("Henüz kaydedilmiş bir iş yok.")}</p>
         ) : (
           <div className="max-h-96 space-y-2 overflow-y-auto">
             {backgroundJobs.map((job) => {
@@ -281,17 +281,17 @@ export default function InboxPage() {
                     <div className="flex flex-wrap items-center gap-x-2 gap-y-1 text-xs">
                       <span className="font-medium text-slate-100">{job.job_type === "scrape" ? t("İlan tarama") : job.job_type === "application_submit" ? t("Başvuru gönderimi") : job.job_type}</span>
                       <span className={`uppercase ${statusColor}`}>{job.status}</span>
-                      <span className="text-slate-500">{t("Deneme")}{job.attempts}/{job.max_attempts}</span>
-                      <time className="text-slate-500">{job.updated_at || job.created_at}</time>
+                      <span className="text-slate-400">{t("Deneme")}{job.attempts}/{job.max_attempts}</span>
+                      <time className="text-slate-400">{job.updated_at || job.created_at}</time>
                     </div>
-                    {job.payload?.keywords && <p className="truncate text-[11px] text-slate-400">{t("Arama:")}{job.payload.keywords}</p>}
-                    {job.error_text && <p className="break-words text-[11px] text-rose-300">{t("Hata:")}{job.error_text}</p>}
+                    {job.payload?.keywords && <p className="truncate text-xs text-slate-400">{t("Arama:")}{job.payload.keywords}</p>}
+                    {job.error_text && <p className="break-words text-xs text-rose-300">{t("Hata:")}{job.error_text}</p>}
                   </div>
                   {failed && (
                     <button
                       onClick={() => retryBackgroundJob(job.id)}
                       disabled={retryingJobId === job.id}
-                      className="shrink-0 rounded-lg border border-rose-500/30 px-3 py-1.5 text-[11px] font-medium text-rose-200 hover:bg-rose-950/40 disabled:opacity-50"
+                      className="shrink-0 rounded-lg border border-rose-500/30 px-3 py-1.5 text-xs font-medium text-rose-200 hover:bg-rose-950/40 disabled:opacity-50"
                     >
                       {retryingJobId === job.id ? "Yeniden deneniyor…" : "Yeniden dene"}
                     </button>
@@ -317,7 +317,7 @@ export default function InboxPage() {
           <div className="flex items-center gap-2">
             {/* Celery / Redis Queue Badge */}
             <span
-              className={`text-[11px] px-3 py-1 rounded-xl font-mono flex items-center gap-1.5 border ${
+              className={`text-xs px-3 py-1 rounded-xl font-mono flex items-center gap-1.5 border ${
                 queueStatus?.redis_connected
                   ? "bg-emerald-950/40 text-emerald-400 border-emerald-500/30"
                   : "bg-slate-900 text-slate-300 border-slate-700"
@@ -349,7 +349,7 @@ export default function InboxPage() {
                 </div>
                 <div>
                   <div className="text-xs font-bold text-white">{t("Google Gmail API")}</div>
-                  <div className="text-[10px] text-slate-400">
+                  <div className="text-xs text-slate-400">
                     {oauthStatus?.google?.connected
                       ? `Bağlı: ${oauthStatus.google.email}`
                       : t("Gmail gelen kutusu ve yanıt yetkisi")}
@@ -358,7 +358,7 @@ export default function InboxPage() {
               </div>
 
               <span
-                className={`text-[10px] px-2 py-0.5 rounded-full font-mono ${
+                className={`text-xs px-2 py-0.5 rounded-full font-mono ${
                   oauthStatus?.google?.connected
                     ? "bg-emerald-500/10 text-emerald-400 border border-emerald-500/20"
                     : "bg-slate-800 text-slate-400"
@@ -403,7 +403,7 @@ export default function InboxPage() {
                 </div>
                 <div>
                   <div className="text-xs font-bold text-white">{t("Microsoft Outlook (Graph API)")}</div>
-                  <div className="text-[10px] text-slate-400">
+                  <div className="text-xs text-slate-400">
                     {oauthStatus?.microsoft?.connected
                       ? `Bağlı: ${oauthStatus.microsoft.email}`
                       : "Outlook & Office365 gelen kutusu"}
@@ -412,7 +412,7 @@ export default function InboxPage() {
               </div>
 
               <span
-                className={`text-[10px] px-2 py-0.5 rounded-full font-mono ${
+                className={`text-xs px-2 py-0.5 rounded-full font-mono ${
                   oauthStatus?.microsoft?.connected
                     ? "bg-emerald-500/10 text-emerald-400 border border-emerald-500/20"
                     : "bg-slate-800 text-slate-400"
@@ -467,7 +467,7 @@ export default function InboxPage() {
                 <h2 className="text-sm font-semibold text-white">{t("Telegram Mobil Komuta")}</h2>
               </div>
               <span
-                className={`text-[10px] px-2 py-0.5 rounded-full font-mono ${
+                className={`text-xs px-2 py-0.5 rounded-full font-mono ${
                   telegramStatus?.is_configured
                     ? "bg-emerald-500/10 text-emerald-400 border border-emerald-500/20"
                     : "bg-amber-500/10 text-amber-400 border border-amber-500/20"
@@ -477,7 +477,7 @@ export default function InboxPage() {
               </span>
             </div>
 
-            <p className="text-[11px] text-slate-400 leading-relaxed">
+            <p className="text-xs text-slate-400 leading-relaxed">
               {t("Her sabah günün en yüksek ATS puanlı ilanlarını ve mülakat davetlerini Telegram'a anlık brifing olarak gönderir.")}</p>
 
             <button
@@ -491,7 +491,7 @@ export default function InboxPage() {
 
             {/* Test Command Box */}
             <div className="pt-3 border-t border-slate-800 space-y-2">
-              <div className="text-[11px] font-semibold text-slate-300">{t("Telegram Komut Simülatörü:")}</div>
+              <div className="text-xs font-semibold text-slate-300">{t("Telegram Komut Simülatörü:")}</div>
               <div className="flex gap-2">
                 <select
                   value={testCmd}
@@ -511,7 +511,7 @@ export default function InboxPage() {
               </div>
 
               {cmdResult && (
-                <pre className="p-3 bg-slate-950 rounded-xl border border-slate-800 text-[11px] font-mono text-slate-300 whitespace-pre-wrap">
+                <pre className="p-3 bg-slate-950 rounded-xl border border-slate-800 text-xs font-mono text-slate-300 whitespace-pre-wrap">
                   {cmdResult}
                 </pre>
               )}
@@ -520,10 +520,10 @@ export default function InboxPage() {
             {/* Recent Telegram Dispatches */}
             {telegramStatus?.events && telegramStatus.events.length > 0 && (
               <div className="pt-3 border-t border-slate-800 space-y-2">
-                <div className="text-[11px] font-semibold text-slate-300">{t("Son Gönderim Kayıtları:")}</div>
+                <div className="text-xs font-semibold text-slate-300">{t("Son Gönderim Kayıtları:")}</div>
                 <div className="space-y-2 max-h-48 overflow-y-auto">
                   {telegramStatus.events.map((ev: any) => (
-                    <div key={ev.id} className="p-2.5 rounded-lg bg-slate-900/60 border border-slate-800 text-[10px] space-y-1">
+                    <div key={ev.id} className="p-2.5 rounded-lg bg-slate-900/60 border border-slate-800 text-xs space-y-1">
                       <div className="flex justify-between items-center text-slate-400">
                         <span className="font-mono uppercase text-sky-400">{ev.event_type}</span>
                         <span className="text-emerald-400">{ev.status}</span>
@@ -571,14 +571,14 @@ export default function InboxPage() {
                         <div>
                           <div className="flex items-center gap-2">
                             <span className="text-xs font-bold text-white">{m.sender_name || m.sender_email}</span>
-                            <span className="text-[10px] text-slate-400 font-mono">&lt;{m.sender_email}&gt;</span>
+                            <span className="text-xs text-slate-400 font-mono">&lt;{m.sender_email}&gt;</span>
                           </div>
                           <div className="text-xs font-semibold text-slate-200 mt-0.5">{m.subject}</div>
                         </div>
 
                         <div className="flex items-center gap-2">
                           <span
-                            className={`text-[10px] px-2 py-0.5 rounded-full font-mono font-semibold ${
+                            className={`text-xs px-2 py-0.5 rounded-full font-mono font-semibold ${
                               isInvite
                                 ? "bg-emerald-500/20 text-emerald-300 border border-emerald-500/30"
                                 : isRejection
@@ -588,7 +588,7 @@ export default function InboxPage() {
                           >
                             {m.classification}
                           </span>
-                          <span className="text-[10px] bg-slate-800 text-slate-400 px-2 py-0.5 rounded font-mono">
+                          <span className="text-xs bg-slate-800 text-slate-400 px-2 py-0.5 rounded font-mono">
                             {m.status}
                           </span>
                         </div>
@@ -617,7 +617,7 @@ export default function InboxPage() {
                       {/* Proposed Auto-Scheduler Reply */}
                       {m.proposed_reply && (
                         <div className="p-3 rounded-lg bg-slate-950 border border-slate-800 space-y-2">
-                          <div className="flex items-center justify-between text-[11px]">
+                          <div className="flex items-center justify-between text-xs">
                             <span className="font-semibold text-slate-300 flex items-center gap-1.5">
                               <Sparkles className="w-3.5 h-3.5 text-blue-400" />
                               {t("Yapay Zeka & Takvim Otomatik Yanıt Taslağı:")}</span>
@@ -626,11 +626,11 @@ export default function InboxPage() {
                                 setSelectedMessage(m);
                                 setCustomReply(m.proposed_reply);
                               }}
-                              className="text-blue-400 hover:text-blue-300 font-medium text-[11px]"
+                              className="text-blue-400 hover:text-blue-300 font-medium text-xs"
                             >
                               {t("Düzenle & Gönder →")}</button>
                           </div>
-                          <pre className="text-[11px] font-sans text-slate-400 whitespace-pre-wrap leading-relaxed">
+                          <pre className="text-xs font-sans text-slate-400 whitespace-pre-wrap leading-relaxed">
                             {m.proposed_reply}
                           </pre>
                         </div>

@@ -57,10 +57,10 @@ export default function EmptyFeedGuide({ hiddenByPageFilters, emptyState, unavai
   return (
     <div className="rounded-2xl border border-slate-800 bg-[#0e1524] p-8 text-center">
       <div className="mx-auto max-w-xl space-y-2">
-        <p className="text-xs font-semibold uppercase tracking-wide text-slate-500">{t("0 ilan")}</p>
+        <p className="text-xs font-semibold uppercase tracking-wide text-slate-400">{t("0 ilan")}</p>
         <p className="font-semibold text-slate-100">{item.title}</p>
         <p className="text-xs text-slate-400">{item.detail}</p>
-        {!hiddenByPageFilters && emptyState?.error && <p className="rounded-lg border border-rose-500/20 bg-rose-500/5 px-3 py-2 text-left text-[11px] text-rose-300">{emptyState.error}</p>}
+        {!hiddenByPageFilters && emptyState?.error && <p className="rounded-lg border border-rose-500/20 bg-rose-500/5 px-3 py-2 text-left text-xs text-rose-300">{emptyState.error}</p>}
         <p className="text-xs font-medium text-emerald-300">{item.fix}</p>
         <div className="flex flex-wrap justify-center gap-2 pt-1">
           {hiddenByPageFilters && <button type="button" onClick={onClearFilters} className="rounded-lg border border-slate-700 px-3 py-2 text-xs font-semibold text-white hover:bg-slate-800">{t("Filtreleri temizle")}</button>}

@@ -75,7 +75,7 @@ export default function WritingStylePage() {
         <>
           {/* Rules */}
           <div className="bg-slate-800/60 border border-slate-700/40 rounded-xl p-5">
-            <h3 className="text-sm font-semibold text-white mb-2">{t("📏 Kurallar (")}{guide.tone_description})</h3>
+            <h3 className="text-sm font-semibold text-white mb-2">{t("Kurallar (")}{guide.tone_description})</h3>
             <div className="space-y-1">
               {guide.tone_rules?.map((r: string, i: number) => (
                 <div key={i} className="text-xs text-slate-300 bg-slate-900/50 px-3 py-1.5 rounded-lg">{t("•")}{r}</div>
@@ -110,7 +110,7 @@ export default function WritingStylePage() {
                 <div className="space-y-1 mb-2">
                   {compliance.violations.map((v: any, i: number) => (
                     <div key={i} className="text-xs text-red-300 bg-red-500/10 px-3 py-1.5 rounded-lg">
-                      ❌ <strong>"{v.phrase}"</strong> → {v.suggestion}
+                      <strong>"{v.phrase}"</strong> → {v.suggestion}
                     </div>
                   ))}
                 </div>
@@ -118,7 +118,7 @@ export default function WritingStylePage() {
               {compliance.suggestions?.length > 0 && (
                 <div className="space-y-1">
                   {compliance.suggestions.map((s: string, i: number) => (
-                    <div key={i} className="text-xs text-amber-300 bg-amber-500/10 px-3 py-1.5 rounded-lg">💡 {s}</div>
+                    <div key={i} className="text-xs text-amber-300 bg-amber-500/10 px-3 py-1.5 rounded-lg">{s}</div>
                   ))}
                 </div>
               )}
@@ -128,7 +128,7 @@ export default function WritingStylePage() {
           {/* Fixed Text */}
           {fixedText && (
             <div className="bg-slate-800/60 border border-emerald-500/20 rounded-xl p-5">
-              <h3 className="text-sm font-semibold text-emerald-400 mb-2">{t("✅ Düzeltilmiş Metin")}</h3>
+              <h3 className="text-sm font-semibold text-emerald-400 mb-2">{t("Düzeltilmiş Metin")}</h3>
               <div className="text-sm text-slate-300 whitespace-pre-wrap">{fixedText}</div>
             </div>
           )}

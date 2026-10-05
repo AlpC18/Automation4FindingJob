@@ -200,7 +200,7 @@ function CvAnalysisPage() {
               <button type="button" onClick={showAutomaticDraft} disabled={busy || !result.optimized_cv_text} className="inline-flex items-center justify-center gap-2 rounded-lg bg-emerald-600 px-3 py-2 text-xs font-semibold text-white transition hover:bg-emerald-500 disabled:opacity-50"><WandSparkles className="h-3.5 w-3.5" />{t("CV'yi otomatik düzenle")}</button>
             </div>
           </div>
-          <p className="mt-3 text-[11px] text-slate-500">{t("AI ile kontrol et düğmesine basıldığında CV metni Ayarlar'da seçili AI sağlayıcısına gönderilebilir. AI kullanılmazsa yerel analiz devam eder.")}</p>
+          <p className="mt-3 text-xs text-slate-400">{t("AI ile kontrol et düğmesine basıldığında CV metni Ayarlar'da seçili AI sağlayıcısına gönderilebilir. AI kullanılmazsa yerel analiz devam eder.")}</p>
         </section>
         <CvImportReview fields={result.fields} originalText={result.text} quality={result.quality} analysis={result.analysis} optimizedCvText={showAutoDraft ? result.optimized_cv_text : ""} aiWarning={result.ai_warning} aiUsed={result.ai_used} applying={busy} onApply={applyFields} onCancel={() => setResult(null)} />
       </>}
@@ -210,18 +210,18 @@ function CvAnalysisPage() {
           <Clock3 className="h-4 w-4 text-emerald-300" />
           <h2 className="text-sm font-semibold text-white">{t("Son CV analizleri")}</h2>
         </div>
-        <p className="mt-1 text-xs text-slate-500">{t("Dosyanın kendisi saklanmaz; yalnızca analiz özeti ve kalite skoru tutulur.")}</p>
+        <p className="mt-1 text-xs text-slate-400">{t("Dosyanın kendisi saklanmaz; yalnızca analiz özeti ve kalite skoru tutulur.")}</p>
         {history.length === 0 ? (
-          <p className="mt-4 text-xs text-slate-500">{t("Henüz kaydedilmiş bir CV analizi yok.")}</p>
+          <p className="mt-4 text-xs text-slate-400">{t("Henüz kaydedilmiş bir CV analizi yok.")}</p>
         ) : (
           <div className="mt-4 space-y-2">
             {history.map((run) => (
               <div key={run.id} className="flex flex-col gap-2 rounded-xl border border-slate-800/80 bg-slate-950/30 px-3 py-2.5 sm:flex-row sm:items-center sm:justify-between">
                 <div className="min-w-0">
                   <p className="truncate text-xs font-semibold text-slate-200">{run.filename || t("Adsız CV")}</p>
-                  <p className="mt-1 text-[11px] text-slate-500">{run.character_count} {t("karakter")} · {run.ai_used ? `AI: ${run.ai_provider || "provider"}` : t("Yerel analiz")}</p>
+                  <p className="mt-1 text-xs text-slate-400">{run.character_count} {t("karakter")} · {run.ai_used ? `AI: ${run.ai_provider || "provider"}` : t("Yerel analiz")}</p>
                 </div>
-                <div className="flex items-center gap-3 text-[11px] text-slate-400">
+                <div className="flex items-center gap-3 text-xs text-slate-400">
                   <span>{t("Skor")}: <strong className="text-emerald-300">{run.quality?.score ?? 0}/100</strong></span>
                   {run.created_at && <span>{new Date(run.created_at).toLocaleDateString()}</span>}
                 </div>

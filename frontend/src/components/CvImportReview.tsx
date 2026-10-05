@@ -116,8 +116,8 @@ export default function CvImportReview({ fields, originalText = "", quality, ana
         <div>
           <h3 className="text-sm font-semibold text-white">{t("CV alanlarını incele")}</h3>
           <p className="mt-1 text-xs text-slate-400">{t("Uygulamak istediğin alanları seç, değerleri kontrol et ve sonra onayla.")}</p>
-          {aiUsed && <p className="mt-1 text-[11px] text-amber-300">{t("CV metni isteğinle yapılandırılmış AI sağlayıcısında işlendi. Bilgileri kaydetmeden önce doğrula.")}</p>}
-          {aiWarning && <p role="status" className="mt-1 text-[11px] text-amber-300">{t(aiWarning)}</p>}
+          {aiUsed && <p className="mt-1 text-xs text-amber-300">{t("CV metni isteğinle yapılandırılmış AI sağlayıcısında işlendi. Bilgileri kaydetmeden önce doğrula.")}</p>}
+          {aiWarning && <p role="status" className="mt-1 text-xs text-amber-300">{t(aiWarning)}</p>}
         </div>
       </div>
 
@@ -125,36 +125,36 @@ export default function CvImportReview({ fields, originalText = "", quality, ana
         <div className="flex items-center justify-between gap-3">
           <div>
             <h4 className="text-xs font-semibold text-white">{t("CV kalite puanı")}</h4>
-            <p className="text-[10px] text-slate-400">{t("Puan CV belgesinin hazırlık düzeyini değerlendirir; kişiyi veya bilgilerin doğruluğunu ölçmez.")}</p>
+            <p className="text-xs text-slate-400">{t("Puan CV belgesinin hazırlık düzeyini değerlendirir; kişiyi veya bilgilerin doğruluğunu ölçmez.")}</p>
           </div>
-          <div className="shrink-0 text-right"><div className="text-xl font-bold text-white">{quality.score}<span className="text-xs text-slate-400">/100</span></div><div className="text-[10px] font-semibold text-emerald-300">{t(`CV notu: ${quality.grade}`)}</div></div>
+          <div className="shrink-0 text-right"><div className="text-xl font-bold text-white">{quality.score}<span className="text-xs text-slate-400">/100</span></div><div className="text-xs font-semibold text-emerald-300">{t(`CV notu: ${quality.grade}`)}</div></div>
         </div>
         <div className="grid gap-2 sm:grid-cols-2">
           {quality.criteria.map((criterion) => <div key={criterion.id} className="rounded-md bg-slate-900/70 p-2">
-            <div className="mb-1 flex justify-between gap-2 text-[10px] text-slate-300"><span>{t(`CV ölçütü: ${criterion.id}`)}</span><span>{criterion.score}/{criterion.max_score}</span></div>
+            <div className="mb-1 flex justify-between gap-2 text-xs text-slate-300"><span>{t(`CV ölçütü: ${criterion.id}`)}</span><span>{criterion.score}/{criterion.max_score}</span></div>
             <div className="h-1.5 overflow-hidden rounded-full bg-slate-700"><div className="h-full rounded-full bg-emerald-500" style={{ width: `${Math.round(criterion.score / criterion.max_score * 100)}%` }} /></div>
           </div>)}
         </div>
-        {quality.recommendation_ids.length > 0 && <div><p className="mb-1 text-[10px] font-semibold text-slate-300">{t("Öncelikli iyileştirmeler")}</p><ul className="space-y-1 text-[11px] text-slate-400">{quality.recommendation_ids.map((id) => <li key={id}>• {t(`CV önerisi: ${id}`)}</li>)}</ul></div>}
+        {quality.recommendation_ids.length > 0 && <div><p className="mb-1 text-xs font-semibold text-slate-300">{t("Öncelikli iyileştirmeler")}</p><ul className="space-y-1 text-xs text-slate-400">{quality.recommendation_ids.map((id) => <li key={id}>• {t(`CV önerisi: ${id}`)}</li>)}</ul></div>}
       </div>}
 
       {analysis && (analysis.strengths?.length || analysis.gaps?.length || analysis.potential_issues?.length || analysis.improvements?.length) ? (
         <div className="space-y-3 rounded-lg border border-sky-500/20 bg-sky-500/[0.04] p-3">
           <h4 className="text-xs font-semibold text-sky-200">{t("AI CV analizi")}</h4>
-          {analysis.strengths?.length ? <div><p className="mb-1 text-[11px] font-semibold text-emerald-300">{t("Güçlü yönler")}</p><ul className="list-disc space-y-1 pl-4 text-[11px] text-slate-300">{analysis.strengths.map((item, index) => <li key={`strength-${index}`}>{item}</li>)}</ul></div> : null}
-          {analysis.gaps?.length ? <div><p className="mb-1 text-[11px] font-semibold text-amber-300">{t("Eksik bilgiler")}</p><ul className="list-disc space-y-1 pl-4 text-[11px] text-slate-300">{analysis.gaps.map((item, index) => <li key={`gap-${index}`}>{item}</li>)}</ul></div> : null}
-          {analysis.potential_issues?.length ? <div><p className="mb-1 text-[11px] font-semibold text-rose-300">{t("Olası sorunlar")}</p><ul className="space-y-2">{analysis.potential_issues.map((item, index) => <li key={`issue-${index}`} className="rounded-md bg-slate-950/60 p-2 text-[11px] text-slate-300"><span className="font-semibold uppercase text-rose-300">{t(item.severity)}</span> · {item.finding}{item.evidence && <p className="mt-1 text-slate-400">{t("Kanıt")}: “{item.evidence}”</p>}{item.recommendation && <p className="mt-1">{t("Öneri")}: {item.recommendation}</p>}</li>)}</ul></div> : null}
-          {analysis.improvements?.length ? <div><p className="mb-1 text-[11px] font-semibold text-sky-200">{t("İyileştirme önerileri")}</p><ul className="list-disc space-y-1 pl-4 text-[11px] text-slate-300">{analysis.improvements.map((item, index) => <li key={`improve-${index}`}>{item}</li>)}</ul></div> : null}
-          <p className="text-[10px] text-slate-500">{t("AI geri bildirimi öneridir; olası sorunları CV'nin yanlış olduğu kanıtı olarak değerlendirme.")}</p>
+          {analysis.strengths?.length ? <div><p className="mb-1 text-xs font-semibold text-emerald-300">{t("Güçlü yönler")}</p><ul className="list-disc space-y-1 pl-4 text-xs text-slate-300">{analysis.strengths.map((item, index) => <li key={`strength-${index}`}>{item}</li>)}</ul></div> : null}
+          {analysis.gaps?.length ? <div><p className="mb-1 text-xs font-semibold text-amber-300">{t("Eksik bilgiler")}</p><ul className="list-disc space-y-1 pl-4 text-xs text-slate-300">{analysis.gaps.map((item, index) => <li key={`gap-${index}`}>{item}</li>)}</ul></div> : null}
+          {analysis.potential_issues?.length ? <div><p className="mb-1 text-xs font-semibold text-rose-300">{t("Olası sorunlar")}</p><ul className="space-y-2">{analysis.potential_issues.map((item, index) => <li key={`issue-${index}`} className="rounded-md bg-slate-950/60 p-2 text-xs text-slate-300"><span className="font-semibold uppercase text-rose-300">{t(item.severity)}</span> · {item.finding}{item.evidence && <p className="mt-1 text-slate-400">{t("Kanıt")}: “{item.evidence}”</p>}{item.recommendation && <p className="mt-1">{t("Öneri")}: {item.recommendation}</p>}</li>)}</ul></div> : null}
+          {analysis.improvements?.length ? <div><p className="mb-1 text-xs font-semibold text-sky-200">{t("İyileştirme önerileri")}</p><ul className="list-disc space-y-1 pl-4 text-xs text-slate-300">{analysis.improvements.map((item, index) => <li key={`improve-${index}`}>{item}</li>)}</ul></div> : null}
+          <p className="text-xs text-slate-400">{t("AI geri bildirimi öneridir; olası sorunları CV'nin yanlış olduğu kanıtı olarak değerlendirme.")}</p>
         </div>
       ) : null}
 
       {optimizedCvText && <details open className="rounded-lg border border-emerald-500/25 bg-slate-950/50 p-3">
         <summary className="cursor-pointer text-xs font-semibold text-emerald-200">{t("Otomatik düzenlenmiş CV önizlemesi")}</summary>
-        <p className="mt-2 text-[10px] text-slate-400">{t("Bu öneri orijinal dosyanın üzerine yazmaz. Yeni metni incele, düzelt ve istersen indir.")}</p>
+        <p className="mt-2 text-xs text-slate-400">{t("Bu öneri orijinal dosyanın üzerine yazmaz. Yeni metni incele, düzelt ve istersen indir.")}</p>
         <div className="mt-3 grid gap-3 lg:grid-cols-2">
-          <div><h5 className="mb-1 text-[10px] font-semibold uppercase tracking-wide text-slate-400">{t("Orijinal CV")}</h5><pre className="max-h-80 overflow-auto whitespace-pre-wrap rounded-md border border-slate-800 bg-slate-900 p-3 text-[11px] leading-relaxed text-slate-300">{originalText}</pre></div>
-          <div><h5 className="mb-1 text-[10px] font-semibold uppercase tracking-wide text-emerald-300">{t("Düzenlenmiş taslak")}</h5><textarea aria-label={t("Düzenlenmiş taslak")} rows={18} value={revisedText} onChange={(event) => setRevisedText(event.target.value)} className="max-h-80 min-h-72 w-full overflow-auto whitespace-pre-wrap rounded-md border border-emerald-500/20 bg-slate-900 p-3 text-[11px] leading-relaxed text-slate-100" /></div>
+          <div><h5 className="mb-1 text-xs font-semibold uppercase tracking-wide text-slate-400">{t("Orijinal CV")}</h5><pre className="max-h-80 overflow-auto whitespace-pre-wrap rounded-md border border-slate-800 bg-slate-900 p-3 text-xs leading-relaxed text-slate-300">{originalText}</pre></div>
+          <div><h5 className="mb-1 text-xs font-semibold uppercase tracking-wide text-emerald-300">{t("Düzenlenmiş taslak")}</h5><textarea aria-label={t("Düzenlenmiş taslak")} rows={18} value={revisedText} onChange={(event) => setRevisedText(event.target.value)} className="max-h-80 min-h-72 w-full overflow-auto whitespace-pre-wrap rounded-md border border-emerald-500/20 bg-slate-900 p-3 text-xs leading-relaxed text-slate-100" /></div>
         </div>
         <button type="button" onClick={downloadOptimizedCv} className="mt-3 rounded-lg border border-emerald-500/30 px-3 py-2 text-xs font-semibold text-emerald-200">{t("Düzenlenmiş CV metnini indir")}</button>
       </details>}
@@ -168,7 +168,7 @@ export default function CvImportReview({ fields, originalText = "", quality, ana
               <span className="mb-2 flex items-center gap-2 text-xs font-medium text-slate-300">
                 <input type="checkbox" checked={Boolean(selected[key])} onChange={() => toggle(key)} aria-label={`${t("Uygula")}: ${t(FIELD_LABELS[key])}`} />
                 {t(FIELD_LABELS[key])}
-                {typeof confidence === "number" && <span className="ml-auto text-[10px] text-slate-500">{Math.round(confidence * 100)}%</span>}
+                {typeof confidence === "number" && <span className="ml-auto text-xs text-slate-400">{Math.round(confidence * 100)}%</span>}
               </span>
 
               {key === "skills" || key === "languages" ? (

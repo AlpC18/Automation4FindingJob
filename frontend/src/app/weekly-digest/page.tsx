@@ -1,4 +1,5 @@
 "use client";
+import { notify } from "@/lib/notify";
 import { useLanguage } from "@/lib/i18n";
 import { useEffect, useState } from "react";
 import { Newspaper, Send, TrendingUp, AlertTriangle, Sparkles, CheckCircle2, RefreshCw } from "lucide-react";
@@ -33,14 +34,14 @@ export default function WeeklyDigestPage() {
       const res = await fetchFromApi("/outcome/digest/dispatch", { method: "POST" });
       setDispatchResult(res);
     } catch (e) {
-      alert(t("Gönderim sırasında hata oluştu."));
+      notify(t("Gönderim sırasında hata oluştu."));
     } finally {
       setDispatching(false);
     }
   }
 
   if (loading) {
-    return <div className="text-center py-20 text-slate-500">{t("Haftalık bülten derleniyor...")}</div>;
+    return <div className="text-center py-20 text-slate-400">{t("Haftalık bülten derleniyor...")}</div>;
   }
 
   const m = digest?.metrics || {};
@@ -51,7 +52,7 @@ export default function WeeklyDigestPage() {
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
         <div>
           <h1 className="text-2xl font-bold text-white flex items-center gap-3">
-            <Newspaper className="w-7 h-7 text-indigo-400" /> {t("Haftalık Kariyer & İstihbarat Bülteni")}</h1>
+            <Newspaper className="w-7 h-7 text-indigo-400" /> {t("Haftalık bülten")}</h1>
           <p className="text-slate-400 mt-1">
             {t("Dönem:")}<strong className="text-slate-200">{digest?.period}</strong> {t("• Otomatik Pazartesi Raporu")}</p>
         </div>
@@ -79,22 +80,22 @@ export default function WeeklyDigestPage() {
         <div className="bg-slate-900/60 border border-slate-800 rounded-xl p-4">
           <div className="text-xs text-slate-400">{t("Yeni Keşif")}</div>
           <div className="text-2xl font-bold text-blue-400 mt-1">{m.new_jobs_found || 0} {t("İlan")}</div>
-          <div className="text-[10px] text-slate-500 mt-1">{t("Son 7 günde taranan")}</div>
+          <div className="text-xs text-slate-400 mt-1">{t("Son 7 günde taranan")}</div>
         </div>
         <div className="bg-slate-900/60 border border-slate-800 rounded-xl p-4">
           <div className="text-xs text-slate-400">{t("Uyum tahmini hesaplanan")}</div>
           <div className="text-2xl font-bold text-emerald-400 mt-1">{m.evaluated_ranked || 0} {t("İlan")}</div>
-          <div className="text-[10px] text-slate-500 mt-1">{t("Yüksek eşleşme filtresi")}</div>
+          <div className="text-xs text-slate-400 mt-1">{t("Yüksek eşleşme filtresi")}</div>
         </div>
         <div className="bg-slate-900/60 border border-slate-800 rounded-xl p-4">
           <div className="text-xs text-slate-400">{t("Yapılan Başvuru")}</div>
           <div className="text-2xl font-bold text-indigo-400 mt-1">{m.applications_submitted || 0} {t("Gönderim")}</div>
-          <div className="text-[10px] text-slate-500 mt-1">{t("Drafter-Reviewer onaylı")}</div>
+          <div className="text-xs text-slate-400 mt-1">{t("Drafter-Reviewer onaylı")}</div>
         </div>
         <div className="bg-slate-900/60 border border-slate-800 rounded-xl p-4">
           <div className="text-xs text-slate-400">{t("Kapanan / Son Günler")}</div>
           <div className="text-2xl font-bold text-amber-400 mt-1">{m.closing_soon_count || 0} {t("Fırsat")}</div>
-          <div className="text-[10px] text-slate-500 mt-1">{t("5 gün içinde son tarih")}</div>
+          <div className="text-xs text-slate-400 mt-1">{t("5 gün içinde son tarih")}</div>
         </div>
       </div>
 
@@ -103,7 +104,7 @@ export default function WeeklyDigestPage() {
         <h2 className="text-base font-bold text-white flex items-center gap-2">
           <Sparkles className="w-5 h-5 text-amber-400" /> {t("Haftanın En Yüksek Eşleşen Fırsatları")}</h2>
         {(!digest?.top_opportunities || digest.top_opportunities.length === 0) ? (
-          <div className="text-xs text-slate-500">{t("Henüz yüksek puanlı ilan bulunmuyor.")}</div>
+          <div className="text-xs text-slate-400">{t("Henüz yüksek puanlı ilan bulunmuyor.")}</div>
         ) : (
           <div className="space-y-3">
             {digest.top_opportunities.map((job: any, i: number) => (
@@ -145,7 +146,7 @@ export default function WeeklyDigestPage() {
         <div className="space-y-2">
           {digest?.strategic_recommendations?.map((rec: string, i: number) => (
             <div key={i} className="text-xs text-slate-300 bg-slate-950/60 rounded-xl p-3.5 border border-slate-800/80">
-              💡 {rec}
+              {rec}
             </div>
           ))}
         </div>

@@ -1,5 +1,6 @@
 "use client";
 
+import { notify } from "@/lib/notify";
 import dynamic from "next/dynamic";
 import PageTabs from "@/components/PageTabs";
 import { useEffect, useState } from "react";
@@ -297,7 +298,7 @@ function JobsPage() {
     }
 
     if (chosenTitles.length === 0) {
-      alert(t("Lütfen taranacak en az bir rol veya ünvan seçiniz."));
+      notify(t("Lütfen taranacak en az bir rol veya ünvan seçiniz."));
       return;
     }
 
@@ -419,7 +420,7 @@ function JobsPage() {
         <div>
           <h1 className="text-2xl font-bold text-white flex items-center gap-2">
             <Search className="w-6 h-6 text-blue-500" />
-            {t("1.2 & 1.3 Çoklu Platform İlan Akışı & Algoritmik Eşleşme")}
+            {t("İş ilanları")}
           </h1>
           <p className="text-xs text-slate-400 mt-1">
             {t("CV'niz doğrultusunda kabul görme ihtimali yüksek rolleri keşfedin, çalışma şekli ve konumu her aramada siz belirleyin.")}
@@ -433,7 +434,7 @@ function JobsPage() {
             className="flex items-center gap-1.5 bg-slate-800 hover:bg-slate-700 text-slate-200 text-xs font-semibold px-3 py-2 rounded-xl transition border border-slate-700"
           >
             <Compass className="w-3.5 h-3.5 text-sky-400" />
-            {showWizard ? t("Sihirbazı Gizle") : t("Rol & Konum Sihirbazını Aç")}
+            {showWizard ? t("Arama ayarlarını gizle") : t("Arama ayarlarını aç")}
           </button>
         </div>
       </div>
@@ -447,13 +448,13 @@ function JobsPage() {
             <div className="flex items-center gap-2.5">
               <Sparkles className="w-5 h-5 text-amber-400" />
               <div>
-                <h2 className="text-sm font-bold text-white">{t("CV Tabanlı Akıllı Rol Keşfi & Tercih Sihirbazı")}</h2>
-                <p className="text-[11px] text-slate-400">
+                <h2 className="text-sm font-bold text-white">{t("Arama ayarları")}</h2>
+                <p className="text-xs text-slate-400">
                   {t("Aday profiliniz ve yetkinliklerinize göre mülakat alma şansınızın en yüksek olduğu pozisyonlar")}</p>
               </div>
             </div>
-            <span className="text-[10px] bg-blue-500/10 text-blue-400 border border-blue-500/20 px-2.5 py-0.5 rounded-full font-mono">
-              {t("AI Rol Öneri Motoru Aktif")}
+            <span className="text-xs bg-blue-500/10 text-blue-400 border border-blue-500/20 px-2.5 py-0.5 rounded-full font-mono">
+              {t("Yapay zekâ önerileri açık")}
             </span>
           </div>
 
@@ -465,7 +466,7 @@ function JobsPage() {
                   <Briefcase className="w-4 h-4 text-sky-400" />
                   {t("Bir sonraki rolde ne tür iş yapmak istiyorsun? Hangi ünvanları arayalım?")}
                 </span>
-                <span className="text-[10px] text-slate-400 font-mono">
+                <span className="text-xs text-slate-400 font-mono">
                   {activeSearchCount} {t(internshipOnly ? "Staj araması" : "rol seçildi")}
                 </span>
               </div>
@@ -478,7 +479,7 @@ function JobsPage() {
                   className={`flex w-full items-center justify-between rounded-xl border px-3 py-2.5 text-left text-xs font-semibold transition ${internshipOnly ? "border-emerald-500/50 bg-emerald-950/35 text-emerald-300" : "border-slate-800 bg-slate-900/40 text-slate-300 hover:border-emerald-700/60"}`}
                 >
                   <span>{t("Staj / internship ilanları")}</span>
-                  <span className="text-[10px] font-normal">{internshipOnly ? t("Etkin · yalnızca staj") : t("Aramayı staj ilanlarına çevir")}</span>
+                  <span className="text-xs font-normal">{internshipOnly ? t("Etkin · yalnızca staj") : t("Aramayı staj ilanlarına çevir")}</span>
                 </button>
                 {discoveredRoles.map((role) => {
                   const isChecked = selectedRoleIds.includes(role.id);
@@ -506,11 +507,11 @@ function JobsPage() {
                           <span className="text-xs font-bold text-white">{role.title}</span>
                         </div>
 
-                      <span className="text-[10px] font-bold font-mono px-2 py-0.5 rounded-full bg-emerald-500/10 text-emerald-400 border border-emerald-500/20">
+                      <span className="text-xs font-bold font-mono px-2 py-0.5 rounded-full bg-emerald-500/10 text-emerald-400 border border-emerald-500/20">
                           {t("CV becerileriyle önerildi")}
                         </span>
                       </div>
-                      <div className="text-[11px] text-slate-400 pl-6 leading-relaxed">
+                      <div className="text-xs text-slate-400 pl-6 leading-relaxed">
                         {role.subtext}
                       </div>
                     </div>
@@ -526,11 +527,11 @@ function JobsPage() {
                     <div className="flex items-center gap-2">
                       <Check className="w-3.5 h-3.5 text-blue-400" />
                       <span className="font-semibold text-white">{cr}</span>
-                      <span className="text-[9px] bg-slate-800 text-slate-400 px-1.5 py-0.5 rounded">{t("Özel")}</span>
+                      <span className="text-xs bg-slate-800 text-slate-400 px-1.5 py-0.5 rounded">{t("Özel")}</span>
                     </div>
                     <button
                       onClick={() => handleRemoveCustomRole(cr)}
-                      className="text-[10px] text-rose-400 hover:text-rose-300"
+                      className="text-xs text-rose-400 hover:text-rose-300"
                     >
                       {t("Kaldır")}
                     </button>
@@ -544,8 +545,8 @@ function JobsPage() {
                     value={customRoleInput}
                     onChange={(e) => setCustomRoleInput(e.target.value)}
                     onKeyDown={(e) => e.key === "Enter" && handleAddCustomRole()}
-                    placeholder={t("Type something (Örn: Platform Architect, Lead ML)...")}
-                    className="flex-1 bg-slate-950 border border-slate-800 rounded-xl px-3 py-2 text-xs text-white placeholder:text-slate-600 focus:outline-none focus:border-blue-500"
+                    placeholder={t("Örn: Platform Architect, Lead ML")}
+                    className="flex-1 bg-slate-950 border border-slate-800 rounded-xl px-3 py-2 text-xs text-white placeholder:text-slate-500 focus:outline-none focus:border-blue-500"
                   />
                   <button
                     onClick={handleAddCustomRole}
@@ -599,8 +600,8 @@ function JobsPage() {
                       setCustomLocationInput(e.target.value);
                       setSelectedLocationId("custom");
                     }}
-                    placeholder={t("Type something (Örn: Berlin, Remote US, İzmir hibrit)...")}
-                    className="w-full bg-slate-950 border border-slate-800 rounded-xl px-3 py-2 text-xs text-white placeholder:text-slate-600 focus:outline-none focus:border-blue-500"
+                    placeholder={t("Örn: Berlin, Remote US, İzmir hibrit")}
+                    className="w-full bg-slate-950 border border-slate-800 rounded-xl px-3 py-2 text-xs text-white placeholder:text-slate-500 focus:outline-none focus:border-blue-500"
                   />
                 </div>
               </div>
@@ -647,17 +648,21 @@ function JobsPage() {
         </div>
       )}
 
+      {/* Secondary information: open until there are results, then tucked away. */}
+      <details className="jobs-secondary space-y-4" open={jobs.length === 0 ? true : undefined}>
+        <summary className="cursor-pointer rounded-xl border border-slate-800 px-4 py-3 text-sm font-semibold text-slate-200">{t("Zamanlama ve tarama durumu")}</summary>
+        <div className="mt-4 space-y-6">
       <section className="rounded-xl border border-slate-800 bg-[#0e1524] p-4">
         <div className="flex flex-wrap items-start justify-between gap-3">
           <div>
             <h2 className="text-sm font-semibold text-white">{t("Otomatik zamanlama")}</h2>
-            <p className="mt-1 text-[11px] text-slate-400">{t("“Tarama başlat” yalnızca şimdi bir kez tarar. Burada zamanlanan aramalar ise zamanlayıcı çalışırken her gece kendiliğinden taranır.")}</p>
+            <p className="mt-1 text-xs text-slate-400">{t("“Tarama başlat” yalnızca şimdi bir kez tarar. Burada zamanlanan aramalar ise zamanlayıcı çalışırken her gece kendiliğinden taranır.")}</p>
           </div>
-          {scheduler && <span className={`rounded-full border px-2.5 py-1 text-[10px] font-semibold ${scheduler.is_running ? "border-emerald-500/30 text-emerald-300" : "border-amber-500/30 text-amber-300"}`}>{scheduler.is_running ? `${t("Zamanlayıcı çalışıyor")} · ${scheduler.nightly_time} (${scheduler.timezone})` : t("Zamanlayıcı kapalı")}</span>}
+          {scheduler && <span className={`rounded-full border px-2.5 py-1 text-xs font-semibold ${scheduler.is_running ? "border-emerald-500/30 text-emerald-300" : "border-amber-500/30 text-amber-300"}`}>{scheduler.is_running ? `${t("Zamanlayıcı çalışıyor")} · ${scheduler.nightly_time} (${scheduler.timezone})` : t("Zamanlayıcı kapalı")}</span>}
         </div>
         {scheduler && !scheduler.is_running && scheduler.scheduled_searches > 0 && <p className="mt-2 text-xs text-amber-200">{scheduler.scheduled_searches} {t("arama zamanlanmış ama zamanlayıcı kapalı olduğu için otomatik çalışmayacak.")} <Link href="/daemon-settings" className="font-semibold underline">{t("Zamanlayıcıyı aç")}</Link></p>}
-        {scheduler?.last_nightly_run && <p className="mt-2 text-[11px] text-slate-500">{t("Son otomatik tarama")}: {formatTimestamp(scheduler.last_nightly_run, locale)}</p>}
-        {savedSearches.length === 0 ? <p className="mt-3 text-xs text-slate-500">{t("Zamanlanmış arama yok. Yukarıdan rol ve konum seçip “Otomatik zamanla”ya bas.")}</p> : <div className="mt-3 flex flex-wrap gap-2">{savedSearches.map((item) => <div key={item.id} className="flex flex-wrap items-center gap-2 rounded-lg bg-slate-950 px-3 py-2 text-xs text-slate-200">
+        {scheduler?.last_nightly_run && <p className="mt-2 text-xs text-slate-400">{t("Son otomatik tarama")}: {formatTimestamp(scheduler.last_nightly_run, locale)}</p>}
+        {savedSearches.length === 0 ? <p className="mt-3 text-xs text-slate-400">{t("Zamanlanmış arama yok. Yukarıdan rol ve konum seçip “Otomatik zamanla”ya bas.")}</p> : <div className="mt-3 flex flex-wrap gap-2">{savedSearches.map((item) => <div key={item.id} className="flex flex-wrap items-center gap-2 rounded-lg bg-slate-950 px-3 py-2 text-xs text-slate-200">
           <span>{item.name} · {item.location || "Remote"} · %{item.min_match_score}+{item.llm_provider ? ` · ${t("Yapay zekâ incelemesi")}: ${item.llm_provider}` : ""}</span>
           <button onClick={() => void setSavedSearchSchedule(item, !item.enabled)} aria-pressed={Boolean(item.enabled)} className={item.enabled ? "text-emerald-300" : "text-slate-400"}>{item.enabled ? t("Otomatik zamanlama açık") : t("Otomatik zamanlama kapalı")}</button>
           <button onClick={() => void runSavedSearch(item.id)} disabled={savedSearchBusy === item.id} className="text-blue-300 hover:text-white">{savedSearchBusy === item.id ? t("Taranıyor…") : t("Şimdi tara")}</button>
@@ -666,17 +671,19 @@ function JobsPage() {
       </section>
 
       <ScanStatusPanel status={scanStatus} unavailable={scanStatusUnavailable} runs={scanRuns} />
+        </div>
+      </details>
 
       {/* Filters Bar */}
       <div className="p-4 rounded-xl bg-[#0e1524] border border-slate-800 flex flex-wrap items-center justify-between gap-4 text-xs">
         <div className="flex w-full flex-wrap items-center gap-2">
           <div className="relative min-w-[220px] flex-1">
-            <Search className="pointer-events-none absolute left-3 top-2.5 h-3.5 w-3.5 text-slate-500" />
-            <input value={textFilter} onChange={(e) => setTextFilter(e.target.value)} placeholder={t("İlan, şirket veya yetenek ara")} className="w-full rounded-lg border border-slate-800 bg-slate-950 py-2 pl-9 pr-3 text-xs text-white placeholder:text-slate-600 focus:border-blue-500 focus:outline-none" />
+            <Search className="pointer-events-none absolute left-3 top-2.5 h-3.5 w-3.5 text-slate-400" />
+            <input value={textFilter} onChange={(e) => setTextFilter(e.target.value)} placeholder={t("İlan, şirket veya yetenek ara")} className="w-full rounded-lg border border-slate-800 bg-slate-950 py-2 pl-9 pr-3 text-xs text-white placeholder:text-slate-500 focus:border-blue-500 focus:outline-none" />
           </div>
           <button type="button" aria-pressed={internshipOnly} onClick={() => setInternshipOnly((current) => !current)} className={`rounded-lg border px-3 py-2 text-xs font-semibold transition ${internshipOnly ? "border-emerald-500/40 bg-emerald-500/10 text-emerald-300" : "border-slate-800 bg-slate-950 text-slate-300 hover:border-emerald-700/60"}`}>{internshipOnly ? t("Yalnızca staj") : t("Staj ilanlarını ara / filtrele")}</button>
           <button type="button" aria-pressed={includeStale} onClick={() => setIncludeStale((value) => !value)} className={`rounded-lg border px-3 py-2 text-xs font-semibold transition ${includeStale ? "border-amber-500/40 bg-amber-500/10 text-amber-200" : "border-slate-800 bg-slate-950 text-slate-300 hover:border-amber-700/60"}`}>{includeStale ? t("Eski ilanlar dahil") : t("Eski ilanları göster")}</button>
-          <input value={locationFilter} onChange={(e) => setLocationFilter(e.target.value)} placeholder={t("Konum")} className="w-32 rounded-lg border border-slate-800 bg-slate-950 px-3 py-2 text-xs text-white placeholder:text-slate-600 focus:border-blue-500 focus:outline-none" />
+          <input value={locationFilter} onChange={(e) => setLocationFilter(e.target.value)} placeholder={t("Konum")} className="w-32 rounded-lg border border-slate-800 bg-slate-950 px-3 py-2 text-xs text-white placeholder:text-slate-500 focus:border-blue-500 focus:outline-none" />
           <select value={remoteFilter} onChange={(e) => setRemoteFilter(e.target.value)} className="rounded-lg border border-slate-800 bg-slate-950 px-3 py-2 text-xs text-slate-200 focus:border-blue-500 focus:outline-none">
             <option value="all">{t("Tüm çalışma şekilleri")}</option><option value="remote">{t("Remote")}</option><option value="hybrid">{t("Hybrid")}</option><option value="on-site">{t("On-site")}</option>
           </select>
@@ -701,7 +708,7 @@ function JobsPage() {
                   : "bg-slate-900 text-slate-400 hover:text-white"
               }`}
             >
-              {p}
+              {p === "all" ? t("Tümü") : p}
             </button>
           ))}
         </div>
@@ -712,15 +719,15 @@ function JobsPage() {
             <button
               key={tier}
               onClick={() => setSelectedTier(tier)}
-              className={`px-2 py-0.5 rounded text-[11px] ${
+              className={`px-2 py-0.5 rounded text-xs ${
                 selectedTier === tier ? "bg-slate-700 text-white" : "text-slate-400 hover:text-white"
               }`}
             >
-              {tier}
+              {t({ all: "Tümü", High: "Yüksek", Medium: "Orta", Low: "Düşük" }[tier] || tier)}
             </button>
           ))}
         </div>
-        <button type="button" onClick={() => setFavoriteOnly((value) => !value)} className={`inline-flex items-center gap-1.5 rounded-lg border px-2.5 py-1.5 text-[11px] font-semibold ${favoriteOnly ? "border-rose-500/40 bg-rose-500/10 text-rose-300" : "border-slate-800 text-slate-400 hover:text-white"}`}>
+        <button type="button" onClick={() => setFavoriteOnly((value) => !value)} className={`inline-flex items-center gap-1.5 rounded-lg border px-2.5 py-1.5 text-xs font-semibold ${favoriteOnly ? "border-rose-500/40 bg-rose-500/10 text-rose-300" : "border-slate-800 text-slate-400 hover:text-white"}`}>
           <Heart className={`h-3.5 w-3.5 ${favoriteOnly ? "fill-current" : ""}`} /> {t("Favoriler")}
         </button>
       </div>
@@ -733,24 +740,24 @@ function JobsPage() {
         >
           {filteredJobs.length > 0 && filteredJobs.every((job) => selectedJobIds.includes(job.id))
             ? <CheckSquare className="w-4 h-4 text-blue-400" />
-            : <Square className="w-4 h-4 text-slate-500" />}
+            : <Square className="w-4 h-4 text-slate-400" />}
           {t("Görünen ilanların tümünü seç")} ({filteredJobs.length})
         </button>
         <div className="flex items-center gap-2">
-          <span className="text-[11px] text-slate-500">{selectedJobIds.length} {t("seçili")}</span>
+          <span className="text-xs text-slate-400">{selectedJobIds.length} {t("seçili")}</span>
           {selectedJobIds.length > 0 && (
             <>
               <button
                 disabled={batchBusy}
                 onClick={() => void runBatchAction("prepare")}
-                className="rounded-lg border border-blue-500/30 bg-blue-500/10 px-3 py-1.5 text-[11px] font-semibold text-blue-300 hover:bg-blue-500/20 disabled:opacity-50"
+                className="rounded-lg border border-blue-500/30 bg-blue-500/10 px-3 py-1.5 text-xs font-semibold text-blue-300 hover:bg-blue-500/20 disabled:opacity-50"
               >
                 {batchBusy ? t("İşleniyor...") : t("Toplu taslak hazırla")}
               </button>
               <button
                 disabled={batchBusy}
                 onClick={() => void runBatchAction("reject")}
-                className="rounded-lg border border-rose-500/30 bg-rose-500/10 px-3 py-1.5 text-[11px] font-semibold text-rose-300 hover:bg-rose-500/20 disabled:opacity-50"
+                className="rounded-lg border border-rose-500/30 bg-rose-500/10 px-3 py-1.5 text-xs font-semibold text-rose-300 hover:bg-rose-500/20 disabled:opacity-50"
               >
                 {t("Seçilenleri ele")}
               </button>
@@ -780,25 +787,25 @@ function JobsPage() {
               </div>
             </div>
             {packagePreview.tailored_cv?.summary && <p className="mt-3 text-xs leading-5 text-slate-300">{packagePreview.tailored_cv.summary}</p>}
-            {packagePreview.tailored_cv?.skills?.length > 0 && <div className="mt-3 flex flex-wrap gap-1.5">{packagePreview.tailored_cv.skills.slice(0, 8).map((skill: string, index: number) => <span key={`${skill}-${index}`} className={`rounded-full border px-2.5 py-1 text-[11px] ${index < (packagePreview.tailoring?.skills_to_highlight?.length || 0) ? "border-emerald-700/60 bg-emerald-950/50 text-emerald-200" : "border-slate-700 text-slate-300"}`}>{skill}</span>)}</div>}
+            {packagePreview.tailored_cv?.skills?.length > 0 && <div className="mt-3 flex flex-wrap gap-1.5">{packagePreview.tailored_cv.skills.slice(0, 8).map((skill: string, index: number) => <span key={`${skill}-${index}`} className={`rounded-full border px-2.5 py-1 text-xs ${index < (packagePreview.tailoring?.skills_to_highlight?.length || 0) ? "border-emerald-700/60 bg-emerald-950/50 text-emerald-200" : "border-slate-700 text-slate-300"}`}>{skill}</span>)}</div>}
             {packagePreview.tailored_cv?.experience?.length > 0 && <div className="mt-3 space-y-2">{packagePreview.tailored_cv.experience.slice(0, 3).map((experience: any, index: number) => <p key={`${experience.title}-${experience.company}-${index}`} className="text-xs text-slate-300"><strong className="text-slate-100">{experience.title}</strong> · {experience.company}{experience.bullets?.[0] ? ` — ${experience.bullets[0]}` : ""}</p>)}</div>}
           </section>
           <textarea readOnly value={packagePreview.cover_letter} rows={12} className="mt-4 w-full rounded-xl border border-slate-800 bg-slate-900 p-4 text-sm leading-relaxed text-slate-200" />
-          <p className="mt-3 text-xs text-slate-500">{t("Taslak oluşturuldu; hiçbir yere gönderilmedi. Gerçek başvuruyu yalnızca sen gözden geçirip gönderirsin.")}</p>
+          <p className="mt-3 text-xs text-slate-400">{t("Taslak oluşturuldu; hiçbir yere gönderilmedi. Gerçek başvuruyu yalnızca sen gözden geçirip gönderirsin.")}</p>
           <div className="mt-4 flex justify-end"><Link href="/kanban" onClick={() => setPackagePreview(null)} className="rounded-lg bg-blue-600 px-4 py-2 text-sm font-semibold text-white">{t("Başvuruları takip et")}</Link></div>
         </div>
       </div>}
       {detailJob && <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 p-4" role="dialog" aria-modal="true" aria-labelledby="job-detail-title">
         <div className="max-h-[90vh] w-full max-w-3xl overflow-y-auto rounded-2xl border border-slate-700 bg-slate-950 p-6 shadow-2xl">
           <div className="flex items-start justify-between gap-4"><div><p className="text-xs uppercase tracking-widest text-blue-400">{t("Canlı kaynak ilanı ·")} {detailJob.platform}</p><h2 id="job-detail-title" className="mt-1 text-xl font-bold text-white">{detailJob.title}</h2><p className="mt-1 text-sm text-slate-400">{detailJob.company} · {detailJob.location}</p></div><button onClick={() => setDetailJob(null)} className="text-slate-400 hover:text-white">{t("Kapat")}</button></div>
-          <div className="mt-5 grid gap-3 sm:grid-cols-2 lg:grid-cols-4"><div className="rounded-xl border border-slate-800 bg-slate-900 p-3"><div className="text-[10px] text-slate-500">{t("Tahmini profil uyumu")}</div><div className="mt-1 text-lg font-bold text-emerald-400">≈ %{detailJob.match_score ?? "—"}</div></div><div className="rounded-xl border border-slate-800 bg-slate-900 p-3"><div className="text-[10px] text-slate-500">{t("Ghost riski")}</div><div className="mt-1 text-lg font-bold text-rose-300">%{detailJob.ghost_score ?? 0}</div></div><div className="rounded-xl border border-slate-800 bg-slate-900 p-3"><div className="text-[10px] text-slate-500">{t("Yayın tarihi")}</div><div className="mt-1 text-sm font-semibold text-white">{detailJob.posted_date || "Bilinmiyor"}</div></div><div className="rounded-xl border border-slate-800 bg-slate-900 p-3"><div className="text-[10px] text-slate-500">{t("Link durumu")}</div><div className="mt-1 text-sm font-semibold text-white">{linkLabels[linkStatus(detailJob.source_link_check)]}</div>{detailJob.source_link_check?.checked_at && <div className="mt-1 text-[10px] text-slate-500">{t("Son kontrol")}: {formatTimestamp(detailJob.source_link_check.checked_at, locale)}</div>}</div></div>
-          <p className="mt-2 text-[11px] text-slate-500">{t("Bu eşleşme bir kural tabanlı tahmindir; işverenin kullandığı ATS skoru veya işe alınma olasılığı değildir.")}</p>
-          {(detailJob.skill_gaps?.matched_evidence?.length > 0 || detailJob.skill_gaps?.missing_skills?.length > 0) && <section className="mt-4 rounded-xl border border-emerald-500/15 bg-emerald-500/[0.03] p-4"><h3 className="text-sm font-semibold text-white">{t("Eşleşme kanıtı ve beceri boşlukları")}</h3>{detailJob.skill_gaps?.matched_evidence?.length > 0 && <div className="mt-3"><div className="text-[10px] font-semibold uppercase tracking-wide text-emerald-300">{t("Profilden eşleşen beceriler")}</div><div className="mt-1 flex flex-wrap gap-1.5">{detailJob.skill_gaps.matched_evidence.map((item: any) => <span key={item.required_skill} className="rounded-full border border-emerald-500/20 px-2.5 py-1 text-[11px] text-emerald-200">{item.profile_evidence}</span>)}</div></div>}{detailJob.skill_gaps?.missing_skills?.length > 0 && <div className="mt-3"><div className="text-[10px] font-semibold uppercase tracking-wide text-amber-300">{t("İlan metninde aranıp profilde bulunmayan beceriler")}</div><div className="mt-1 flex flex-wrap gap-1.5">{detailJob.skill_gaps.missing_skills.map((item: string) => <span key={item} className="rounded-full border border-amber-500/20 px-2.5 py-1 text-[11px] text-amber-200">{item}</span>)}</div></div>}</section>}
-          <div className="mt-3 rounded-xl border border-slate-800 bg-slate-900/60 p-3 text-[11px] text-slate-400">{t("Veri kaynağı")}: {detailJob.platform}{(detailJob.source_aliases || []).length > 0 ? ` · ${t("Aynı ilan şu kaynaklarda da bulundu")}: ${detailJob.source_aliases.map((alias: any) => alias.platform).join(", ")}` : ""} · {t("İlk görüldü")} {formatTimestamp(detailJob.first_seen_at, locale)} · {t("Kaynakta son görüldü")} {formatTimestamp(detailJob.last_seen_at, locale)}{detailJob.stale_at ? ` · ${t("Eskimiş olabilir: son taramada kaynak bu ilanı döndürmedi")}` : jobFreshness(detailJob).level === "aging" ? ` · ${jobFreshness(detailJob).days} ${t("gündür kaynakta yeniden doğrulanmadı")}` : ""}</div>
+          <div className="mt-5 grid gap-3 sm:grid-cols-2 lg:grid-cols-4"><div className="rounded-xl border border-slate-800 bg-slate-900 p-3"><div className="text-xs text-slate-400">{t("Tahmini profil uyumu")}</div><div className="mt-1 text-lg font-bold text-emerald-400">≈ %{detailJob.match_score ?? "—"}</div></div><div className="rounded-xl border border-slate-800 bg-slate-900 p-3"><div className="text-xs text-slate-400">{t("Ghost riski")}</div><div className="mt-1 text-lg font-bold text-rose-300">%{detailJob.ghost_score ?? 0}</div></div><div className="rounded-xl border border-slate-800 bg-slate-900 p-3"><div className="text-xs text-slate-400">{t("Yayın tarihi")}</div><div className="mt-1 text-sm font-semibold text-white">{detailJob.posted_date || "Bilinmiyor"}</div></div><div className="rounded-xl border border-slate-800 bg-slate-900 p-3"><div className="text-xs text-slate-400">{t("Link durumu")}</div><div className="mt-1 text-sm font-semibold text-white">{linkLabels[linkStatus(detailJob.source_link_check)]}</div>{detailJob.source_link_check?.checked_at && <div className="mt-1 text-xs text-slate-400">{t("Son kontrol")}: {formatTimestamp(detailJob.source_link_check.checked_at, locale)}</div>}</div></div>
+          <p className="mt-2 text-xs text-slate-400">{t("Bu eşleşme bir kural tabanlı tahmindir; işverenin kullandığı ATS skoru veya işe alınma olasılığı değildir.")}</p>
+          {(detailJob.skill_gaps?.matched_evidence?.length > 0 || detailJob.skill_gaps?.missing_skills?.length > 0) && <section className="mt-4 rounded-xl border border-emerald-500/15 bg-emerald-500/[0.03] p-4"><h3 className="text-sm font-semibold text-white">{t("Eşleşme kanıtı ve beceri boşlukları")}</h3>{detailJob.skill_gaps?.matched_evidence?.length > 0 && <div className="mt-3"><div className="text-xs font-semibold uppercase tracking-wide text-emerald-300">{t("Profilden eşleşen beceriler")}</div><div className="mt-1 flex flex-wrap gap-1.5">{detailJob.skill_gaps.matched_evidence.map((item: any) => <span key={item.required_skill} className="rounded-full border border-emerald-500/20 px-2.5 py-1 text-xs text-emerald-200">{item.profile_evidence}</span>)}</div></div>}{detailJob.skill_gaps?.missing_skills?.length > 0 && <div className="mt-3"><div className="text-xs font-semibold uppercase tracking-wide text-amber-300">{t("İlan metninde aranıp profilde bulunmayan beceriler")}</div><div className="mt-1 flex flex-wrap gap-1.5">{detailJob.skill_gaps.missing_skills.map((item: string) => <span key={item} className="rounded-full border border-amber-500/20 px-2.5 py-1 text-xs text-amber-200">{item}</span>)}</div></div>}</section>}
+          <div className="mt-3 rounded-xl border border-slate-800 bg-slate-900/60 p-3 text-xs text-slate-400">{t("Veri kaynağı")}: {detailJob.platform}{(detailJob.source_aliases || []).length > 0 ? ` · ${t("Aynı ilan şu kaynaklarda da bulundu")}: ${detailJob.source_aliases.map((alias: any) => alias.platform).join(", ")}` : ""} · {t("İlk görüldü")} {formatTimestamp(detailJob.first_seen_at, locale)} · {t("Kaynakta son görüldü")} {formatTimestamp(detailJob.last_seen_at, locale)}{detailJob.stale_at ? ` · ${t("Eskimiş olabilir: son taramada kaynak bu ilanı döndürmedi")}` : jobFreshness(detailJob).level === "aging" ? ` · ${jobFreshness(detailJob).days} ${t("gündür kaynakta yeniden doğrulanmadı")}` : ""}</div>
           <div className="mt-5 rounded-xl border border-slate-800 bg-slate-900 p-4"><h3 className="text-sm font-semibold text-white">{t("İlan açıklaması")}</h3><p className="mt-3 whitespace-pre-wrap text-sm leading-7 text-slate-300">{detailJob.description}</p></div>
           {detailJob.ghost_reasons?.length > 0 && <div className="mt-3 rounded-xl border border-rose-500/20 bg-rose-500/5 p-4"><h3 className="text-sm font-semibold text-rose-300">{t("Risk nedenleri")}</h3><ul className="mt-2 list-disc space-y-1 pl-5 text-xs text-rose-200">{detailJob.ghost_reasons.map((reason: string) => <li key={reason}>{reason}</li>)}</ul></div>}
           <div className="mt-5 flex flex-wrap items-center justify-between gap-3"><span className="text-xs text-slate-400">{t("İlanda belirtilen maaş:")}<strong className="text-white">{detailJob.salary_range || t("Belirtilmemiş")}</strong></span>{getExternalJobUrl(detailJob.url) && <a href={getExternalJobUrl(detailJob.url)!} target="_self" className="inline-flex items-center gap-2 rounded-lg bg-blue-600 px-4 py-2 text-xs font-semibold text-white hover:bg-blue-500">{t("Kaynak ilanda aç")}<ExternalLink className="h-3.5 w-3.5" /></a>}</div>
-          {detailJob.salary_benchmark?.formatted_display && <div className="mt-3 rounded-xl border border-amber-500/20 bg-amber-500/5 p-3"><div className="text-xs font-semibold text-amber-200">{t("Piyasa tahmini")}: {detailJob.salary_benchmark.formatted_display}</div><p className="mt-1 text-[11px] text-slate-400">{t("Bu kural tabanlı bir tahmindir; işveren tarafından bildirilmemiş veya doğrulanmamıştır.")}</p></div>}
+          {detailJob.salary_benchmark?.formatted_display && <div className="mt-3 rounded-xl border border-amber-500/20 bg-amber-500/5 p-3"><div className="text-xs font-semibold text-amber-200">{t("Piyasa tahmini")}: {detailJob.salary_benchmark.formatted_display}</div><p className="mt-1 text-xs text-slate-400">{t("Bu kural tabanlı bir tahmindir; işveren tarafından bildirilmemiş veya doğrulanmamıştır.")}</p></div>}
           <section className="mt-5 rounded-xl border border-slate-800 bg-slate-900 p-4">
             <h3 className="text-sm font-semibold text-white">{t("Şirket ve ilan güvenilirliği")}</h3>
             <p className="mt-1 text-xs text-slate-400">{t("Bildirimin yalnızca bu hesabında saklanır; topluluk doğrulaması veya bağımsız teyit anlamına gelmez.")}</p>
@@ -819,7 +826,7 @@ function JobsPage() {
               })}
             </div>
             {jobFeedbackNotice && <p role="status" className="mt-3 text-xs text-slate-300">{jobFeedbackNotice}</p>}
-            {jobFeedbackTypes.length > 0 && <p className="mt-2 text-[11px] text-slate-500">{t("Bu ilan için kayıtlı kişisel bildirimin sayısı")}: {jobFeedbackTypes.length}</p>}
+            {jobFeedbackTypes.length > 0 && <p className="mt-2 text-xs text-slate-400">{t("Bu ilan için kayıtlı kişisel bildirimin sayısı")}: {jobFeedbackTypes.length}</p>}
           </section>
         </div>
       </div>}

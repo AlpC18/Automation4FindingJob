@@ -185,3 +185,21 @@ html[data-theme="light"] [class*="bg-[#0d131f]"] { background-color: var(--surfa
 .nav-more > summary::-webkit-details-marker { display: none; }
 .nav-more > summary:hover { color: var(--text); background: var(--surface-muted); }
 .nav-more[open] > summary svg { transform: rotate(180deg); }
+
+/* Keyboard users always see where they are. */
+a:focus-visible, button:focus-visible, summary:focus-visible, [role="tab"]:focus-visible,
+input:focus-visible, select:focus-visible, textarea:focus-visible { outline: 2px solid var(--accent-strong); outline-offset: 2px; }
+
+/* Light theme for pages styled with fixed dark utility classes: map them onto the theme variables. */
+html[data-theme="light"] [class*="bg-slate-9"], html[data-theme="light"] [class*="bg-[#0"], html[data-theme="light"] [class*="bg-[#1"] { background-color: var(--surface) !important; }
+html[data-theme="light"] [class*="bg-slate-8"], html[data-theme="light"] [class*="bg-slate-7"] { background-color: var(--surface-muted) !important; }
+html[data-theme="light"] [class*="border-slate-"] { border-color: var(--border) !important; }
+html[data-theme="light"] [class*="text-slate-1"], html[data-theme="light"] [class*="text-slate-2"], html[data-theme="light"] [class*="text-slate-3"] { color: var(--text) !important; }
+html[data-theme="light"] [class*="text-slate-4"] { color: var(--muted) !important; }
+html[data-theme="light"] .text-white:not([class*="bg-blue-"]):not([class*="bg-emerald-"]):not([class*="bg-indigo-"]):not([class*="bg-red-"]):not([class*="bg-rose-"]):not([class*="bg-green-"]):not([class*="bg-purple-"]):not([class*="bg-sky-"]):not([class*="bg-gradient"]) { color: var(--text) !important; }
+html[data-theme="light"] [class*="text-blue-2"], html[data-theme="light"] [class*="text-blue-3"], html[data-theme="light"] [class*="text-blue-4"] { color: #1d4ed8 !important; }
+html[data-theme="light"] [class*="text-emerald-2"], html[data-theme="light"] [class*="text-emerald-3"], html[data-theme="light"] [class*="text-emerald-4"], html[data-theme="light"] [class*="text-lime-"] { color: #047857 !important; }
+html[data-theme="light"] [class*="text-amber-"], html[data-theme="light"] [class*="text-yellow-"], html[data-theme="light"] [class*="text-orange-"] { color: #b45309 !important; }
+html[data-theme="light"] [class*="text-rose-"], html[data-theme="light"] [class*="text-red-"], html[data-theme="light"] [class*="text-pink-"] { color: #be123c !important; }
+html[data-theme="light"] [class*="text-indigo-"], html[data-theme="light"] [class*="text-purple-"] { color: #4338ca !important; }
+html[data-theme="light"] [class*="text-sky-"], html[data-theme="light"] [class*="text-cyan-"] { color: #0369a1 !important; }

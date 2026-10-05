@@ -1,4 +1,5 @@
 "use client";
+import { notify } from "@/lib/notify";
 import { useLanguage } from "@/lib/i18n";
 import { useEffect, useState } from "react";
 import { Sparkles, Search, Database, TrendingUp, ArrowRight, RefreshCw, Layers } from "lucide-react";
@@ -22,9 +23,9 @@ export default function SemanticSearchPage() {
       setIndexing(true);
       const res = await fetchFromApi("/rank/semantic/index", { method: "POST" });
       setIndexStats(res);
-      alert(t("ChromaDB vector indexing complete: {count} job vectors added.", { count: res.indexed_count }));
+      notify(t("ChromaDB vector indexing complete: {count} job vectors added.", { count: res.indexed_count }));
     } catch (e) {
-      alert(t("İndeksleme sırasında hata oluştu."));
+      notify(t("İndeksleme sırasında hata oluştu."));
     } finally {
       setIndexing(false);
     }
@@ -67,7 +68,7 @@ export default function SemanticSearchPage() {
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
         <div>
           <h1 className="text-2xl font-bold text-white flex items-center gap-3">
-            <Sparkles className="w-7 h-7 text-indigo-400" /> {t("Semantik Vektör Arama & Piyasa Kümeleri")}</h1>
+            <Sparkles className="w-7 h-7 text-indigo-400" /> {t("Anlamsal arama")}</h1>
           <p className="text-slate-400 mt-1">
             {t("ChromaDB Cosine Similarity ile doğal dilde arama yapın, \"buna benzer ilanları bul\" fonksiyonunu kullanın.")}</p>
         </div>
@@ -113,7 +114,7 @@ export default function SemanticSearchPage() {
                 className="text-xs bg-slate-800/80 border border-slate-700 px-3 py-1 rounded-lg text-slate-300 flex items-center gap-2"
               >
                 <span>{item.skill}</span>
-                <span className="text-[10px] font-mono text-indigo-400 font-bold">%{item.percentage}</span>
+                <span className="text-xs font-mono text-indigo-400 font-bold">%{item.percentage}</span>
               </span>
             ))}
           </div>

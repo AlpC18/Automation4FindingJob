@@ -1,4 +1,5 @@
 "use client";
+import { notify } from "@/lib/notify";
 import { useLanguage } from "@/lib/i18n";
 import { useState, useEffect, useRef } from "react";
 import { Mic, MicOff, Volume2, Sparkles, RefreshCw, CheckCircle2, AlertTriangle, Shield } from "lucide-react";
@@ -37,7 +38,7 @@ export default function VoiceInterviewPage() {
       setTranscript("");
       setAnalysisResult(null);
     } catch (e) {
-      alert(t("Soru üretilemedi."));
+      notify(t("Soru üretilemedi."));
     } finally {
       setLoadingQuestion(false);
     }
@@ -85,7 +86,7 @@ export default function VoiceInterviewPage() {
       utterance.onend = () => setSpeaking(false);
       window.speechSynthesis.speak(utterance);
     } else {
-      alert(t("Tarayıcınız ses sentezini (TTS) desteklemiyor."));
+      notify(t("Tarayıcınız ses sentezini (TTS) desteklemiyor."));
     }
   }
 
@@ -129,7 +130,7 @@ export default function VoiceInterviewPage() {
       const SpeechRecognition = (window as any).SpeechRecognition || (window as any).webkitSpeechRecognition;
       if (!SpeechRecognition) {
         if (!mediaRecorderRef.current) {
-          alert(t("Tarayıcınız ses kaydını desteklemiyor. Lütfen Chrome veya Safari kullanın."));
+          notify(t("Tarayıcınız ses kaydını desteklemiyor. Lütfen Chrome veya Safari kullanın."));
           return;
         }
         startTimeRef.current = Date.now();
@@ -185,7 +186,7 @@ export default function VoiceInterviewPage() {
       setTranscript(payload.text || "");
       await handleAnalyzeAnswer(payload.text || "", Math.max(5, (Date.now() - startTimeRef.current) / 1000));
     } catch (error: any) {
-      alert(error?.message || "Whisper transkripsiyonu başarısız.");
+      notify(error?.message || "Whisper transkripsiyonu başarısız.");
     } finally {
       setTranscribing(false);
     }
@@ -215,7 +216,7 @@ export default function VoiceInterviewPage() {
       {/* Header */}
       <div>
         <h1 className="text-2xl font-bold text-white flex items-center gap-3">
-          <Volume2 className="w-7 h-7 text-indigo-400" /> {t("İnteraktif Sesli Mülakat Koçu (Voice AI)")}</h1>
+          <Volume2 className="w-7 h-7 text-indigo-400" /> {t("Sesli mülakat")}</h1>
         <p className="text-slate-400 mt-1">
           {t("Yapay zeka mülakatçı soruyu seslendirir; cevabınızı mikrofonla konuşarak verirsiniz. Sistem konuşma hızı ve dolgu kelimelerinizi ölçer.")}</p>
       </div>
@@ -258,7 +259,7 @@ export default function VoiceInterviewPage() {
             <span className="font-semibold text-slate-300">{t("Mülakatçının Duymak İstediği Anahtar Noktalar:")}</span>
             <div className="flex flex-wrap gap-2 pt-1">
               {questionData.listen_for.map((point: string, i: number) => (
-                <span key={i} className="px-2.5 py-0.5 rounded-full bg-slate-800 text-slate-300 text-[11px]">
+                <span key={i} className="px-2.5 py-0.5 rounded-full bg-slate-800 text-slate-300 text-xs">
                   {t("•")}{point}
                 </span>
               ))}
@@ -292,7 +293,7 @@ export default function VoiceInterviewPage() {
         {/* Live Transcript Display */}
         <div className="bg-slate-950/80 border border-slate-800 rounded-xl p-4 min-h-[90px] text-left text-xs text-slate-300 leading-relaxed font-sans">
           {transcript || (
-            <span className="text-slate-600 italic">
+            <span className="text-slate-400 italic">
               {t("Mikrofon butonuna basıp konuştuğunuzda metin anlık olarak burada belirecektir...")}</span>
           )}
         </div>
@@ -317,25 +318,25 @@ export default function VoiceInterviewPage() {
 
           <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
             <div className="bg-slate-950/80 border border-slate-800 p-3 rounded-xl text-center">
-              <div className="text-[10px] text-slate-400 uppercase font-mono">{t("Akıcılık Puanı")}</div>
+              <div className="text-xs text-slate-400 uppercase font-mono">{t("Akıcılık Puanı")}</div>
               <div className="text-2xl font-bold text-emerald-400 font-mono mt-0.5">
                 %{analysisResult.fluency_score}
               </div>
             </div>
             <div className="bg-slate-950/80 border border-slate-800 p-3 rounded-xl text-center">
-              <div className="text-[10px] text-slate-400 uppercase font-mono">{t("Konuşma Hızı (WPM)")}</div>
+              <div className="text-xs text-slate-400 uppercase font-mono">{t("Konuşma Hızı (WPM)")}</div>
               <div className="text-2xl font-bold text-white font-mono mt-0.5">
                 {analysisResult.words_per_minute}
               </div>
             </div>
             <div className="bg-slate-950/80 border border-slate-800 p-3 rounded-xl text-center">
-              <div className="text-[10px] text-slate-400 uppercase font-mono">{t("Dolgu Kelimeler")}</div>
+              <div className="text-xs text-slate-400 uppercase font-mono">{t("Dolgu Kelimeler")}</div>
               <div className="text-2xl font-bold text-amber-400 font-mono mt-0.5">
                 {analysisResult.total_fillers_used}
               </div>
             </div>
             <div className="bg-slate-950/80 border border-slate-800 p-3 rounded-xl text-center">
-              <div className="text-[10px] text-slate-400 uppercase font-mono">{t("Kelime Sayısı")}</div>
+              <div className="text-xs text-slate-400 uppercase font-mono">{t("Kelime Sayısı")}</div>
               <div className="text-2xl font-bold text-blue-400 font-mono mt-0.5">
                 {analysisResult.total_words}
               </div>
@@ -343,7 +344,7 @@ export default function VoiceInterviewPage() {
           </div>
 
           <div className="bg-slate-950/60 p-3 rounded-xl border border-slate-800 text-xs text-slate-300">
-            🎯 <strong>{t("Ritim Değerlendirmesi:")}</strong> {analysisResult.pace_verdict}
+            <strong>{t("Ritim Değerlendirmesi:")}</strong> {analysisResult.pace_verdict}
           </div>
         </div>
       )}

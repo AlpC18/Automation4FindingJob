@@ -182,7 +182,7 @@ export default function NotificationDrawer() {
       >
         <Bell className="w-4 h-4" />
         {unreadCount > 0 && (
-          <span className="absolute -top-1 -right-1 w-4 h-4 rounded-full bg-rose-500 text-white text-[10px] font-bold flex items-center justify-center animate-pulse">
+          <span className="absolute -top-1 -right-1 w-4 h-4 rounded-full bg-rose-500 text-white text-xs font-bold flex items-center justify-center animate-pulse">
             {unreadCount}
           </span>
         )}
@@ -201,7 +201,7 @@ export default function NotificationDrawer() {
               <div className="flex items-center gap-2">
                 <button
                   onClick={clearAll}
-                  className="text-slate-500 hover:text-slate-300 p-1 text-xs"
+                  className="text-slate-400 hover:text-slate-300 p-1 text-xs"
                   title={t("Tümünü Temizle")}
                 >
                   <Trash2 className="w-3.5 h-3.5" />
@@ -218,7 +218,7 @@ export default function NotificationDrawer() {
             {/* Notification Items List */}
             <div className="flex-1 overflow-y-auto space-y-2.5 pr-1">
               {notifications.length === 0 ? (
-                <div className="text-center py-16 text-xs text-slate-500">{t("Bildirim bulunmuyor.")}</div>
+                <div className="text-center py-16 text-xs text-slate-400">{t("Bildirim bulunmuyor.")}</div>
               ) : (
                 notifications.map((item) => (
                   <div
@@ -232,9 +232,9 @@ export default function NotificationDrawer() {
                         {item.type === "info" && <Sparkles className="w-3.5 h-3.5 text-blue-400" />}
                     {t(item.title)}
                       </span>
-                      <span className="text-[10px] text-slate-500 font-mono">{item.timestamp}</span>
+                      <span className="text-xs text-slate-400 font-mono">{item.timestamp}</span>
                     </div>
-                    <p className="text-[11px] text-slate-400 leading-relaxed">{t(item.message)}</p>
+                    <p className="text-xs text-slate-400 leading-relaxed">{t(item.message)}</p>
                   </div>
                 ))
               )}
@@ -246,7 +246,7 @@ export default function NotificationDrawer() {
       {toast && !isOpen && (
         <div className="fixed bottom-5 right-5 z-40 w-80 rounded-xl border border-blue-500/30 bg-slate-900/95 p-3 shadow-2xl shadow-blue-950/40 backdrop-blur animate-in slide-in-from-right-4 duration-200">
           <div className="text-xs font-semibold text-white">{t(toast.title)}</div>
-          <div className="mt-1 text-[11px] leading-relaxed text-slate-400">{t(toast.message)}</div>
+          <div className="mt-1 text-xs leading-relaxed text-slate-400">{t(toast.message)}</div>
         </div>
       )}
     </>

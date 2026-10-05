@@ -38,7 +38,7 @@ export default function CVHeatmapPage() {
       {/* Header */}
       <div>
         <h1 className="text-2xl font-bold text-white flex items-center gap-3">
-          <Layers className="w-7 h-7 text-emerald-400" /> {t("ATS Anahtar Kelime Isı Haritası (Heatmap)")}</h1>
+          <Layers className="w-7 h-7 text-emerald-400" /> {t("CV analiz haritası")}</h1>
         <p className="text-slate-400 mt-1">
           {t("CV'nizin hedef ilandaki ATS anahtar kelimelerini karşılama yoğunluğunu ve eksik kritik terimleri ısı haritası üzerinde görselleştirin.")}</p>
       </div>
@@ -54,7 +54,7 @@ export default function CVHeatmapPage() {
             onChange={(e) => setJobText(e.target.value)}
             className="w-full bg-slate-950/80 border border-slate-700/80 rounded-xl p-3 text-xs text-white leading-relaxed font-sans"
           />
-          <div className="text-[11px] text-slate-500">
+          <div className="text-xs text-slate-400">
             {t("Farklı bir ilanı yapıştırarak CV uyum yoğunluğunun nasıl değiştiğini anlık gözlemleyebilirsiniz.")}</div>
         </div>
 
@@ -74,7 +74,7 @@ export default function CVHeatmapPage() {
 
           {/* Matched Keywords (Heatmap High Intensity) */}
           <div className="space-y-2">
-            <div className="text-[11px] font-semibold text-emerald-400 flex items-center gap-1.5">
+            <div className="text-xs font-semibold text-emerald-400 flex items-center gap-1.5">
               <CheckCircle2 className="w-3.5 h-3.5" />
               <span>{t("Güçlü Eşleşen Anahtar Kelimeler (")}{matched.length})</span>
             </div>
@@ -92,7 +92,7 @@ export default function CVHeatmapPage() {
 
           {/* Missing Keywords (Heatmap Zero Intensity) */}
           <div className="space-y-2 pt-2 border-t border-slate-800">
-            <div className="text-[11px] font-semibold text-rose-400 flex items-center gap-1.5">
+            <div className="text-xs font-semibold text-rose-400 flex items-center gap-1.5">
               <XCircle className="w-3.5 h-3.5" />
               <span>{t("CV'de Eksik Kalan Kritik Terimler (")}{missing.length})</span>
             </div>
@@ -106,12 +106,12 @@ export default function CVHeatmapPage() {
                 </span>
               ))}
             </div>
-            <div className="text-[11px] text-slate-400 pt-1">
-              💡 <strong>{t("Tavsiye:")}</strong> {t("Yukarıdaki eksik kelimeleri 'Deneyim' veya 'Projeler' bölümündeki madde işaretlerine doğal bir şekilde serpiştirin.")}</div>
+            <div className="text-xs text-slate-400 pt-1">
+              <strong>{t("Tavsiye:")}</strong> {t("Yukarıdaki eksik kelimeleri 'Deneyim' veya 'Projeler' bölümündeki madde işaretlerine doğal bir şekilde serpiştirin.")}</div>
           </div>
 
           <div className="space-y-2 pt-2 border-t border-slate-800">
-            <div className="text-[11px] font-semibold text-indigo-300">{t("CV paragraf yoğunluğu")}</div>
+            <div className="text-xs font-semibold text-indigo-300">{t("CV paragraf yoğunluğu")}</div>
             <div className="space-y-2 max-h-64 overflow-y-auto pr-1">
               {cvParagraphs.map((paragraph: string, index: number) => {
                 const matches = getParagraphMatches(paragraph);
@@ -121,8 +121,8 @@ export default function CVHeatmapPage() {
                     ? "border-amber-500/40 bg-amber-500/10"
                     : "border-slate-700 bg-slate-950/60";
                 return (
-                  <div key={`${index}-${paragraph.slice(0, 20)}`} className={`rounded-lg border p-2.5 text-[11px] text-slate-300 leading-relaxed ${tone}`}>
-                    <div className="mb-1 text-[9px] uppercase tracking-wide text-slate-500">
+                  <div key={`${index}-${paragraph.slice(0, 20)}`} className={`rounded-lg border p-2.5 text-xs text-slate-300 leading-relaxed ${tone}`}>
+                    <div className="mb-1 text-xs uppercase tracking-wide text-slate-400">
                       {matches} {t("eşleşme")}</div>
                     {paragraph}
                   </div>

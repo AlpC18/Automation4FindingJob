@@ -36,7 +36,7 @@ export default function PortalHealthPage() {
     if (status === "healthy") return <CheckCircle2 className="w-5 h-5 text-emerald-400" />;
     if (status === "warning") return <AlertTriangle className="w-5 h-5 text-amber-400" />;
     if (status === "degraded") return <XCircle className="w-5 h-5 text-red-400" />;
-    return <Activity className="w-5 h-5 text-slate-500" />;
+    return <Activity className="w-5 h-5 text-slate-400" />;
   }
 
   function getStatusBg(status: string) {
@@ -51,7 +51,7 @@ export default function PortalHealthPage() {
       <div>
         <h1 className="text-2xl font-bold text-white flex items-center gap-3">
           <Activity className="w-7 h-7 text-lime-400" /> {t("Portal Sağlık Monitörü")}</h1>
-        <p className="text-slate-400 mt-1">{t("Scraper kalitesi, parser degradation ve portal durumu")}</p>
+        <p className="text-slate-400 mt-1">{t("İlan kaynaklarının çalışma durumu")}</p>
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -84,7 +84,7 @@ export default function PortalHealthPage() {
               {portalReport?.issues?.length > 0 && (
                 <div className="space-y-1 mt-2">
                   {portalReport.issues.map((issue: string, i: number) => (
-                    <div key={i} className="text-xs text-red-300 bg-red-500/10 rounded-lg px-3 py-1.5">❌ {issue}</div>
+                    <div key={i} className="text-xs text-red-300 bg-red-500/10 rounded-lg px-3 py-1.5">{issue}</div>
                   ))}
                 </div>
               )}
@@ -92,13 +92,13 @@ export default function PortalHealthPage() {
               {portalReport?.warnings?.length > 0 && (
                 <div className="space-y-1 mt-2">
                   {portalReport.warnings.map((w: string, i: number) => (
-                    <div key={i} className="text-xs text-amber-300 bg-amber-500/10 rounded-lg px-3 py-1.5">⚠️ {w}</div>
+                    <div key={i} className="text-xs text-amber-300 bg-amber-500/10 rounded-lg px-3 py-1.5">{w}</div>
                   ))}
                 </div>
               )}
 
               {status === "no_data" && (
-                <div className="text-xs text-slate-500 mt-2">{t("Henüz bu portaldan tarama yapılmadı.")}</div>
+                <div className="text-xs text-slate-400 mt-2">{t("Henüz bu portaldan tarama yapılmadı.")}</div>
               )}
             </div>
           );

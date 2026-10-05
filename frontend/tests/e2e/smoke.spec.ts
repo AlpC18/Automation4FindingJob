@@ -55,11 +55,11 @@ test.describe("Career Agent critical navigation", () => {
 
     await page.goto("/jobs");
     await expect(page.getByText("Profilinize özel güvenli oturum açın.")).toBeVisible();
-    await expect(page.getByRole("heading", { name: "1.2 & 1.3 Çoklu Platform İlan Akışı & Algoritmik Eşleşme" })).toHaveCount(0);
+    await expect(page.getByRole("heading", { name: "İş ilanları" })).toHaveCount(0);
     await page.getByLabel("E-posta").fill("candidate@example.test");
     await page.getByLabel("Parola").fill("correct-horse-battery");
     await page.getByRole("button", { name: "Giriş yap" }).click();
-    await expect(page.getByRole("heading", { name: "1.2 & 1.3 Çoklu Platform İlan Akışı & Algoritmik Eşleşme" })).toBeVisible();
+    await expect(page.getByRole("heading", { name: "İş ilanları" })).toBeVisible();
   });
 
   test("lets the candidate opt in to personal follow-up emails", async ({ page }) => {

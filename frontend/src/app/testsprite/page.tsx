@@ -34,7 +34,7 @@ export default function TestSpritePage() {
         <div>
           <h1 className="text-2xl font-bold text-white flex items-center gap-2">
             <Sparkles className="w-6 h-6 text-blue-500" />
-            {t("1.7 TestSprite Entegrasyonu ile Otonom Kalite Güvencesi")}</h1>
+            {t("Test merkezi")}</h1>
           <p className="text-xs text-slate-400 mt-1">
             {t("Uçtan uca mimarinin (Anti-AI Humanizer, Ghost Job, X-Ray Dork, Form Memory, Rate Limiter) otomatik doğrulanması ve Auto-Fix onarımı.")}</p>
         </div>
@@ -109,12 +109,12 @@ export default function TestSpritePage() {
                     )}
                     <span className="font-bold text-white">{t.test_name}</span>
                   </div>
-                  <div className="text-[11px] text-slate-400 pl-6 font-mono">
+                  <div className="text-xs text-slate-400 pl-6 font-mono">
                     {t.details}
                   </div>
                 </div>
 
-                <span className={`text-[10px] px-2.5 py-1 rounded-full font-mono font-semibold self-start md:self-center ${t.passed ? 'bg-emerald-500/10 text-emerald-400 border border-emerald-500/20' : 'bg-rose-500/10 text-rose-400 border border-rose-500/20'}`}>
+                <span className={`text-xs px-2.5 py-1 rounded-full font-mono font-semibold self-start md:self-center ${t.passed ? 'bg-emerald-500/10 text-emerald-400 border border-emerald-500/20' : 'bg-rose-500/10 text-rose-400 border border-rose-500/20'}`}>
                   {t.passed ? "PASSED" : "FAILED"}
                 </span>
               </div>

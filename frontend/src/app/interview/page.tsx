@@ -1,4 +1,5 @@
 "use client";
+import { notify } from "@/lib/notify";
 import dynamic from "next/dynamic";
 import PageTabs from "@/components/PageTabs";
 import { useLanguage } from "@/lib/i18n";
@@ -108,7 +109,7 @@ function InterviewPage() {
     if (typeof window === "undefined") return;
     const SpeechRecognition = (window as any).SpeechRecognition || (window as any).webkitSpeechRecognition;
     if (!SpeechRecognition) {
-      alert(t("Tarayıcınız Web Speech API'yi desteklemiyor. Lütfen Chrome veya Brave kullanın veya yanıtınızı metin olarak girin."));
+      notify(t("Tarayıcınız Web Speech API'yi desteklemiyor. Lütfen Chrome veya Brave kullanın veya yanıtınızı metin olarak girin."));
       return;
     }
 
@@ -193,7 +194,7 @@ function InterviewPage() {
       <div>
         <h1 className="text-2xl font-bold text-white flex items-center gap-2">
           <MessageSquare className="w-6 h-6 text-blue-500" />
-          {t("1.5 Gerçek Zamanlı Sesli Mülakat Koçu & Pazarlık Ajanı (/interview)")}</h1>
+          {t("Mülakat hazırlığı")}</h1>
         <p className="text-xs text-slate-400 mt-1">
           {t("Yapay zekanın soruyu sesli sorduğu, mikrofonunuzla yanıtladığınız, WPM ve dolgu kelime analizli Sesli Koçluk Sistemi.")}</p>
       </div>
@@ -207,8 +208,8 @@ function InterviewPage() {
               <Sparkles className="w-4 h-4 text-indigo-400" /> {t("Sesli Mülakat Simülatörü")}</h2>
 
             {/* Persona Selector */}
-            <div className="flex items-center gap-1.5 text-[11px] bg-slate-900 p-1 rounded-xl border border-slate-800">
-              <span className="text-[10px] text-slate-400 px-1">{t("Mülakatçı:")}</span>
+            <div className="flex items-center gap-1.5 text-xs bg-slate-900 p-1 rounded-xl border border-slate-800">
+              <span className="text-xs text-slate-400 px-1">{t("Mülakatçı:")}</span>
               {[
                 { id: "alex_vp", label: "Alex (VP Eng)" },
                 { id: "elena_hr", label: "Elena (HR)" },
@@ -217,7 +218,7 @@ function InterviewPage() {
                 <button
                   key={p.id}
                   onClick={() => setSelectedPersona(p.id)}
-                  className={`px-2 py-0.5 rounded text-[10px] font-medium transition ${
+                  className={`px-2 py-0.5 rounded text-xs font-medium transition ${
                     selectedPersona === p.id
                       ? "bg-indigo-600 text-white"
                       : "text-slate-400 hover:text-white"
@@ -234,7 +235,7 @@ function InterviewPage() {
               {/* Question Card with Audio Speak Button */}
               <div className="p-4 rounded-xl bg-slate-900/80 border border-slate-800 space-y-2">
                 <div className="flex justify-between items-center">
-                  <span className="text-[10px] bg-blue-500/10 text-blue-400 px-2 py-0.5 rounded uppercase font-mono">
+                  <span className="text-xs bg-blue-500/10 text-blue-400 px-2 py-0.5 rounded uppercase font-mono">
                     {currentQ.type} {t("• Soru")}{currentQIndex + 1}/{questions.length}
                   </span>
                   <button
@@ -247,7 +248,7 @@ function InterviewPage() {
                 <p className="text-xs font-semibold text-slate-200 leading-relaxed">
                   {currentQ.question}
                 </p>
-                <div className="text-[10px] text-slate-400 pt-1">
+                <div className="text-xs text-slate-400 pt-1">
                   <strong>{t("Beklenen Odaklar:")}</strong> {currentQ.key_points?.join(" • ")}
                 </div>
               </div>
@@ -329,24 +330,24 @@ function InterviewPage() {
 
                   <div className="grid grid-cols-3 gap-2 text-center text-xs">
                     <div className="p-2 rounded bg-slate-900 border border-slate-800">
-                      <div className="text-[10px] text-slate-400">{t("Konuşma Hızı")}</div>
+                      <div className="text-xs text-slate-400">{t("Konuşma Hızı")}</div>
                       <div className="text-xs font-bold text-white font-mono mt-0.5">{vocalEvaluation.wpm} {t("WPM")}</div>
-                      <div className="text-[9px] text-sky-400">{vocalEvaluation.pace_label}</div>
+                      <div className="text-xs text-sky-400">{vocalEvaluation.pace_label}</div>
                     </div>
                     <div className="p-2 rounded bg-slate-900 border border-slate-800">
-                      <div className="text-[10px] text-slate-400">{t("Dolgu Kelimeler")}</div>
+                      <div className="text-xs text-slate-400">{t("Dolgu Kelimeler")}</div>
                       <div className="text-xs font-bold text-amber-400 font-mono mt-0.5">{vocalEvaluation.total_fillers} {t("adet")}</div>
-                      <div className="text-[9px] text-slate-400">{t("um, uh, like")}</div>
+                      <div className="text-xs text-slate-400">{t("um, uh, like")}</div>
                     </div>
                     <div className="p-2 rounded bg-slate-900 border border-slate-800">
-                      <div className="text-[10px] text-slate-400">{t("STAR Uyumu")}</div>
+                      <div className="text-xs text-slate-400">{t("STAR Uyumu")}</div>
                       <div className="text-xs font-bold text-emerald-400 font-mono mt-0.5">%{vocalEvaluation.star_adherence_percent}</div>
-                      <div className="text-[9px] text-emerald-400">{t("Durum/Görev/Aksiyon")}</div>
+                      <div className="text-xs text-emerald-400">{t("Durum/Görev/Aksiyon")}</div>
                     </div>
                   </div>
 
-                  <div className="text-[11px] text-slate-300 bg-slate-900/60 p-2.5 rounded-lg border border-slate-800">
-                    💡 <strong>{t("Koçluk Tavsiyesi:")}</strong> {vocalEvaluation.actionable_suggestions?.[0] || vocalEvaluation.pace_feedback}
+                  <div className="text-xs text-slate-300 bg-slate-900/60 p-2.5 rounded-lg border border-slate-800">
+                    <strong>{t("Koçluk Tavsiyesi:")}</strong> {vocalEvaluation.actionable_suggestions?.[0] || vocalEvaluation.pace_feedback}
                   </div>
                 </div>
               )}
@@ -359,13 +360,13 @@ function InterviewPage() {
                     <span className="text-xs font-bold text-emerald-400 font-mono">
                       {evaluation.grade} (%{evaluation.score}{t("/100)")}</span>
                   </div>
-                  <ul className="text-[11px] text-slate-300 space-y-1 list-disc pl-4">
+                  <ul className="text-xs text-slate-300 space-y-1 list-disc pl-4">
                     {evaluation.feedback?.map((fb: string, i: number) => (
                       <li key={i}>{fb}</li>
                     ))}
                   </ul>
-                  <div className="p-2.5 bg-indigo-950/30 rounded-lg border border-indigo-500/20 text-[10px] text-indigo-300">
-                    💡 <strong>{t("Koçluk İpucu:")}</strong> {evaluation.coaching_tip}
+                  <div className="p-2.5 bg-indigo-950/30 rounded-lg border border-indigo-500/20 text-xs text-indigo-300">
+                    <strong>{t("Koçluk İpucu:")}</strong> {evaluation.coaching_tip}
                   </div>
                 </div>
               )}
@@ -379,15 +380,15 @@ function InterviewPage() {
             <div className="flex justify-between items-center">
               <h2 className="text-sm font-semibold text-white flex items-center gap-2">
                 <DollarSign className="w-4 h-4 text-emerald-400" /> {t("Pazarlık Ajanı (Offer Negotiator)")}</h2>
-              <span className="text-[10px] bg-emerald-500/10 text-emerald-400 px-2 py-0.5 rounded font-mono">
+              <span className="text-xs bg-emerald-500/10 text-emerald-400 px-2 py-0.5 rounded font-mono">
                 {t("PRD 3.4 Standardı")}</span>
             </div>
-            <p className="text-[11px] text-slate-400">
+            <p className="text-xs text-slate-400">
               {t("Gelen teklifi piyasa benchmark verileriyle analiz eder, işvereni küstürmeden %10-15 artış ve remote esneklik sağlayan diplomatik karşı teklif e-postası üretir.")}</p>
 
             <div className="space-y-2">
               <div>
-                <label className="text-[10px] font-semibold text-slate-400 uppercase">{t("Gelen Teklif (Initial Offer)")}</label>
+                <label className="text-xs font-semibold text-slate-400 uppercase">{t("Gelen Teklif (Initial Offer)")}</label>
                 <input
                   type="text"
                   value={initialOffer}
@@ -397,7 +398,7 @@ function InterviewPage() {
               </div>
 
               <div>
-                <label className="text-[10px] font-semibold text-slate-400 uppercase">{t("Piyasa Skalası (Benchmark Data)")}</label>
+                <label className="text-xs font-semibold text-slate-400 uppercase">{t("Piyasa Skalası (Benchmark Data)")}</label>
                 <input
                   type="text"
                   value={marketBench}
@@ -407,7 +408,7 @@ function InterviewPage() {
               </div>
 
               <div>
-                <label className="text-[10px] font-semibold text-slate-400 uppercase">{t("Talep Edilen Hedef Maaş")}</label>
+                <label className="text-xs font-semibold text-slate-400 uppercase">{t("Talep Edilen Hedef Maaş")}</label>
                 <input
                   type="text"
                   value={targetAmount}
@@ -431,7 +432,7 @@ function InterviewPage() {
                 <div className="flex justify-between items-center text-xs">
                   <span className="font-semibold text-slate-300">{t("Konu:")}{counterOfferDraft.subject}</span>
                 </div>
-                <pre className="p-3 bg-slate-950 border border-slate-800 rounded-xl text-[11px] text-slate-200 font-sans whitespace-pre-wrap max-h-48 overflow-y-auto leading-relaxed">
+                <pre className="p-3 bg-slate-950 border border-slate-800 rounded-xl text-xs text-slate-200 font-sans whitespace-pre-wrap max-h-48 overflow-y-auto leading-relaxed">
                   {counterOfferDraft.email_body}
                 </pre>
               </div>

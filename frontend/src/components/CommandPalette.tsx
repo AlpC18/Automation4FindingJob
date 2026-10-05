@@ -40,14 +40,14 @@ export default function CommandPalette() {
 
   const items: ActionItem[] = [
     { id: "dash", name: "Genel Bakış Dashboard", category: "Navigasyon", href: "/", icon: LayoutDashboard },
-    { id: "auto", name: "Otonom Başvuru & İnsan Onayı Kuyruğu", category: "Navigasyon", href: "/auto-apply", icon: Send },
-    { id: "sem", name: "Semantik Vektör Arama & Piyasa Kümeleri", category: "Navigasyon", href: "/semantic-search", icon: Sparkles },
+    { id: "auto", name: "Onay bekleyen başvurular", category: "Navigasyon", href: "/auto-apply", icon: Send },
+    { id: "sem", name: "Anlamsal arama", category: "Navigasyon", href: "/semantic-search", icon: Sparkles },
     { id: "prof", name: "LinkedIn & GitHub Profil Optimizatörü", category: "Navigasyon", href: "/profile-optimizer", icon: UserCheck },
     { id: "fol", name: "Akıllı Takip & Mülakat Takvimi", category: "Navigasyon", href: "/follow-up", icon: Calendar },
     { id: "outreach", name: "Yöneticiye Doğrudan Ulaşma (Cold Outreach)", category: "Navigasyon", href: "/cold-outreach", icon: Mail },
     { id: "negotiator", name: "Maaş & Teklif Pazarlık Koçu", category: "Navigasyon", href: "/offer-negotiator", icon: Award },
-    { id: "router", name: "Dinamik LLM Model Maliyet Yönlendiricisi", category: "Navigasyon", href: "/llm-router", icon: Cpu },
-    { id: "onb", name: "Hızlı Kurulum (Onboarding Sihirbazı)", category: "Navigasyon", href: "/onboarding", icon: Zap },
+    { id: "router", name: "Model yönlendirici", category: "Navigasyon", href: "/llm-router", icon: Cpu },
+    { id: "onb", name: "Hızlı kurulum", category: "Navigasyon", href: "/onboarding", icon: Zap },
     { id: "star", name: "STAR Mülakat Hazırlık Koçu", category: "Navigasyon", href: "/star-prep", icon: Target },
     { id: "sal", name: "Maaş İstihbarat Arama Motoru", category: "Navigasyon", href: "/salary-intel", icon: DollarSign },
     { id: "ups", name: "Upskill & Öğrenme Yol Haritası", category: "Navigasyon", href: "/upskill", icon: GraduationCap },
@@ -109,7 +109,7 @@ export default function CommandPalette() {
             placeholder={t("Sayfa veya aksiyon arayın... (Örn: 'vektör', 'başvuru', 'maaş')")}
             className="w-full py-4 bg-transparent text-sm text-white placeholder-slate-500 focus:outline-none"
           />
-          <kbd className="hidden sm:inline-block text-[10px] bg-slate-800 text-slate-400 px-2 py-1 rounded font-mono border border-slate-700">
+          <kbd className="hidden sm:inline-block text-xs bg-slate-800 text-slate-400 px-2 py-1 rounded font-mono border border-slate-700">
             ESC
           </kbd>
         </div>
@@ -117,7 +117,7 @@ export default function CommandPalette() {
         {/* Results List */}
         <div className="max-h-80 overflow-y-auto p-2 space-y-1">
           {filteredItems.length === 0 ? (
-            <div className="text-center py-8 text-xs text-slate-500">{t("Eşleşen komut bulunamadı.")}</div>
+            <div className="text-center py-8 text-xs text-slate-400">{t("Eşleşen komut bulunamadı.")}</div>
           ) : (
             filteredItems.map((item) => {
               const Icon = item.icon;
@@ -135,10 +135,10 @@ export default function CommandPalette() {
                       <div className="text-xs font-semibold text-slate-200 group-hover:text-white">
                         {t(item.name)}
                       </div>
-                      <div className="text-[10px] text-slate-500">{t(item.category)}</div>
+                      <div className="text-xs text-slate-400">{t(item.category)}</div>
                     </div>
                   </div>
-                  <ArrowRight className="w-4 h-4 text-slate-600 group-hover:text-slate-300 transition-colors" />
+                  <ArrowRight className="w-4 h-4 text-slate-400 group-hover:text-slate-300 transition-colors" />
                 </button>
               );
             })

@@ -48,7 +48,7 @@ export default function SeenJobsPage() {
         <div>
           <h1 className="text-2xl font-bold text-white flex items-center gap-3">
             <Eye className="w-7 h-7 text-cyan-400" /> {t("Görülen İlanlar Takibi")}</h1>
-          <p className="text-slate-400 mt-1">{t("Tüm karşılaşılan ilanlar, dedup durumu ve deadline uyarıları")}</p>
+          <p className="text-slate-400 mt-1">{t("Daha önce görülen ilanlar ve son başvuru tarihi uyarıları")}</p>
         </div>
         <div className="flex gap-2">
           <button onClick={handleSweep} className="px-4 py-2 bg-red-600/20 text-red-300 border border-red-500/30 rounded-lg text-sm hover:bg-red-600/30 transition-colors">
@@ -90,10 +90,10 @@ export default function SeenJobsPage() {
 
       {/* Content */}
       {loading ? (
-        <div className="text-center py-16 text-slate-500">{t("Yükleniyor...")}</div>
+        <div className="text-center py-16 text-slate-400">{t("Yükleniyor...")}</div>
       ) : tab === "new" ? (
         <div className="space-y-2">
-          {jobsList.length === 0 && <div className="text-center py-16 text-slate-500">{t("Yeni ilan yok")}</div>}
+          {jobsList.length === 0 && <div className="text-center py-16 text-slate-400">{t("Yeni ilan yok")}</div>}
           {jobsList.map(([key, job]: [string, any]) => (
             <div key={key} className="bg-slate-800/50 border border-slate-700/40 rounded-xl p-4 flex items-center justify-between hover:bg-slate-800/80 transition-colors">
               <div className="flex-1">
@@ -115,7 +115,7 @@ export default function SeenJobsPage() {
         </div>
       ) : (
         <div className="space-y-2">
-          {closingSoon.length === 0 && <div className="text-center py-16 text-slate-500">{t("Yakında kapanan ilan yok")}</div>}
+          {closingSoon.length === 0 && <div className="text-center py-16 text-slate-400">{t("Yakında kapanan ilan yok")}</div>}
           {closingSoon.map((job: any, i: number) => (
             <div key={i} className="bg-slate-800/50 border border-amber-500/20 rounded-xl p-4 flex items-center justify-between">
               <div className="flex-1">

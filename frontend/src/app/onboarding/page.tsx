@@ -1,4 +1,5 @@
 "use client";
+import { notify } from "@/lib/notify";
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { Zap, CheckCircle2, ArrowRight, UserCheck, Code, Brain, PenLine, Search, MapPin, Check } from "lucide-react";
@@ -255,7 +256,7 @@ export default function OnboardingPage() {
       // Next step of the start flow: source and API setup, then the first scan.
       router.push("/sources");
     } catch (e) {
-      alert(t("Profil kaydedilemedi."));
+      notify(t("Profil kaydedilemedi."));
     } finally {
       setSaving(false);
     }
@@ -318,20 +319,20 @@ export default function OnboardingPage() {
             </div>
             <div>
               <label className="text-xs text-slate-400 block mb-1">{t("Hedef Pozisyon / Rol Başlığı")}</label>
-              <p className="mb-2 text-[11px] text-slate-500">{t("Sektör seç, ardından hedef rolünü seç. Listede yoksa özel rol girebilirsin.")}</p>
+              <p className="mb-2 text-xs text-slate-400">{t("Sektör seç, ardından hedef rolünü seç. Listede yoksa özel rol girebilirsin.")}</p>
               <div className="mb-2 flex gap-2 overflow-x-auto pb-1" role="tablist" aria-label={t("Sektör kategorileri")}>
-                {ROLE_GROUPS.map((group) => <button key={group.id} type="button" role="tab" aria-selected={roleGroup === group.id} onClick={() => { setRoleGroup(group.id); setRoleSearch(""); }} className={`shrink-0 rounded-full border px-3 py-1.5 text-[11px] font-medium transition ${roleGroup === group.id ? "border-emerald-500/40 bg-emerald-500/10 text-emerald-300" : "border-slate-700 text-slate-400 hover:border-slate-500 hover:text-slate-200"}`}>{locale === "en" ? group.en : group.tr}</button>)}
+                {ROLE_GROUPS.map((group) => <button key={group.id} type="button" role="tab" aria-selected={roleGroup === group.id} onClick={() => { setRoleGroup(group.id); setRoleSearch(""); }} className={`shrink-0 rounded-full border px-3 py-1.5 text-xs font-medium transition ${roleGroup === group.id ? "border-emerald-500/40 bg-emerald-500/10 text-emerald-300" : "border-slate-700 text-slate-400 hover:border-slate-500 hover:text-slate-200"}`}>{locale === "en" ? group.en : group.tr}</button>)}
               </div>
-              <div className="relative mb-2"><Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-500" /><input value={roleSearch} onChange={(e) => setRoleSearch(e.target.value)} placeholder={t("Rol ara…")} aria-label={t("Rol ara")} className="w-full rounded-xl border border-slate-700/80 bg-slate-950/80 py-2.5 pl-9 pr-3 text-xs text-white" /></div>
+              <div className="relative mb-2"><Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" /><input value={roleSearch} onChange={(e) => setRoleSearch(e.target.value)} placeholder={t("Rol ara…")} aria-label={t("Rol ara")} className="w-full rounded-xl border border-slate-700/80 bg-slate-950/80 py-2.5 pl-9 pr-3 text-xs text-white" /></div>
               <div className="grid max-h-48 grid-cols-1 gap-2 overflow-y-auto pr-1 sm:grid-cols-2" role="group" aria-label={t("Hedef rol seçenekleri")}>
                 {(ROLE_GROUPS.find((group) => group.id === roleGroup)?.roles || []).filter((role) => `${role.tr} ${role.en}`.toLocaleLowerCase(locale === "tr" ? "tr-TR" : "en-US").includes(roleSearch.trim().toLocaleLowerCase(locale === "tr" ? "tr-TR" : "en-US"))).map((role) => {
                   const selected = formData.target_role === role.value;
                   return <button key={role.value} type="button" aria-pressed={selected} onClick={() => setFormData({ ...formData, target_role: role.value })} className={`flex min-h-10 items-center justify-between gap-2 rounded-xl border px-3 py-2 text-left text-xs transition ${selected ? "border-emerald-500/40 bg-emerald-500/10 text-emerald-200" : "border-slate-800 bg-slate-950/50 text-slate-300 hover:border-slate-600 hover:bg-slate-900"}`}><span>{locale === "en" ? role.en : role.tr}</span>{selected && <Check className="h-3.5 w-3.5 shrink-0 text-emerald-400" />}</button>;
                 })}
               </div>
-              {roleSearch && !(ROLE_GROUPS.find((group) => group.id === roleGroup)?.roles || []).some((role) => `${role.tr} ${role.en}`.toLocaleLowerCase(locale === "tr" ? "tr-TR" : "en-US").includes(roleSearch.trim().toLocaleLowerCase(locale === "tr" ? "tr-TR" : "en-US"))) && <p className="py-3 text-center text-xs text-slate-500">{t("Bu kategoride eşleşen rol yok.")}</p>}
+              {roleSearch && !(ROLE_GROUPS.find((group) => group.id === roleGroup)?.roles || []).some((role) => `${role.tr} ${role.en}`.toLocaleLowerCase(locale === "tr" ? "tr-TR" : "en-US").includes(roleSearch.trim().toLocaleLowerCase(locale === "tr" ? "tr-TR" : "en-US"))) && <p className="py-3 text-center text-xs text-slate-400">{t("Bu kategoride eşleşen rol yok.")}</p>}
               <div className="mt-2 flex gap-2"><input value={customRole} onChange={(e) => setCustomRole(e.target.value)} onKeyDown={(e) => { if (e.key === "Enter" && customRole.trim()) { e.preventDefault(); setFormData({ ...formData, target_role: customRole.trim() }); setCustomRole(""); } }} placeholder={t("Listede yoksa özel rol yaz")} aria-label={t("Özel hedef rol")} className="min-w-0 flex-1 rounded-xl border border-slate-700/80 bg-slate-950/80 px-3 py-2 text-xs text-white" /><button type="button" disabled={!customRole.trim()} onClick={() => { setFormData({ ...formData, target_role: customRole.trim() }); setCustomRole(""); }} className="rounded-xl border border-slate-700 px-3 py-2 text-xs text-slate-200 hover:bg-slate-800 disabled:opacity-40">{t("Rolü kullan")}</button></div>
-              {formData.target_role && <p className="mt-2 text-[11px] text-emerald-300">{t("Seçilen rol:")} {formData.target_role}</p>}
+              {formData.target_role && <p className="mt-2 text-xs text-emerald-300">{t("Seçilen rol:")} {formData.target_role}</p>}
             </div>
             <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
               <div>
@@ -345,20 +346,20 @@ export default function OnboardingPage() {
               </div>
               <div>
                 <label className="text-xs text-slate-400 block mb-1">{t("Lokasyon / Tercih")}</label>
-                <p className="mb-2 text-[11px] text-slate-500">{t("Arama için tek bir ülke veya özel şehir seç.")}</p>
+                <p className="mb-2 text-xs text-slate-400">{t("Arama için tek bir ülke veya özel şehir seç.")}</p>
                 <div className="mb-2 grid grid-cols-3 gap-1 rounded-xl border border-slate-800 bg-slate-950/60 p-1" role="tablist" aria-label={t("Lokasyon kategorileri")}>
-                  {[{ id: "europe", tr: "Avrupa", en: "Europe" }, { id: "us", tr: "ABD", en: "United States" }, { id: "remote", tr: "Uzaktan", en: "Remote" }].map((item) => <button key={item.id} type="button" role="tab" aria-selected={locationRegion === item.id} onClick={() => { setLocationRegion(item.id as "europe" | "us" | "remote"); setLocationSearch(""); }} className={`rounded-lg px-2 py-2 text-[11px] font-medium transition ${locationRegion === item.id ? "bg-slate-800 text-white" : "text-slate-400 hover:text-slate-200"}`}>{locale === "en" ? item.en : item.tr}</button>)}
+                  {[{ id: "europe", tr: "Avrupa", en: "Europe" }, { id: "us", tr: "ABD", en: "United States" }, { id: "remote", tr: "Uzaktan", en: "Remote" }].map((item) => <button key={item.id} type="button" role="tab" aria-selected={locationRegion === item.id} onClick={() => { setLocationRegion(item.id as "europe" | "us" | "remote"); setLocationSearch(""); }} className={`rounded-lg px-2 py-2 text-xs font-medium transition ${locationRegion === item.id ? "bg-slate-800 text-white" : "text-slate-400 hover:text-slate-200"}`}>{locale === "en" ? item.en : item.tr}</button>)}
                 </div>
                 {locationRegion === "europe" && <>
-                  <div className="relative mb-2"><Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-500" /><input value={locationSearch} onChange={(e) => setLocationSearch(e.target.value)} placeholder={t("Avrupa ülkelerinde ara…")} aria-label={t("Ülke ara")} className="w-full rounded-xl border border-slate-700/80 bg-slate-950/80 py-2.5 pl-9 pr-3 text-xs text-white" /></div>
+                  <div className="relative mb-2"><Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" /><input value={locationSearch} onChange={(e) => setLocationSearch(e.target.value)} placeholder={t("Avrupa ülkelerinde ara…")} aria-label={t("Ülke ara")} className="w-full rounded-xl border border-slate-700/80 bg-slate-950/80 py-2.5 pl-9 pr-3 text-xs text-white" /></div>
                   <div className="grid max-h-36 grid-cols-2 gap-1.5 overflow-y-auto pr-1 sm:grid-cols-3" role="group" aria-label={t("Avrupa ülkeleri")}>
-                    {EUROPE_COUNTRIES.filter((country) => `${country.tr} ${country.en}`.toLocaleLowerCase(locale === "tr" ? "tr-TR" : "en-US").includes(locationSearch.trim().toLocaleLowerCase(locale === "tr" ? "tr-TR" : "en-US"))).map((country) => <button key={country.value} type="button" aria-pressed={formData.location === country.value} onClick={() => setFormData({ ...formData, location: country.value })} className={`truncate rounded-lg border px-2.5 py-2 text-left text-[11px] transition ${formData.location === country.value ? "border-sky-500/40 bg-sky-500/10 text-sky-200" : "border-slate-800 bg-slate-950/40 text-slate-300 hover:border-slate-600"}`}>{locale === "en" ? country.en : country.tr}</button>)}
+                    {EUROPE_COUNTRIES.filter((country) => `${country.tr} ${country.en}`.toLocaleLowerCase(locale === "tr" ? "tr-TR" : "en-US").includes(locationSearch.trim().toLocaleLowerCase(locale === "tr" ? "tr-TR" : "en-US"))).map((country) => <button key={country.value} type="button" aria-pressed={formData.location === country.value} onClick={() => setFormData({ ...formData, location: country.value })} className={`truncate rounded-lg border px-2.5 py-2 text-left text-xs transition ${formData.location === country.value ? "border-sky-500/40 bg-sky-500/10 text-sky-200" : "border-slate-800 bg-slate-950/40 text-slate-300 hover:border-slate-600"}`}>{locale === "en" ? country.en : country.tr}</button>)}
                   </div>
                 </>}
                 {locationRegion === "us" && <button type="button" aria-pressed={formData.location === "United States"} onClick={() => setFormData({ ...formData, location: "United States" })} className={`flex w-full items-center justify-between rounded-xl border px-3 py-3 text-left text-xs transition ${formData.location === "United States" ? "border-sky-500/40 bg-sky-500/10 text-sky-200" : "border-slate-800 bg-slate-950/40 text-slate-300 hover:border-slate-600"}`}>{locale === "en" ? "United States" : "Amerika Birleşik Devletleri"}{formData.location === "United States" && <Check className="h-4 w-4 text-sky-400" />}</button>}
                 {locationRegion === "remote" && <div className="grid grid-cols-1 gap-1.5">{LOCATION_PRESETS.filter((item) => item.value !== "United States").map((item) => <button key={item.value} type="button" aria-pressed={formData.location === item.value} onClick={() => setFormData({ ...formData, location: item.value })} className={`flex items-center justify-between rounded-xl border px-3 py-2.5 text-left text-xs transition ${formData.location === item.value ? "border-sky-500/40 bg-sky-500/10 text-sky-200" : "border-slate-800 bg-slate-950/40 text-slate-300 hover:border-slate-600"}`}>{locale === "en" ? item.en : item.tr}{formData.location === item.value && <Check className="h-4 w-4 text-sky-400" />}</button>)}</div>}
-                <div className="relative mt-2"><MapPin className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-500" /><input value={formData.location} onChange={(e) => setFormData({ ...formData, location: e.target.value })} placeholder={t("Veya şehir / özel lokasyon yaz")} aria-label={t("Özel lokasyon")} className="w-full rounded-xl border border-slate-700/80 bg-slate-950/80 py-2.5 pl-9 pr-3 text-xs text-white" /></div>
-                {formData.location && <p className="mt-1 text-[11px] text-sky-300">{t("Seçilen lokasyon:")} {formData.location}</p>}
+                <div className="relative mt-2"><MapPin className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" /><input value={formData.location} onChange={(e) => setFormData({ ...formData, location: e.target.value })} placeholder={t("Veya şehir / özel lokasyon yaz")} aria-label={t("Özel lokasyon")} className="w-full rounded-xl border border-slate-700/80 bg-slate-950/80 py-2.5 pl-9 pr-3 text-xs text-white" /></div>
+                {formData.location && <p className="mt-1 text-xs text-sky-300">{t("Seçilen lokasyon:")} {formData.location}</p>}
               </div>
             </div>
           </div>
@@ -391,7 +392,7 @@ export default function OnboardingPage() {
             <div>
               <div className="flex items-center justify-between mb-1">
                 <label className="text-xs text-slate-400">{t("Ham CV Metni")}</label>
-                <label className="text-[11px] text-blue-300 cursor-pointer">
+                <label className="text-xs text-blue-300 cursor-pointer">
                   {cvBusy ? t("CV okunuyor…") : t("PDF / DOCX yükle")}
                   <input
                     type="file"
@@ -406,11 +407,11 @@ export default function OnboardingPage() {
                   />
                 </label>
               </div>
-              <label className="mb-2 flex items-start gap-2 text-[11px] leading-relaxed text-slate-400">
+              <label className="mb-2 flex items-start gap-2 text-xs leading-relaxed text-slate-400">
                 <input type="checkbox" checked={useAiCvExtraction} onChange={(event) => setUseAiCvExtraction(event.target.checked)} className="mt-0.5" />
                 <span>{t("AI ile çıkarım seçilirse CV metni Ayarlar'da seçili AI sağlayıcısında işlenir; bulut sağlayıcısıysa metin cihazından çıkar. Kapalıysa yalnızca yerel çıkarım kullanılır.")}</span>
               </label>
-              {cvMessage && <p role="status" className="mb-2 text-[11px] text-slate-400">{cvMessage}</p>}
+              {cvMessage && <p role="status" className="mb-2 text-xs text-slate-400">{cvMessage}</p>}
               {cvSuggestions && <div className="mb-3"><CvImportReview fields={cvSuggestions.fields} originalText={cvSuggestions.text} quality={cvSuggestions.quality} analysis={cvSuggestions.analysis} optimizedCvText={cvSuggestions.optimized_cv_text} aiWarning={cvSuggestions.ai_warning} aiUsed={cvSuggestions.ai_used} onApply={applyCvSuggestions} onCancel={() => setCvSuggestions(null)} /></div>}
               <textarea rows={5} value={formData.raw_cv_text} onChange={(e) => setFormData({ ...formData, raw_cv_text: e.target.value })} className="w-full bg-slate-950/80 border border-slate-700/80 rounded-xl p-3 text-xs text-white" />
             </div>
@@ -425,7 +426,7 @@ export default function OnboardingPage() {
                     {(["title", "company", "period"] as const).map((key) => <input key={key} placeholder={{ title: "Pozisyon", company: "Şirket", period: "Dönem" }[key]} value={item[key]} onChange={(e) => setFormData({ ...formData, experience: formData.experience.map((row: any, i: number) => i === index ? { ...row, [key]: e.target.value } : row) })} className="bg-slate-950 border border-slate-700 rounded-lg px-3 py-2 text-xs text-white" />)}
                   </div>
                   <textarea rows={2} placeholder={t("Başarılar (her satıra bir madde)")} value={item.bulletsText} onChange={(e) => setFormData({ ...formData, experience: formData.experience.map((row: any, i: number) => i === index ? { ...row, bulletsText: e.target.value } : row) })} className="w-full bg-slate-950 border border-slate-700 rounded-lg p-2 text-xs text-white" />
-                  <button type="button" onClick={() => setFormData({ ...formData, experience: formData.experience.filter((_: any, i: number) => i !== index) })} className="text-[11px] text-rose-300">{t("Deneyimi kaldır")}</button>
+                  <button type="button" onClick={() => setFormData({ ...formData, experience: formData.experience.filter((_: any, i: number) => i !== index) })} className="text-xs text-rose-300">{t("Deneyimi kaldır")}</button>
                 </div>
               ))}
             </div>
@@ -456,8 +457,8 @@ export default function OnboardingPage() {
                 className="w-full bg-slate-950/80 border border-slate-700/80 rounded-xl p-3 text-xs text-white leading-relaxed"
               />
             </div>
-            <div className="text-[11px] text-slate-500">
-              {t("💡 Bu beceriler ilanlarla uyum tahmininde ve CV taslaklarında kanıt olarak kullanılır; yalnızca gerçekten sahip olduklarını yaz.")}</div>
+            <div className="text-xs text-slate-400">
+              {t("Bu beceriler ilanlarla uyum tahmininde ve CV taslaklarında kanıt olarak kullanılır; yalnızca gerçekten sahip olduklarını yaz.")}</div>
           </div>
         )}
 
@@ -479,7 +480,7 @@ export default function OnboardingPage() {
                 }`}
               >
                 <div className="text-xs font-bold text-white">{t(opt.title)}</div>
-                <div className="text-[11px] text-slate-400 mt-0.5">{t(opt.desc)}</div>
+                <div className="text-xs text-slate-400 mt-0.5">{t(opt.desc)}</div>
               </button>
             ))}
           </div>
@@ -503,13 +504,13 @@ export default function OnboardingPage() {
                 }`}
               >
                 <div className="text-xs font-bold text-white">{t(tone.title)}</div>
-                <div className="text-[11px] text-slate-400 mt-0.5">{t(tone.desc)}</div>
+                <div className="text-xs text-slate-400 mt-0.5">{t(tone.desc)}</div>
               </button>
             ))}
           </div>
         )}
 
-        <p role="status" className={`text-[11px] ${currentGaps.length ? "text-amber-300" : "text-emerald-300"}`}>{currentGaps.length ? `${t("Bu adımda eksik:")} ${currentGaps.join(" · ")}` : step <= 3 ? t("Bu adımda eksik yok.") : t("Bu adım isteğe bağlı.")}</p>
+        <p role="status" className={`text-xs ${currentGaps.length ? "text-amber-300" : "text-emerald-300"}`}>{currentGaps.length ? `${t("Bu adımda eksik:")} ${currentGaps.join(" · ")}` : step <= 3 ? t("Bu adımda eksik yok.") : t("Bu adım isteğe bağlı.")}</p>
 
         {/* Buttons */}
         <div className="flex justify-between pt-4 border-t border-slate-800">

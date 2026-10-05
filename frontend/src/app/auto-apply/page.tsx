@@ -1,4 +1,5 @@
 "use client";
+import { notify } from "@/lib/notify";
 import { useEffect, useState, useRef } from "react";
 import { Send, CheckCircle2, XCircle, Clock, Sparkles, RefreshCw, AlertCircle, FileText, ChevronDown } from "lucide-react";
 import { fetchFromApi } from "@/lib/api";
@@ -81,7 +82,7 @@ export default function AutoApplyPage() {
       });
       await loadQueue();
     } catch (e) {
-      alert(t("Onaylama sırasında hata oluştu."));
+      notify(t("Onaylama sırasında hata oluştu."));
     }
   }
 
@@ -94,7 +95,7 @@ export default function AutoApplyPage() {
       });
       await loadQueue();
     } catch (e) {
-      alert(t("Reddetme sırasında hata oluştu."));
+      notify(t("Reddetme sırasında hata oluştu."));
     }
   }
 
@@ -108,7 +109,7 @@ export default function AutoApplyPage() {
       if (result.handoff_required && item?.url) window.open(item.url, "_blank", "noopener,noreferrer");
       await loadQueue();
     } catch (e) {
-      alert(t("Tarayıcı başvuru akışı başlatılamadı."));
+      notify(t("Tarayıcı başvuru akışı başlatılamadı."));
     }
   }
 
@@ -121,7 +122,7 @@ export default function AutoApplyPage() {
       });
       await loadQueue();
     } catch {
-      alert(t("Başvuru teyit edilemedi. Analitik kaydı oluşturulmadı."));
+      notify(t("Başvuru teyit edilemedi. Analitik kaydı oluşturulmadı."));
     }
   }
 
@@ -135,7 +136,7 @@ export default function AutoApplyPage() {
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
         <div>
           <h1 className="text-2xl font-bold text-white flex items-center gap-3">
-            <Send className="w-7 h-7 text-emerald-400" /> {t("Otonom Başvuru & İnsan Onayı Kuyruğu")}
+            <Send className="w-7 h-7 text-emerald-400" /> {t("Onay bekleyen başvurular")}
           </h1>
           <p className="text-slate-400 mt-1">
             {t("Taslakları gözden geçir. Başvuruyu portalda kendin gönder ve yalnızca tamamlandıktan sonra teyit et.")}
@@ -225,12 +226,12 @@ export default function AutoApplyPage() {
 
       {/* List */}
       {loading ? (
-        <div className="text-center py-20 text-slate-500">{t("Kuyruk yükleniyor...")}</div>
+        <div className="text-center py-20 text-slate-400">{t("Kuyruk yükleniyor...")}</div>
       ) : filteredQueue.length === 0 ? (
         <div className="text-center py-20 bg-slate-900/30 border border-slate-800/80 rounded-2xl">
-          <AlertCircle className="w-10 h-10 text-slate-600 mx-auto mb-3" />
+          <AlertCircle className="w-10 h-10 text-slate-400 mx-auto mb-3" />
           <div className="text-slate-300 font-medium">{t("Bu sekmede başvuru bulunmuyor.")}</div>
-          <div className="text-xs text-slate-500 mt-1">
+          <div className="text-xs text-slate-400 mt-1">
             {t("Yukarıdaki \"Yüksek Uyumlu İlanları Tara\" butonuna basarak yeni taslaklar oluşturabilirsiniz.")}</div>
         </div>
       ) : (
@@ -288,8 +289,8 @@ export default function AutoApplyPage() {
                 {review.review_feedback && (
                   <div className="bg-slate-950/60 border border-blue-500/20 rounded-xl p-3 text-xs space-y-1">
                     <div className="text-blue-400 font-semibold flex items-center gap-1.5">
-                      <span>{t("🛡️ Drafter-Reviewer Denetim Özeti")}</span>
-                      <span className="text-[10px] text-slate-400 font-mono">
+                      <span>{t("Drafter-Reviewer Denetim Özeti")}</span>
+                      <span className="text-xs text-slate-400 font-mono">
                         {t("(Revizyon:")}{draft.revision_count || 1}{t(", Doğruluk: %")}{review.review_score || 95})
                       </span>
                     </div>
@@ -310,13 +311,13 @@ export default function AutoApplyPage() {
                 {isExpanded && (
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4 pt-2 border-t border-slate-800">
                     <div className="bg-slate-950/80 rounded-xl p-4 border border-slate-800/80 space-y-2">
-                      <div className="text-xs font-semibold text-emerald-400">{t("📄 Özel Niyet Mektubu (Cover Letter)")}</div>
+                      <div className="text-xs font-semibold text-emerald-400">{t("Özel Niyet Mektubu (Cover Letter)")}</div>
                       <div className="text-xs text-slate-300 whitespace-pre-wrap font-sans leading-relaxed max-h-64 overflow-y-auto">
                         {cl || t("Niyet mektubu hazırlandı.")}
                       </div>
                     </div>
                     <div className="bg-slate-950/80 rounded-xl p-4 border border-slate-800/80 space-y-2">
-                      <div className="text-xs font-semibold text-blue-400">{t("🎯 Uyarlanan CV Özeti")}</div>
+                      <div className="text-xs font-semibold text-blue-400">{t("Uyarlanan CV Özeti")}</div>
                       <div className="text-xs text-slate-300 space-y-2 max-h-64 overflow-y-auto">
                         <div>
                           <strong className="text-slate-200">{t("Başlık:")}</strong> {cv.target_role || item.title}
@@ -325,7 +326,7 @@ export default function AutoApplyPage() {
                           <strong className="text-slate-200">{t("Öne Çıkarılan Yetkinlikler:")}</strong>{" "}
                           {(cv.skills || []).slice(0, 8).join(", ") || "Python, LLMs, FastAPI, AI Agents"}
                         </div>
-                        <div className="text-[11px] text-slate-400 italic">
+                        <div className="text-xs text-slate-400 italic">
                           {t("ATS dostu formatlandı; şirket araştırması ve kültür analiziyle harmanlandı.")}</div>
                       </div>
                     </div>

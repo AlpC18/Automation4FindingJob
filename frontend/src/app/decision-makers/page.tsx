@@ -55,7 +55,7 @@ export default function DecisionMakersPage() {
       <div>
         <h1 className="text-2xl font-bold text-white flex items-center gap-2">
           <Users className="w-6 h-6 text-blue-500" />
-          {t("1.4 Karar Verici & İletişim Bulucu (Decision Maker Engine)")}</h1>
+          {t("Karar vericiler")}</h1>
         <p className="text-xs text-slate-400 mt-1">
           {t("Google arama sorgusu ve gözden geçirilebilir iletişim taslağı oluşturur. Kişi ya da e-posta adresinin bulunduğunu veya doğrulandığını iddia etmez.")}</p>
       </div>
@@ -67,7 +67,7 @@ export default function DecisionMakersPage() {
 
         <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
           <div>
-            <label className="text-[11px] font-semibold text-slate-400 uppercase">{t("Şirket Adı")}</label>
+            <label className="text-xs font-semibold text-slate-400 uppercase">{t("Şirket Adı")}</label>
             <input
               type="text"
               value={company}
@@ -76,7 +76,7 @@ export default function DecisionMakersPage() {
             />
           </div>
           <div>
-            <label className="text-[11px] font-semibold text-slate-400 uppercase">{t("Hedef Bölge / Şehir")}</label>
+            <label className="text-xs font-semibold text-slate-400 uppercase">{t("Hedef Bölge / Şehir")}</label>
             <input
               type="text"
               value={location}
@@ -85,7 +85,7 @@ export default function DecisionMakersPage() {
             />
           </div>
           <div>
-            <label className="text-[11px] font-semibold text-slate-400 uppercase">{t("Hedef Rol")}</label>
+            <label className="text-xs font-semibold text-slate-400 uppercase">{t("Hedef Rol")}</label>
             <input
               type="text"
               value={role}
@@ -109,10 +109,10 @@ export default function DecisionMakersPage() {
           <div className="space-y-3">
             <div className="flex justify-between items-center">
               <span className="text-xs font-bold text-white">{t("Google X-Ray Dorking Sorgusu")}</span>
-              <span className="text-[10px] bg-blue-500/10 text-blue-400 px-2 py-0.5 rounded font-mono">
+              <span className="text-xs bg-blue-500/10 text-blue-400 px-2 py-0.5 rounded font-mono">
                 {t("PRD 3.3 Standardı")}</span>
             </div>
-            <p className="text-[11px] text-slate-400">
+            <p className="text-xs text-slate-400">
               {t("Bu dork sorgusunu Google'a girerek ilgili şirketin bölge müdürünü veya teknik liderini LinkedIn'e girmeden doğrudan bulabilirsiniz:")}</p>
             <pre className="p-3.5 bg-slate-950 border border-slate-800 rounded-xl text-xs text-blue-300 font-mono whitespace-pre-wrap break-all">
               {dork}
@@ -134,10 +134,10 @@ export default function DecisionMakersPage() {
           <div className="space-y-3">
             <div className="flex justify-between items-center">
               <span className="text-xs font-bold text-white">{t("3 Cümlelik Kişiselleştirilmiş Cold DM")}</span>
-              <span className="text-[10px] bg-emerald-500/10 text-emerald-400 px-2 py-0.5 rounded font-mono">
+              <span className="text-xs bg-emerald-500/10 text-emerald-400 px-2 py-0.5 rounded font-mono">
                 {t("Taslak · Göndermeden önce gözden geçir")}</span>
             </div>
-            <p className="text-[11px] text-slate-400">
+            <p className="text-xs text-slate-400">
               {t("Cümle 1: Bölgesel gözlem • Cümle 2: Doğrudan değer teklifi • Cümle 3: Düşük sürtünmeli çağrı (CTA).")}</p>
             <div className="p-3.5 bg-slate-950 border border-slate-800 rounded-xl text-xs text-slate-200 leading-relaxed">
               {coldDm}
@@ -167,17 +167,17 @@ export default function DecisionMakersPage() {
           <div>
             <h2 className="text-sm font-semibold text-white flex items-center gap-2">
               <Sparkles className="w-4 h-4 text-amber-400" /> {t("E-posta deseni tahmini & SMTP gönderimi")}</h2>
-            <p className="text-[11px] text-slate-400">
+            <p className="text-xs text-slate-400">
               {t("Olası adresler yalnızca ad ve şirket adına göre üretilir; gerçeklikleri veya teslim edilebilirlikleri doğrulanmaz. E-posta yalnızca sen gönder düğmesine bastığında denenir.")}</p>
           </div>
-          <span className="text-[10px] bg-amber-500/10 text-amber-400 border border-amber-500/20 px-2.5 py-0.5 rounded-full font-mono">
+          <span className="text-xs bg-amber-500/10 text-amber-400 border border-amber-500/20 px-2.5 py-0.5 rounded-full font-mono">
             {t("E-posta doğrulanmadı")}</span>
         </div>
 
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           <div className="space-y-3">
             <div>
-              <label className="text-[10px] font-semibold text-slate-400 uppercase">{t("Yönetici / Karar Verici Ad Soyad")}</label>
+              <label className="text-xs font-semibold text-slate-400 uppercase">{t("Yönetici / Karar Verici Ad Soyad")}</label>
               <input
                 type="text"
                 id="dmFullName"
@@ -212,9 +212,9 @@ export default function DecisionMakersPage() {
 
           <div className="p-4 rounded-xl bg-slate-900/60 border border-slate-800 space-y-2 text-xs flex flex-col justify-between">
             <div>
-              <label htmlFor="targetEmailResult" className="text-[10px] font-semibold text-slate-400 uppercase">{t("E-posta adresi (kendin doğrula)")}</label>
+              <label htmlFor="targetEmailResult" className="text-xs font-semibold text-slate-400 uppercase">{t("E-posta adresi (kendin doğrula)")}</label>
               <input id="targetEmailResult" type="email" value={emailGuess} onChange={(event) => setEmailGuess(event.target.value)} placeholder={t("İsteğe bağlı: tahmini kontrol edip düzenle")} className="w-full mt-1 bg-slate-950 border border-slate-800 rounded-xl px-3 py-2 text-xs text-white" />
-              {emailLookupMessage && <p role="status" className="mt-2 text-[11px] text-amber-300">{emailLookupMessage}</p>}
+              {emailLookupMessage && <p role="status" className="mt-2 text-xs text-amber-300">{emailLookupMessage}</p>}
             </div>
 
             <button
@@ -239,7 +239,7 @@ export default function DecisionMakersPage() {
               className="w-full bg-blue-600 hover:bg-blue-500 text-white font-semibold text-xs py-2 rounded-xl transition flex items-center justify-center gap-1.5 shadow-md shadow-blue-600/20 disabled:cursor-not-allowed disabled:opacity-50"
             >
               <Send className="w-3.5 h-3.5" /> {emailBusy ? t("Gönderiliyor…") : t("E-postayı şimdi gönder")}</button>
-            {outreachMessage && <p role="status" className="text-[11px] text-slate-300">{outreachMessage}</p>}
+            {outreachMessage && <p role="status" className="text-xs text-slate-300">{outreachMessage}</p>}
           </div>
         </div>
       </div>

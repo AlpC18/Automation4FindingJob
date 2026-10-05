@@ -44,7 +44,7 @@ export default function ReportsPage() {
       <div>
         <h1 className="text-2xl font-bold text-white flex items-center gap-3">
           <FileText className="w-7 h-7 text-sky-400" /> {t("Rapor Oluşturucu")}</h1>
-        <p className="text-slate-400 mt-1">{t("Standalone HTML raporları oluşturun — çevrimdışı görüntülenebilir")}</p>
+        <p className="text-slate-400 mt-1">{t("İndirip çevrimdışı açabileceğin raporlar oluştur")}</p>
       </div>
 
       <div className="grid gap-4">
@@ -82,7 +82,7 @@ export default function ReportsPage() {
           <div className="text-xs text-slate-400 mb-4">
             {result.filename} {t("•")}{result.total_jobs || 0} {t("ilan •")}{result.generated_at?.slice(0, 16)}
           </div>
-          <div className="text-xs text-slate-500 font-mono bg-slate-900/60 rounded-lg p-3 break-all">
+          <div className="text-xs text-slate-400 font-mono bg-slate-900/60 rounded-lg p-3 break-all">
             📁 {result.report_path}
           </div>
         </div>

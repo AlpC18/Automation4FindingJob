@@ -37,7 +37,7 @@ export default function ApolloPeopleSearch({ location }: { location: string }) {
         <h2 id="apollo-search-title" className="flex items-center gap-2 text-sm font-semibold text-white">
           <Users className="h-4 w-4 text-blue-400" /> {t("Apollo ile karar vericileri ara")}
         </h2>
-        <p className="mt-1 text-[11px] text-slate-400">
+        <p className="mt-1 text-xs text-slate-400">
           {t("Şirketin alan adına göre yönetici ve üstü kişileri listeler. Arama Apollo kredisi harcamaz; e-posta ve tam soyadı Apollo tarafından bu aramada verilmez.")}
         </p>
       </div>
@@ -66,7 +66,7 @@ export default function ApolloPeopleSearch({ location }: { location: string }) {
           {people.map((person, index) => (
             <li key={`${person.first_name}-${person.title}-${index}`} className="rounded-xl border border-slate-800 bg-slate-900/60 px-4 py-3">
               <div className="text-xs font-semibold text-white">{[person.first_name, person.last_name_obfuscated].filter(Boolean).join(" ")}</div>
-              <div className="mt-0.5 text-[11px] text-slate-400">{[person.title, person.company].filter(Boolean).join(" — ")}</div>
+              <div className="mt-0.5 text-xs text-slate-400">{[person.title, person.company].filter(Boolean).join(" — ")}</div>
             </li>
           ))}
         </ul>
