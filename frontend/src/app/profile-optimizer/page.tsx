@@ -2,7 +2,7 @@
 import { notify } from "@/lib/notify";
 import { useLanguage } from "@/lib/i18n";
 import { useState } from "react";
-import { UserCheck, Github, Linkedin, Copy, Check, Sparkles, RefreshCw, ExternalLink } from "lucide-react";
+import { UserCheck, Github, Linkedin, Copy, Check, Sparkles, RefreshCw } from "lucide-react";
 import { fetchFromApi } from "@/lib/api";
 
 export default function ProfileOptimizerPage() {

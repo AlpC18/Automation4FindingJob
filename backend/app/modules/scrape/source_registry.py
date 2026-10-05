@@ -61,9 +61,11 @@ def get_source_config(source: str) -> dict[str, Any]:
 
 def apify_tokens(source: str) -> list[str]:
     """A source's own Apify tokens, else the shared ones: APIFY_API_TOKEN, then tokens saved for another source."""
-    own = get_source_config(source)["api_tokens"]
-    if own:
-        return own
+    return get_source_config(source)["api_tokens"] or shared_apify_tokens()
+
+
+def shared_apify_tokens() -> list[str]:
+    """Tokens for sources that have none of their own: APIFY_API_TOKEN, else the first saved set."""
     if settings.APIFY_API_TOKEN.strip():
         return [settings.APIFY_API_TOKEN.strip()]
     for other in ACTOR_SOURCES:
@@ -190,11 +192,12 @@ def get_source_health() -> dict[str, dict[str, Any]]:
     health = {}
     cutoff = time.time() - 7 * 86400
     today_start = time.time() - (time.time() % 86400)
+    shared_tokens = shared_apify_tokens()
     for source in ALL_SOURCES:
         config = get_source_config(source)
         global_actor = getattr(settings, f"APIFY_ACTOR_{source.upper()}", "").strip() if source in ACTOR_SOURCES else ""
         actor_id = config["actor_id"] or global_actor
-        has_token = bool(apify_tokens(source)) if source in ACTOR_SOURCES else False
+        has_token = bool(config["api_tokens"] or shared_tokens) if source in ACTOR_SOURCES else False
         conn = get_db_connection()
         try:
             cursor = conn.cursor()

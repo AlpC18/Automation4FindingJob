@@ -2,12 +2,12 @@
 import { notify } from "@/lib/notify";
 import { useLanguage } from "@/lib/i18n";
 import { useState, useEffect, useRef } from "react";
-import { Mic, MicOff, Volume2, Sparkles, RefreshCw, CheckCircle2, AlertTriangle, Shield } from "lucide-react";
+import { Mic, MicOff, Volume2, Sparkles, RefreshCw, CheckCircle2 } from "lucide-react";
 import { API_BASE, API_AUTH_TOKEN, fetchFromApi } from "@/lib/api";
 
 export default function VoiceInterviewPage() {
   const { translate: t } = useLanguage();
-  const [jobTitle, setJobTitle] = useState("Senior Backend & AI Systems Engineer");
+  const [jobTitle] = useState("Senior Backend & AI Systems Engineer");
   const [questionData, setQuestionData] = useState<any>(null);
   const [loadingQuestion, setLoadingQuestion] = useState(false);
 
@@ -16,7 +16,7 @@ export default function VoiceInterviewPage() {
   const [transcript, setTranscript] = useState("");
   const [speaking, setSpeaking] = useState(false);
   const [analysisResult, setAnalysisResult] = useState<any>(null);
-  const [analyzing, setAnalyzing] = useState(false);
+  const [, setAnalyzing] = useState(false);
   const [recordedAudio, setRecordedAudio] = useState<Blob | null>(null);
   const [transcribing, setTranscribing] = useState(false);
 

@@ -2,7 +2,7 @@
 import { notify } from "@/lib/notify";
 import { useLanguage } from "@/lib/i18n";
 import { useEffect, useState } from "react";
-import { Sparkles, Search, Database, TrendingUp, ArrowRight, RefreshCw, Layers } from "lucide-react";
+import { Sparkles, Search, Database, TrendingUp, ArrowRight, Layers } from "lucide-react";
 import { fetchFromApi } from "@/lib/api";
 
 export default function SemanticSearchPage() {
@@ -12,7 +12,7 @@ export default function SemanticSearchPage() {
   const [trends, setTrends] = useState<any>(null);
   const [loading, setLoading] = useState(false);
   const [indexing, setIndexing] = useState(false);
-  const [indexStats, setIndexStats] = useState<any>(null);
+  const [, setIndexStats] = useState<any>(null);
 
   useEffect(() => {
     fetchFromApi("/rank/semantic/trends").then(setTrends).catch(() => {});

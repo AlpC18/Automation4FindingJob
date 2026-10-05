@@ -257,7 +257,8 @@ class ApifyActorJobSource:
         # A known Actor ran the search itself, so its listings only need the role in the headline; a word buried in
         # the description (or missing from it) says little. Unknown Actors keep the strict every-word check.
         jobs = [job for job in jobs if (_title_matches if query_key else _matches_query)(job, query)]
-        if location and query_key and takes_location:
+        indeed_without_country = actor_id.lower() == "valig/indeed-jobs-scraper" and not remote and (location or "").strip().casefold() not in INDEED_COUNTRIES
+        if location and query_key and takes_location and not indeed_without_country:
             # The Actor searched this place itself, and its listings name the city rather than the country.
             for job in jobs:
                 job["location_matched_by_source"] = True

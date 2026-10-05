@@ -43,7 +43,9 @@ export async function requestFromApi(endpoint: string, options?: RequestInit): P
       window.dispatchEvent(new Event("career-agent:session-expired"));
     }
     const err = await res.json().catch(() => ({ detail: res.statusText }));
-    throw new Error(err.detail || `Request failed with status ${res.status}`);
+    // FastAPI validation errors arrive as a list of {msg}; show their text instead of "[object Object]".
+    const detail = Array.isArray(err.detail) ? err.detail.map((item: any) => item?.msg || String(item)).join("; ") : err.detail;
+    throw new Error((typeof detail === "string" && detail) || `Request failed with status ${res.status}`);
   }
   return res;
 }

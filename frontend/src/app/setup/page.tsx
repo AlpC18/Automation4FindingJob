@@ -9,7 +9,6 @@ import {
   CheckCircle,
   HelpCircle,
   Plus,
-  RefreshCw,
   Sparkles,
   Eye
 } from "lucide-react";

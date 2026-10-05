@@ -17,7 +17,11 @@ Mevcut yerel veritabanı bulunan kurulumlarda `scripts/bootstrap_env.py` yeni ş
 
 `MULTI_TENANT_ENABLED=true` iken panel kayıt/giriş ekranı sunar; her hesabın uygulama verisi ayrı SQLite dosyasında veya PostgreSQL şemasında tutulur. Üretimde `.env` içine güçlü ve sabit bir `AUTH_SECRET_KEY` koyun (ör. `openssl rand -hex 32`); anahtarı deploy'lar arasında değiştirmek mevcut oturumları geçersiz kılar. LinkedIn çerezleri ve görülen ilan dosyaları da tenant klasörüne ayrılır. Eski veritabanı kurulumları açılışta sürümlü şema revizyonlarını uygular.
 
-Üretimde kayıt doğrulaması ve parola kurtarma için `SMTP_HOST`, `SMTP_PORT`, `SMTP_USER`, `SMTP_PASS` ve `SMTP_FROM_EMAIL` ayarlayın. Oturum-cookie kullanan değiştirici istekler CSRF başlığıyla korunur; hatalı girişler e-posta/IP bazında sınırlandırılır. Kullanıcı oturum menüsünden e-posta ve mevcut parolayı yeniden girerek hesabını ve tenant verisini silebilir. `/llm` sayfasından OpenAI, Gemini, Anthropic veya DeepSeek anahtarınızı girip şifreli olarak saklayabilir, bağlantıyı test edebilir veya kaldırabilirsiniz. Anahtarlar API yanıtında tekrar gösterilmez. Yerel geliştirmede şifreleme anahtarı `backend/data` altında özel izinle oluşturulur; üretimde sabit `APP_ENCRYPTION_KEY` değerini gizli ortam değişkeni olarak tanımlayın.
+Üretimde kayıt doğrulaması ve parola kurtarma için `SMTP_HOST`, `SMTP_PORT`, `SMTP_USER`, `SMTP_PASS` ve `SMTP_FROM_EMAIL` ayarlayın. Oturum-cookie kullanan değiştirici istekler CSRF başlığıyla korunur; hatalı girişler e-posta/IP bazında sınırlandırılır. Kullanıcı oturum menüsünden e-posta ve mevcut parolayı yeniden girerek hesabını ve tenant verisini silebilir. 
+
+AI sağlayıcıları: `/llm` sayfasından Anthropic (Claude), OpenAI, Gemini, DeepSeek, Ollama (yerel) veya herhangi bir OpenAI-uyumlu servis (Groq, OpenRouter, Cerebras vb.) için API anahtarınızı şifreli olarak saklayabilir, bağlantıyı test edebilir veya kaldırabilirsiniz. Anahtarlar API yanıtında tekrar gösterilmez. `CUSTOM_LLM_BASE_URL`, `CUSTOM_LLM_API_KEY` ve `CUSTOM_LLM_MODEL` ile herhangi bir OpenAI-uyumlu hizmet desteklenir (ör. `https://api.groq.com/openai/v1`). `LLM_DAILY_TOKEN_BUDGET` Anthropic Token harcama sınırı olup, aşıldığında şablon motoru devralır; diğer sağlayıcılara uygulanmaz. Seçilen sağlayıcı ve günlük kullanım veri klasöründe kalıcı hale getirilir.
+
+Yerel geliştirmede şifreleme anahtarı `backend/data` altında özel izinle oluşturulur; üretimde sabit `APP_ENCRYPTION_KEY` değerini gizli ortam değişkeni olarak tanımlayın.
 
 Harici hata/trace izlemesi için isteğe bağlı olarak `SENTRY_DSN` ve `SENTRY_TRACES_SAMPLE_RATE` verin. PII otomatik eklenmez. Uygulama ayrıca oturum sayısı ve gecikme histogramını Prometheus formatında `/api/system/metrics` üzerinden verir (uç normal hesap oturumuyla korunur). SQLite yedeği `/api/system/backup` üzerinden indirilebilir. PostgreSQL Docker kurulumunda `postgres-backup` hizmeti her gün doğrulanmış, izinleri kısıtlı bir custom-format yedek üretir; son 14 günlük yedekler `postgres-backups` volume'ünde tutulur. Süre `BACKUP_INTERVAL_SECONDS`, saklama süresi `BACKUP_RETENTION_DAYS` ile ayarlanır. Geri yükleme hedef veritabanını değiştirir; yalnızca doğru yedek dosyasını ve hedefi kontrol ettikten sonra `CONFIRM_RESTORE=YES` ile `scripts/restore-postgres.sh` çalıştırın. Canlıya almadan önce sağlayıcı point-in-time backup'ını da etkin tutun.
 
@@ -25,7 +29,7 @@ Harici hata/trace izlemesi için isteğe bağlı olarak `SENTRY_DSN` ve `SENTRY_
 
 Compose dosyası servis adlarını sabitlemez; portlar, image sürümleri, worker sayıları, public URL'ler, veritabanı, Redis, scraper modu ve scheduler saatleri `.env` üzerinden değiştirilebilir. Compose varsayılan olarak PostgreSQL kullanır; veritabanı override'ı gerekiyorsa `COMPOSE_DATABASE_URL`, Redis override'ı için `COMPOSE_REDIS_URL` kullanın (`DATABASE_URL` ve `REDIS_URL` yerel geliştirme sürecine aittir). Docker çalıştırmadan önce `POSTGRES_PASSWORD`, `REDIS_PASSWORD`, `API_AUTH_TOKEN`, `AUTH_SECRET_KEY` ve `APP_ENCRYPTION_KEY` için güçlü ve kalıcı sırlar belirleyin. Gerçek verilerle başlamak için `DEMO_DATA_ENABLED=false` ve sağlayıcı ayarlarını kullanın; yerel fixture görmek için açıkça `DEMO_DATA_ENABLED=true` seçin.
 
-Canlı ilan akışında `remote` kaynağı Remote OK ve Arbeitnow herkese açık feed'lerini kullanır. LinkedIn, Upwork ve Kosova bölgesel portal sonuçları için `.env` dosyasında ilgili `APIFY_ACTOR_*` değerini ve `APIFY_API_TOKEN`'ı tanımlayın; actor'a özel arama alanları gerekiyorsa `APIFY_INPUT_*` JSON'larıyla ekleyin. Her kaynak aynı normalize ilan alanlarını üretir, hatalar kaynak adıyla raporlanır. Remote OK feed'ini kullanan dağıtımlar ilan kaynağına atıf ve orijinal ilana bağlantı gösterir.
+Canlı ilan akışında `remote` kaynağı RemoteOK, Arbeitnow, Remotive, Jobicy ve Himalayas herkese açık feed'lerini sorgulamaktadır. Apify kaynakları için `.env` dosyasında ilgili `APIFY_ACTOR_*` Actor ID'sini ve `APIFY_API_TOKEN`'ı tanımlayın; actor'a özel arama alanları gerekiyorsa `APIFY_INPUT_*` JSON'larıyla ekleyin. Her kaynak aynı normalize ilan alanlarını üretir, hatalar kaynak adıyla raporlanır. Açık API feed'lerini kullanan dağıtımlar ilan kaynağına atıf ve orijinal ilana bağlantı gösterir.
 
 Apify sağlayıcıları `/sources` ekranından tenant bazında ayarlanabilir; çalışma geçmişi ve son hata bu ekranda görünür. Arka plan iş kuyruğu `/inbox` içinden izlenir. SQLite kullanan hesaplar aynı ekrandan tutarlı veritabanı yedeği indirebilir. Yedekten dönmek için uygulamayı durdurun, arşivi ilgili `career_engine.db` (tenant kurulumunda `tenants/<tenant-id>.db`) konumuna geri koyun, sonra uygulamayı başlatın. PostgreSQL compose dağıtımlarında günlük otomatik yedekleme de etkinleşir. Worker heartbeat'i 20 dakika aşan işler kuyruk ekranında başarısız gösterilir ve yeniden denenebilir.
 
@@ -115,22 +119,25 @@ Metinler yüksek **Burstiness** (cümle boyu varyasyonu) ve zengin söz dağarc�
    * PDF doğrulama katmanı `pypdf` ile text-layer ve ATS keyword kontrollerini container içinde harici Poppler kurulumu olmadan yapabilir.
 
 6. **Yedekleme ve kurtarma:**
-   * SQLite modunda çalışma verisi uygulama başlarken ve `BACKUP_INTERVAL_SECONDS` aralığında şifreli arşivlenir; varsayılan saklama süresi 14 gündür.
-   * `BACKUP_DIR`, `BACKUP_RETENTION_DAYS` ve `BACKUP_MAX_SIZE_MB` ile konum, saklama ve boyut sınırı ayarlanabilir. Şifreli yedekler mevcut `APP_ENCRYPTION_KEY` ile açılır; bu anahtar yedeğin içine konmaz, ayrı ve güvenli saklanmalıdır.
-   * İlan kaynakları ekranındaki geri yükleme önce mevcut verinin güvenlik kopyasını alır ve yalnızca oturum açmış hesabın SQLite çalışma alanını değiştirir. PostgreSQL kurtarması Docker içindeki `restore-postgres.sh` akışıyla yapılır.
+   * SQLite modunda çalışma verisi uygulama başlarken ve `BACKUP_INTERVAL_SECONDS` aralığında (varsayılan 1 gün) şifreli arşivlenir; varsayılan saklama süresi 14 gündür.
+   * `BACKUP_DIR` tanımlanırsa oraya, yoksa veri klasörüne yedekler kaydedilir. `BACKUP_RETENTION_DAYS` ve `BACKUP_MAX_SIZE_MB` ile saklama ve boyut sınırı ayarlanabilir. Şifreli yedekler mevcut `APP_ENCRYPTION_KEY` ile açılır; bu anahtar yedeğin içine konmaz, ayrı ve güvenli saklanmalıdır.
+   * `scripts/backup-data.sh` el ile yedek almayı sağlar. İlan kaynakları ekranındaki geri yükleme önce mevcut verinin güvenlik kopyasını alır ve yalnızca oturum açmış hesabın SQLite çalışma alanını değiştirir. 
+   * PostgreSQL Docker kurulumunda `postgres-backup` servisi günlük doğrulanmış özel format yedekler üretir; son 14 günlük yedekler `postgres-backups` volume'ünde tutulur. `scripts/restore-postgres.sh` ile geri yükleme yapılır; `CONFIRM_RESTORE=YES` olmadan hiçbir şey değişmez.
 
 ---
 
 ## 🌐 İlan kaynakları
 
-| Kaynak | Yöntem | Gereken |
+| Kaynak | Yöntem | Gerekli |
 | :--- | :--- | :--- |
-| KosovaJob | Sitenin açık arama sayfaları doğrudan okunur (istekler sıralı ve sınırlıdır) | Yok |
 | RemoteOK, Arbeitnow, Remotive, Jobicy, Himalayas | Açık API | Yok |
+| KosovaJob, TechCareer | Doğrudan web taraması | Yok |
 | Greenhouse, Lever, Ashby kullanan şirketler | Açık kariyer sayfası API'si | `/sources` ekranından şirket ekle ya da `COMPANY_BOARDS=greenhouse:stripe,lever:spotify` |
-| LinkedIn, Upwork, Indeed, Glassdoor, Kariyer.net, Fiverr, Freelancer, Toptal, GjirafaWork, Wellfound | Apify Actor | `/sources` ekranında Actor ID ve Apify token |
+| LinkedIn, Upwork, Indeed, Glassdoor, Kariyer.net | Apify Actor | `/sources` ekranında Actor ID ve Apify API token |
 
-Bot koruması olan portallar (ör. Kariyer.net, Indeed) doğrudan taranmaz; yalnızca Apify veya Chrome eklentisiyle tek tek aktarılabilir.
+**Platform denetimi:** `SCRAPER_PLATFORMS` (varsayılan: `linkedin,upwork,kosovajob,techcareer,remote`) hangi kaynakların etkin olduğunu belirler. Gece otomatik taraması (`SCHEDULER_NIGHTLY_TIME: 03:30`) yalnızca `NIGHTLY_SCAN_PLATFORMS` (varsayılan: `remote,kosovajob,techcareer`) listesindeki kaynaklardır; Apify ücretli kaynakları gece taramasına dahil edilmez. Apify Token olmayan kaynaklar başında tanımlı token reuse'ı kullanır.
+
+Bot koruması olan portallar (Indeed, Glassdoor, Kariyer.net) doğrudan taranmaz; yalnızca Apify Actor veya Chrome eklentisiyle tek tek aktarılabilir.
 
 ## ⚠️ Bilinen sınırlar
 
@@ -142,28 +149,30 @@ Bot koruması olan portallar (ör. Kariyer.net, Indeed) doğrudan taranmaz; yaln
 
 ## 🧪 Testlerin Çalıştırılması
 
+Backend testleri yalıtılmış ortamda çalışmalı; düz `pytest` yerel `.env` dosyasını ve gerçek DB'i kullanır:
+
 ```bash
-# Backend testleri yalıtılmış ortamla çalıştırılmalı; düz `pytest` yerel .env dosyasını ve gerçek veritabanını kullanır.
-T=$(mktemp -d) && PYTHONPATH=. ENVIRONMENT=test MULTI_TENANT_ENABLED=false API_AUTH_TOKEN= \
-  CORS_ORIGINS=http://localhost:3000 DATA_PATH="$T" DATABASE_URL="sqlite:///$T/ci.db" \
-  ./backend/.venv/bin/python -m pytest -q backend/tests
+# Yalıtılmış backend testleri (CI ile aynı)
+T=$(mktemp -d) && PYTHONPATH=. ENVIRONMENT=test MULTI_TENANT_ENABLED=false \
+  DATA_PATH=”$T” DATABASE_URL=”sqlite:///$T/ci.db” \
+  python -m pytest -q backend/tests
+
+# Frontend testleri, linting ve build
 npm --prefix frontend test
 npm --prefix frontend run lint
 npm --prefix frontend run build
+
+# E2E testleri (Playwright)
 npm --prefix frontend run e2e:install
 npm --prefix frontend run e2e
 ```
 
-GitHub Actions aynı backend regresyon testlerini ve frontend test/lint/build kontrollerini push ve pull request'lerde çalıştırır.
-Chromium kurulumu yapılabildiğinde aynı akışta CV analizi, canlı ilanlar ve analitik ekranları için üç kritik tarayıcı smoke testi de çalışır.
+GitHub Actions CI aynı backend regresyon testlerini (yalıtılmış ortamda) ve frontend test/lint/build kontrollerini push ve PR'lerde çalıştırır. Chromium kurulumunda başarılıysa CV analiz, iş arama ve analitik ekranları için kritik tarayıcı test akışları da çalışır.
 
-Yerel servisler çalışırken temel backend/frontend route kontrolü için:
+Yerel servisler çalışırken hızlı sağlık kontrolü:
 
 ```bash
 ./scripts/smoke_local.sh
 ```
 
-Bu kontrol `/system/health`, ilanlar, CV analiz geçmişi, ana sayfa, ilanlar,
-CV analiz ve analitik ekranlarının erişilebilir olduğunu doğrular. İlan kaynak
-linkleri ayrıca `/jobs` ekranındaki güvenli “Linki kontrol et” aksiyonuyla
-on-demand doğrulanır; yerel/özel ağ adresleri SSRF koruması nedeniyle engellenir.
+Bu komut sistem sağlığı, ilanlar, CV analiz geçmişi, ana sayfa ve analitik ekranlarının erişilebilirliğini doğrular. İlan kaynağı URL'leri ayrıca `/jobs` ekranında on-demand doğrulanır (SSRF koruması nedeniyle yerel/özel ağ adresleri engellenir).

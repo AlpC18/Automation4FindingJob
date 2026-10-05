@@ -9,11 +9,7 @@ import {
   Sparkles,
   CheckCircle2,
   Clock,
-  ArrowRight,
   ShieldCheck,
-  FileCheck,
-  Send,
-  MessageSquare,
   HelpCircle,
   Eye,
   ExternalLink,
@@ -29,7 +25,7 @@ const STAGES = ["Draft", "Human Review", "Applied", "Interview", "Offer", "Rejec
 export default function KanbanPage() {
   const { translate: t } = useLanguage();
   const [board, setBoard] = useState<Record<string, any[]>>({});
-  const [loading, setLoading] = useState(true);
+  const [, setLoading] = useState(true);
   const [selectedJob, setSelectedJob] = useState<any>(null);
   const [pendingSubmission, setPendingSubmission] = useState<any>(null);
   const [generating, setGenerating] = useState<string | null>(null);
@@ -49,6 +45,8 @@ export default function KanbanPage() {
       setLoading(true);
       const res = await fetchFromApi("/outcome/kanban");
       setBoard(res || {});
+    } catch (cause: any) {
+      notify(cause?.message || t("Başvurular yüklenemedi."));
     } finally {
       setLoading(false);
     }
@@ -190,7 +188,7 @@ export default function KanbanPage() {
             <KanbanSquare className="w-6 h-6 text-blue-500" />
             {t("Başvurular")}</h1>
           <p className="text-xs text-slate-400 mt-1">
-            {t("Multi-Agent orkestrasyonu, İnsansı Doku Puanı (Human Texture Score) onayı ve başvuru takip otomasyonu.")}</p>
+            {t("Başvurularını aşamalara göre takip et.")}</p>
         </div>
 
         {/* Tools row: LLM Model selector & Dynamic Form Memory Quick Tool */}
@@ -407,24 +405,6 @@ export default function KanbanPage() {
 
             {/* Modal Body */}
             <div className="p-6 space-y-4 overflow-y-auto flex-1 text-xs">
-              {/* Metrics Badge Row */}
-              <div className="grid grid-cols-3 gap-3 p-3.5 rounded-xl bg-slate-900/80 border border-slate-800">
-                <div className="text-center">
-                  <div className="text-xs text-slate-400">{t("İnsansı Doku Puanı")}</div>
-                  <div className="text-sm font-bold text-emerald-400 font-mono">
-                    %{selectedJob.human_texture_score || 92}
-                  </div>
-                </div>
-                <div className="text-center">
-                  <div className="text-xs text-slate-400">{t("AI Yasaklı Kelime")}</div>
-                  <div className="text-sm font-bold text-emerald-400 font-mono">{t("0 (Temiz)")}</div>
-                </div>
-                <div className="text-center">
-                  <div className="text-xs text-slate-400">{t("Burstiness (Ritim)")}</div>
-                  <div className="text-sm font-bold text-indigo-400 font-mono">{t("0.68 (İnsan Seviyesi)")}</div>
-                </div>
-              </div>
-
               <section className="rounded-xl border border-slate-800 bg-slate-900/60 p-3">
                 <div className="mb-2 flex items-center gap-2 text-xs font-semibold text-slate-200"><Clock className="h-3.5 w-3.5 text-sky-300" />{t("Başvuru geçmişi")}</div>
                 {statusHistory.length === 0 ? <p className="text-xs text-slate-400">{t("Henüz durum geçmişi yok")}</p> : <div className="space-y-1.5">{statusHistory.slice(0, 6).map((item) => <div key={item.id} className="flex flex-wrap items-center justify-between gap-2 text-xs"><span className="text-slate-300">{item.from_status} → <strong className="text-white">{item.to_status}</strong></span><span className="text-slate-400">{item.created_at}</span></div>)}</div>}

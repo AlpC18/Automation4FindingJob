@@ -29,6 +29,7 @@ def run_saved_search(search_id: str) -> dict:
     scrape = unified_scraper.run_multi_platform_scrape(
         queries=json.loads(saved["queries_json"]),
         location_preference=saved["location"] or None,
+        remote_type=(saved["remote_type"] if "remote_type" in saved.keys() else "") or None,
         replace_current_feed=False,
     )
     profile = fetch_candidate_profile()
@@ -37,6 +38,13 @@ def run_saved_search(search_id: str) -> dict:
     if provider:
         # Runs in a worker thread, so it owns its event loop. The review never raises.
         asyncio.run(review_top_jobs(profile, provider=provider))
+        # The review replaced some rule scores; alerts below must use what is now stored.
+        conn = get_db_connection()
+        try:
+            stored = {row["id"]: row["match_score"] for row in conn.cursor().execute("SELECT id, match_score FROM scraped_jobs WHERE stale_at IS NULL").fetchall()}
+        finally:
+            conn.close()
+        ranked = [{**job, "match_score": stored.get(job["id"], job.get("match_score", 0)) or 0} for job in ranked]
     matches = [job for job in ranked if job["id"] not in before and job.get("match_score", 0) >= saved["min_match_score"]]
     conn = get_db_connection()
     try:

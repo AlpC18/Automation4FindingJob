@@ -5,14 +5,11 @@ import Link from "next/link";
 import {
   Briefcase,
   ShieldAlert,
-  Zap,
   CheckCircle2,
   TrendingUp,
   ArrowRight,
   Sparkles,
-  ExternalLink,
   RefreshCw,
-  Search,
   X
 } from "lucide-react";
 import { fetchFromApi, waitForBackgroundJob } from "@/lib/api";
@@ -287,27 +284,6 @@ export default function DashboardOverview() {
               </div>
             </div>
           ))}
-        </div>
-      </div>
-
-      {/* Realtime Agent Terminal Console (SSE / Log Streaming) */}
-      <div className="p-6 rounded-2xl bg-[#0e1524] border border-slate-800/80 space-y-3">
-        <div className="flex justify-between items-center">
-          <div className="flex items-center gap-2">
-            <span className="w-2.5 h-2.5 rounded-full bg-emerald-500 animate-pulse"></span>
-            <h2 className="text-sm font-semibold text-white font-mono">{t("Live Agent Execution Console (Streaming Logs)")}</h2>
-          </div>
-          <span className="text-xs text-slate-400 font-mono bg-slate-900 border border-slate-800 px-2 py-0.5 rounded">
-            {t("FastAPI Streamer • Active")}
-          </span>
-        </div>
-
-        <div className="p-4 rounded-xl bg-black/80 border border-slate-800 font-mono text-xs text-slate-300 space-y-1.5 h-44 overflow-y-auto">
-          <div className="text-emerald-400">{t("[SYSTEM]")}{t("API bağlantısı")} {loading ? t("kontrol ediliyor") : t("aktif")}.</div>
-          <div className="text-blue-400">{t("[SCRAPER]")}{t("Güncel ilan havuzu")}{t(":")}{currentFeedJobs.length} {t("kayıt")}.</div>
-          <div className="text-indigo-400">{t("[RANKING]")}{t("Profil eşleşmesi")}{t(":")}{highMatchCount} {t("yüksek uyumlu kayıt")}.</div>
-          <div className="text-amber-400">{t("[SOURCES]")}{Object.keys(health).length} {t("kaynak yapılandırması yüklendi")}.</div>
-          {!jobs.length && <div className="text-slate-400">{t("[SCRAPER]")}{t("Henüz canlı tarama sonucu yok. Kaynak ayarlarından Apify bilgilerini ekleyin.")}</div>}
         </div>
       </div>
     </div>

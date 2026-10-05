@@ -7,7 +7,7 @@ import { fetchFromApi } from "@/lib/api";
 import { useLanguage } from "@/lib/i18n";
 
 type LlmUsage = {
-  model: string; input_tokens: number; output_tokens: number; tokens_used: number; budget_tokens: number;
+  provider: string; model: string; anthropic_tokens_today?: number; input_tokens: number; output_tokens: number; tokens_used: number; budget_tokens: number;
   remaining_tokens: number | null; percent_used: number; calls: number;
   estimated_cost_usd: number | null; average_cost_per_call_usd: number | null;
 };
@@ -65,6 +65,7 @@ export default function LlmUsageButton() {
           <div className="mt-3 h-1.5 overflow-hidden rounded-full" style={{ background: "var(--surface-muted)" }}><div className={`h-full rounded-full transition-all ${usage.percent_used >= 90 ? "bg-amber-500" : "bg-emerald-500"}`} style={{ width: `${usage.percent_used}%` }} /></div>
           <p className="mt-3 text-xs leading-relaxed" style={{ color: "var(--muted)" }}>{t("Günlük sınır yalnızca Claude için geçerlidir; dolunca şablon motoru yanıt verir. Maliyet yalnızca fiyatı bilinen modellerde gösterilir.")}</p>
         </>}
+        {usage && usage.provider !== "anthropic" && Boolean(usage.anthropic_tokens_today) && <p className="mt-2 text-xs" style={{ color: "var(--muted)" }}>{t("Bugün Claude ile kullanılan token")}: {usage.anthropic_tokens_today?.toLocaleString()}</p>}
         {error && <p role="status" className="mt-3 text-xs text-red-500">{error}</p>}
         <Link href="/llm" onClick={() => setOpen(false)} className="mt-3 block rounded-lg border px-3 py-2 text-center text-xs font-semibold" style={{ borderColor: "var(--border)" }}>{t("Anahtarları yönet")}</Link>
       </section>}

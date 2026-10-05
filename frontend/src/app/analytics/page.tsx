@@ -1,14 +1,11 @@
 "use client";
 
-import { notify } from "@/lib/notify";
 import { useEffect, useState } from "react";
 import {
   BarChart3,
   TrendingUp,
   Clock,
   Layers,
-  ArrowRight,
-  Send,
   Calendar,
   Sparkles,
   History
@@ -97,7 +94,7 @@ export default function AnalyticsPage() {
           <TrendingUp className="w-4 h-4 text-blue-400" /> {t("Başvuru dönüşüm hunisi")}
         </h2>
         <div className="space-y-3">
-          {stages.map((stage: any, idx: number) => (
+          {stages.map((stage: any) => (
             <div key={stage.stage} className="space-y-1">
               <div className="flex justify-between text-xs">
                 <span className="font-semibold text-slate-200">{t(stage.stage)}</span>
@@ -191,11 +188,10 @@ export default function AnalyticsPage() {
                     <Calendar className="w-3.5 h-3.5" /> {t("Planlanan Tarih:")}{f.scheduled_date}
                   </div>
                 </div>
-                <button
-                  onClick={() => notify(`Kibar Takip Taslağı:\n\n${f.draft_email}`)}
-                  className="bg-slate-800 hover:bg-slate-700 text-slate-200 px-3 py-1.5 rounded-lg text-xs font-medium border border-slate-700"
-                >
-                  {t("Taslağı İncele")}</button>
+                <details className="max-w-xl text-xs">
+                  <summary className="cursor-pointer rounded-lg border border-slate-700 bg-slate-800 px-3 py-1.5 font-medium text-slate-200">{t("Taslağı İncele")}</summary>
+                  <pre className="mt-2 whitespace-pre-wrap rounded-lg border border-slate-800 bg-slate-900/60 p-3 font-sans leading-relaxed text-slate-300">{f.draft_email}</pre>
+                </details>
               </div>
             ))}
           </div>

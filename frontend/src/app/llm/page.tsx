@@ -7,15 +7,11 @@ import { useEffect, useState } from "react";
 import {
   Cpu,
   CheckCircle2,
-  AlertCircle,
   Zap,
   RefreshCw,
   Sparkles,
   ShieldCheck,
-  Server,
   Key,
-  Layers,
-  ArrowRight
 } from "lucide-react";
 import { fetchFromApi } from "@/lib/api";
 
@@ -24,7 +20,7 @@ function LLMHubPage() {
   const [providersData, setProvidersData] = useState<any>(null);
   const [loading, setLoading] = useState(true);
   const [activeProvider, setActiveProvider] = useState<string>("auto");
-  const [selectedModel, setSelectedModel] = useState<string>("");
+  const [, setSelectedModel] = useState<string>("");
   const [testingId, setTestingId] = useState<string | null>(null);
   const [testResults, setTestResults] = useState<Record<string, any>>({});
   const [switching, setSwitching] = useState(false);

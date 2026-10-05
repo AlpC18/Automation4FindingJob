@@ -55,7 +55,8 @@ Return JSON with keys:
         )
 
         category = res.get("category", "GENERAL_UPDATE") if res else "GENERAL_UPDATE"
-        confidence = res.get("confidence", 0.9) if res else 0.8
+        # No model answer (or none for this field) means no confidence, not a made-up high one.
+        confidence = (res.get("confidence") or 0.0) if res else 0.0
         meeting_link = res.get("detected_meeting_link") or self._extract_url(body)
 
         # Automatic Pipeline Stage Progression

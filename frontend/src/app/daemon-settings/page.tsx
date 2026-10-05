@@ -2,13 +2,13 @@
 import { notify } from "@/lib/notify";
 import { useLanguage } from "@/lib/i18n";
 import { useEffect, useState } from "react";
-import { Activity, Play, Square, RefreshCw, Send, CheckCircle2, AlertCircle, Radio, Bell } from "lucide-react";
+import { Play, Square, RefreshCw, Radio, Bell } from "lucide-react";
 import { fetchFromApi } from "@/lib/api";
 
 export default function DaemonSettingsPage() {
   const { translate: t } = useLanguage();
   const [status, setStatus] = useState<any>(null);
-  const [loading, setLoading] = useState(true);
+  const [, setLoading] = useState(true);
   const [actionLoading, setActionLoading] = useState(false);
 
   // Webhook Test Form State
@@ -47,7 +47,7 @@ export default function DaemonSettingsPage() {
   async function handleManualTrigger(sweepType: "nightly" | "morning") {
     try {
       setActionLoading(true);
-      const res = await fetchFromApi(`/daemon/trigger_${sweepType}`, { method: "POST" });
+      await fetchFromApi(`/daemon/trigger_${sweepType}`, { method: "POST" });
       notify(t("{sweep} completed!", { sweep: t(sweepType === "nightly" ? "Gece taraması" : "Sabah başvuru hazırlığı") }));
       await loadStatus();
     } catch (e) {

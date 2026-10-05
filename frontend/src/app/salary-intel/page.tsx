@@ -1,7 +1,7 @@
 "use client";
 import { useLanguage } from "@/lib/i18n";
 import { useEffect, useState } from "react";
-import { DollarSign, Plus, Search, Upload, CheckCircle2 } from "lucide-react";
+import { DollarSign, Plus, Search } from "lucide-react";
 import { fetchFromApi } from "@/lib/api";
 
 export default function SalaryIntelPage() {

@@ -1,18 +1,17 @@
 "use client";
 import { useLanguage } from "@/lib/i18n";
 import { useEffect, useState } from "react";
-import { Target, ChevronDown, Star, AlertCircle, CheckCircle2 } from "lucide-react";
+import { Target, CheckCircle2 } from "lucide-react";
 import { fetchFromApi } from "@/lib/api";
 
 export default function STARPrepPage() {
   const { translate: t } = useLanguage();
   const [categories, setCategories] = useState<any>({});
   const [stubs, setStubs] = useState<any[]>([]);
-  const [questions, setQuestions] = useState<any[]>([]);
   const [selectedCat, setSelectedCat] = useState<string | null>(null);
   const [answer, setAnswer] = useState({ situation: "", task: "", action: "", result: "" });
   const [scoreResult, setScoreResult] = useState<any>(null);
-  const [loading, setLoading] = useState(true);
+  const [, setLoading] = useState(true);
 
   useEffect(() => {
     async function load() {

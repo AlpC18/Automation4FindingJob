@@ -2,7 +2,7 @@
 import { notify } from "@/lib/notify";
 import { useLanguage } from "@/lib/i18n";
 import { useEffect, useState } from "react";
-import { Mail, Send, ShieldCheck, Copy, Check, Sparkles, RefreshCw, UserCheck } from "lucide-react";
+import { Mail, ShieldCheck, Copy, Check, Sparkles, RefreshCw, UserCheck } from "lucide-react";
 import { fetchFromApi } from "@/lib/api";
 
 export default function ColdOutreachPage() {

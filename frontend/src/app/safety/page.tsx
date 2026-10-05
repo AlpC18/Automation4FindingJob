@@ -4,9 +4,7 @@ import { useLanguage } from "@/lib/i18n";
 import { useEffect, useState } from "react";
 import {
   ShieldCheck,
-  ShieldAlert,
   Sliders,
-  Server,
   Lock,
   Globe,
   CheckCircle2,
@@ -17,7 +15,7 @@ import { fetchFromApi } from "@/lib/api";
 export default function SafetyPage() {
   const { translate: t } = useLanguage();
   const [health, setHealth] = useState<any>({});
-  const [loading, setLoading] = useState(true);
+  const [, setLoading] = useState(true);
 
   // LinkedIn Session Handshake State
   const [sessionStatus, setSessionStatus] = useState<any>(null);

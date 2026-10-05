@@ -6,9 +6,9 @@ import { usePathname } from "next/navigation";
 import {
   ArrowUpRight, BarChart3, Bot, BriefcaseBusiness,
   CalendarDays, CheckSquare, ChevronDown, Compass, Cpu, FileText, Globe2,
-  FileSearch, GraduationCap, Inbox, LayoutDashboard, LifeBuoy, Menu, MessageSquareText,
-  Moon, Newspaper, Radio, Search, Send, Settings2, ShieldCheck, Sparkles, Activity,
-  Sun, Target, UserRound, Users, Volume2, X,
+  FileSearch, GraduationCap, Inbox, LayoutDashboard, Menu, MessageSquareText,
+  Moon, Newspaper, Search, Send, Settings2, ShieldCheck, Activity,
+  Sun, Target, UserRound, Users, X,
 } from "lucide-react";
 import CandidateHeader from "@/components/CandidateHeader";
 import ApifyUsageButton from "@/components/ApifyUsageButton";
@@ -162,7 +162,7 @@ export default function AppShell({ children }: { children: React.ReactNode }) {
       <CommandPalette />
       <Toaster />
 
-      {mobileOpen && <button className="mobile-scrim fixed inset-0 z-40 lg:hidden" onClick={() => setMobileOpen(false)} aria-label={t("Menüyü kapat")} />}
+      {mobileOpen && <div className="mobile-scrim fixed inset-0 z-40 lg:hidden" onClick={() => setMobileOpen(false)} aria-hidden="true" />}
 
       <aside className={`app-sidebar fixed inset-y-0 left-0 z-50 flex w-[250px] flex-col border-r transition-transform duration-200 lg:translate-x-0 ${mobileOpen ? "translate-x-0" : "-translate-x-full"}`}>
         <div className="sidebar-brand flex h-[66px] shrink-0 items-center justify-between border-b px-4">

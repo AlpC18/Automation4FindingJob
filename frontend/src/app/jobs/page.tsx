@@ -3,31 +3,22 @@
 import { notify } from "@/lib/notify";
 import dynamic from "next/dynamic";
 import PageTabs from "@/components/PageTabs";
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import Link from "next/link";
 import {
   Search,
   Filter,
-  ShieldAlert,
-  AlertTriangle,
-  CheckCircle2,
-  DollarSign,
   Briefcase,
   Sparkles,
   RefreshCw,
   Clock,
   ExternalLink,
-  Link2,
-  ChevronDown,
-  Layers,
   MapPin,
   Compass,
   CheckSquare,
   Square,
   Heart,
-  EyeOff,
   Plus,
-  Sliders,
   Check
 } from "lucide-react";
 import AiProviderSelect from "@/components/AiProviderSelect";
@@ -43,7 +34,7 @@ import EmptyFeedGuide from "@/components/EmptyFeedGuide";
 function JobsPage() {
   const { locale, translate: t } = useLanguage();
   const [jobs, setJobs] = useState<any[]>([]);
-  const [loading, setLoading] = useState(true);
+  const [, setLoading] = useState(true);
   const [scraping, setScraping] = useState(false);
   const [selectedPlatform, setSelectedPlatform] = useState("all");
   const [selectedTier, setSelectedTier] = useState("all");
@@ -122,12 +113,15 @@ function JobsPage() {
     }
   }
 
+  const jobsRequest = useRef(0);
+
   async function loadSavedSearches() {
     const result = await fetchFromApi("/scrape/saved-searches");
     setSavedSearches(result.searches || []);
   }
 
   async function loadJobs() {
+    const requestId = ++jobsRequest.current;
     try {
       setLoading(true);
       const params = new URLSearchParams();
@@ -135,7 +129,10 @@ function JobsPage() {
       if (includeStale) params.set("include_stale", "true");
       const suffix = params.toString();
       const res = await fetchFromApi(`/scrape/jobs${suffix ? `?${suffix}` : ""}`);
+      if (requestId !== jobsRequest.current) return; // a newer request has started
       setJobs(res.jobs || []);
+    } catch (cause: any) {
+      notify(cause?.message || t("İlanlar yüklenemedi."));
     } finally {
       setLoading(false);
     }
@@ -208,11 +205,15 @@ function JobsPage() {
     if (params.get("minMatch")) setMinimumMatch(params.get("minMatch") || "0");
     if (params.get("ghost") === "1") setGhostOnly(true);
     if (params.get("scope") === "current") setCurrentOnly(true);
-    loadJobs();
     loadDiscoveredRoles();
     loadSavedSearches().catch(() => {});
     loadScanRuns();
     loadScanStatus();
+  }, []);
+
+  // Only the list depends on these two filters; reloading the rest would reset the roles picked above.
+  useEffect(() => {
+    loadJobs();
   }, [favoriteOnly, includeStale]);
 
   async function scheduleCurrentSearch() {
@@ -223,7 +224,7 @@ function JobsPage() {
     const savedPreset = locationPresets.find((item) => item.id === selectedLocationId);
     const location = customLocationInput.trim() || (savedPreset ? savedPreset.location_filter : "Remote");
     try {
-      await fetchFromApi("/scrape/saved-searches", { method: "POST", body: JSON.stringify({ name: internshipOnly ? t("Staj ilanları") : terms.slice(0, 2).join(" + "), queries: terms, location, min_match_score: 65, enabled: true, llm_provider: searchAi === "local_fallback" ? "" : searchAi }) });
+      await fetchFromApi("/scrape/saved-searches", { method: "POST", body: JSON.stringify({ name: internshipOnly ? t("Staj ilanları") : terms.slice(0, 2).join(" + "), queries: terms, location, min_match_score: 65, enabled: true, llm_provider: searchAi === "local_fallback" ? "" : searchAi, remote_type: customLocationInput.trim() ? "Remote" : (savedPreset ? savedPreset.remote_filter : "Remote") }) });
       await loadSavedSearches();
       await loadScanStatus();
       setScrapeFeedback(t("Arama otomatik zamanlamaya eklendi; şimdi tarama başlatılmadı. Durumu aşağıdaki Otomatik zamanlama bölümünden yönetebilirsin."));
@@ -351,7 +352,7 @@ function JobsPage() {
     const text = textFilter.trim().toLowerCase();
     if (text && !`${j.title} ${j.company} ${j.description}`.toLowerCase().includes(text)) return false;
     if (internshipOnly && !isInternshipJob(j)) return false;
-    if (selectedPlatform !== "all" && j.platform.toLowerCase() !== selectedPlatform.toLowerCase()) return false;
+    if (selectedPlatform !== "all" && String(j.platform || "").toLowerCase() !== selectedPlatform.toLowerCase()) return false;
     if (selectedTier !== "all" && (j.match_tier || "").toLowerCase() !== selectedTier.toLowerCase()) return false;
     if (locationFilter.trim() && !(j.location || "").toLowerCase().includes(locationFilter.trim().toLowerCase())) return false;
     if (remoteFilter !== "all" && !(j.remote_type || "").toLowerCase().includes(remoteFilter.toLowerCase())) return false;
@@ -379,17 +380,12 @@ function JobsPage() {
     if (!selectedJobIds.length) return;
     try {
       setBatchBusy(true);
-      if (action === "reject") {
-        await Promise.all(selectedJobIds.map((job_id) => fetchFromApi("/outcome/update_status", {
-          method: "POST",
-          body: JSON.stringify({ job_id, new_status: "Rejected" })
-        })));
-      } else {
-        await Promise.all(selectedJobIds.map((job_id) => fetchFromApi("/apply/generate_package", {
-          method: "POST",
-          body: JSON.stringify({ job_id, provider: "auto" })
-        })));
-      }
+      const [path, body] = action === "reject"
+        ? ["/outcome/update_status", (job_id: string) => ({ job_id, new_status: "Rejected" })] as const
+        : ["/apply/generate_package", (job_id: string) => ({ job_id, provider: "auto" })] as const;
+      const results = await Promise.allSettled(selectedJobIds.map((job_id) => fetchFromApi(path, { method: "POST", body: JSON.stringify(body(job_id)) })));
+      const failed = results.filter((result) => result.status === "rejected").length;
+      if (failed) notify(`${failed} / ${results.length} ${t("işlem tamamlanamadı.")}`);
       setSelectedJobIds([]);
       await loadJobs();
     } finally {

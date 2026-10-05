@@ -8,7 +8,6 @@ import {
   XCircle,
   Play,
   RefreshCw,
-  ShieldCheck,
   Cpu
 } from "lucide-react";
 import { fetchFromApi } from "@/lib/api";

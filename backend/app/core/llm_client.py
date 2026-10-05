@@ -9,6 +9,7 @@ import json
 import logging
 import os
 import re
+import threading
 import time
 from datetime import date
 from pathlib import Path
@@ -56,6 +57,8 @@ class LLMClient:
         self.ollama_url = settings.OLLAMA_BASE_URL
         # {"day": iso date, "by_provider": {provider: [input tokens, output tokens, calls]}}
         self._usage: Dict[str, Any] = {}
+        # Calls arrive from the event loop and from worker threads (scheduled searches, role suggestions).
+        self._state_lock = threading.Lock()
         self._load_state()
 
     @staticmethod
@@ -80,8 +83,11 @@ class LLMClient:
     def _save_state(self) -> None:
         state = {"env_provider": settings.ACTIVE_LLM_PROVIDER.lower(), "provider": self.provider, "model": self.custom_model, "usage": self._usage}
         try:
-            self._state_path().parent.mkdir(parents=True, exist_ok=True)
-            self._state_path().write_text(json.dumps(state), encoding="utf-8")
+            path = self._state_path()
+            path.parent.mkdir(parents=True, exist_ok=True)
+            temporary = path.with_suffix(".json.partial")
+            temporary.write_text(json.dumps(state), encoding="utf-8")
+            os.replace(temporary, path)
         except OSError as exc:
             logger.warning("Could not save the AI provider choice and usage (%s).", type(exc).__name__)
 
@@ -96,12 +102,13 @@ class LLMClient:
         return tokens_in + tokens_out
 
     def _record_tokens(self, provider: str, tokens_in: Any, tokens_out: Any) -> None:
-        used_in, used_out, calls = self._usage_today(provider)
-        today = date.today().isoformat()
-        by_provider = dict(self._usage.get("by_provider", {})) if self._usage.get("day") == today else {}
-        by_provider[provider] = [used_in + int(tokens_in or 0), used_out + int(tokens_out or 0), calls + 1]
-        self._usage = {"day": today, "by_provider": by_provider}
-        self._save_state()
+        with self._state_lock:
+            used_in, used_out, calls = self._usage_today(provider)
+            today = date.today().isoformat()
+            by_provider = dict(self._usage.get("by_provider", {})) if self._usage.get("day") == today else {}
+            by_provider[provider] = [used_in + int(tokens_in or 0), used_out + int(tokens_out or 0), calls + 1]
+            self._usage = {"day": today, "by_provider": by_provider}
+            self._save_state()
 
     def _model_for(self, provider: str) -> str:
         defaults = {
@@ -123,6 +130,8 @@ class LLMClient:
         return {
             "provider": provider,
             "model": model,
+            # Claude can be used by a scheduled search while another AI is active; its paid tokens stay visible.
+            "anthropic_tokens_today": self._tokens_used_today(),
             "input_tokens": tokens_in,
             "output_tokens": tokens_out,
             "tokens_used": used,
@@ -233,7 +242,8 @@ class LLMClient:
         self.provider = provider_id.lower()
         # A model picked for the previous provider must not carry over to the new one.
         self.custom_model = model_name or None
-        self._save_state()
+        with self._state_lock:
+            self._save_state()
 
     async def test_provider_connection(self, provider_id: str) -> Dict[str, Any]:
         """

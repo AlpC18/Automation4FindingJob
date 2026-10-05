@@ -1,7 +1,7 @@
 "use client";
 import { useLanguage } from "@/lib/i18n";
 import { useState } from "react";
-import { FileText, Download, BarChart3, Loader2 } from "lucide-react";
+import { FileText, Download, Loader2 } from "lucide-react";
 import { fetchFromApi } from "@/lib/api";
 
 export default function ReportsPage() {

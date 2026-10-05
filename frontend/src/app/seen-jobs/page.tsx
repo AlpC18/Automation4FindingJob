@@ -1,7 +1,7 @@
 "use client";
 import { useLanguage } from "@/lib/i18n";
 import { useEffect, useState } from "react";
-import { Eye, Clock, AlertTriangle, CheckCircle2, Filter, RefreshCw } from "lucide-react";
+import { Eye, Clock, RefreshCw } from "lucide-react";
 import { fetchFromApi } from "@/lib/api";
 
 export default function SeenJobsPage() {

@@ -1,6 +1,6 @@
 "use client";
 import { useEffect, useRef, useState } from "react";
-import { Bell, X, CheckCircle2, Clock, Sparkles, AlertCircle, Trash2 } from "lucide-react";
+import { Bell, X, CheckCircle2, Clock, Sparkles, Trash2 } from "lucide-react";
 import { getApiAuthToken, getWebSocketUrl, isMultiTenantEnabled } from "@/lib/runtime-config";
 import { fetchFromApi } from "@/lib/api";
 import { useLanguage } from "@/lib/i18n";

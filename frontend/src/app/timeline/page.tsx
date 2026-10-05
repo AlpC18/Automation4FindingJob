@@ -1,7 +1,7 @@
 "use client";
 import { useLanguage } from "@/lib/i18n";
 import { useEffect, useState } from "react";
-import { GitCommit, Clock, CheckCircle2, AlertCircle, Calendar, ArrowRight, ExternalLink } from "lucide-react";
+import { GitCommit, Clock } from "lucide-react";
 import { fetchFromApi } from "@/lib/api";
 
 export default function TimelinePage() {

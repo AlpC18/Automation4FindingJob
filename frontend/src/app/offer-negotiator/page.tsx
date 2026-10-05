@@ -2,7 +2,7 @@
 import { notify } from "@/lib/notify";
 import { useLanguage } from "@/lib/i18n";
 import { useState } from "react";
-import { DollarSign, ShieldAlert, Award, TrendingUp, Copy, Check, Sparkles, RefreshCw, Layers } from "lucide-react";
+import { DollarSign, ShieldAlert, Award, TrendingUp, Copy, Check, Sparkles, RefreshCw } from "lucide-react";
 import { fetchFromApi } from "@/lib/api";
 
 export default function OfferNegotiatorPage() {

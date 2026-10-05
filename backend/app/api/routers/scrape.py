@@ -73,6 +73,8 @@ class SavedSearchRequest(BaseModel):
     enabled: bool = False
     # AI provider that reviews this search's results on scheduled runs; empty = no AI review.
     llm_provider: Optional[str] = ""
+    # Work mode the search was created with ("Remote", ...); empty = any.
+    remote_type: Optional[str] = ""
 
 
 class SavedSearchScheduleRequest(BaseModel):
@@ -101,8 +103,8 @@ def create_saved_search(req: SavedSearchRequest):
     search_id = uuid.uuid4().hex
     conn = get_db_connection()
     try:
-        conn.cursor().execute("INSERT INTO saved_searches(id, name, queries_json, location, min_match_score, enabled, llm_provider) VALUES (?, ?, ?, ?, ?, ?, ?)",
-                              (search_id, req.name.strip(), json.dumps(queries), req.location or "", max(0, min(100, req.min_match_score)), int(req.enabled), llm_provider))
+        conn.cursor().execute("INSERT INTO saved_searches(id, name, queries_json, location, min_match_score, enabled, llm_provider, remote_type) VALUES (?, ?, ?, ?, ?, ?, ?, ?)",
+                              (search_id, req.name.strip(), json.dumps(queries), req.location or "", max(0, min(100, req.min_match_score)), int(req.enabled), llm_provider, (req.remote_type or "").strip()[:40]))
         conn.commit()
     finally:
         conn.close()
@@ -336,9 +338,11 @@ def get_all_jobs(
         "recent": "created_at DESC",
         "company": "lower(company) ASC, lower(title) ASC",
     }[sort]
-    cursor.execute(f"SELECT * FROM scraped_jobs WHERE {' AND '.join(clauses)} ORDER BY {ordering}", params)
-    rows = cursor.fetchall()
-    conn.close()
+    try:
+        cursor.execute(f"SELECT * FROM scraped_jobs WHERE {' AND '.join(clauses)} ORDER BY {ordering}", params)
+        rows = cursor.fetchall()
+    finally:
+        conn.close()
     jobs = [_serialize_job(row) for row in rows]
     flags = get_job_flags_for_ids([job["id"] for job in jobs])
     link_checks = get_job_link_checks([job["id"] for job in jobs])

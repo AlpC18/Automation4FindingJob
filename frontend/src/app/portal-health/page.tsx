@@ -7,7 +7,7 @@ import { fetchFromApi } from "@/lib/api";
 export default function PortalHealthPage() {
   const { translate: t } = useLanguage();
   const [report, setReport] = useState<any>(null);
-  const [loading, setLoading] = useState(true);
+  const [, setLoading] = useState(true);
 
   useEffect(() => {
     // Try to get health from last scrape results

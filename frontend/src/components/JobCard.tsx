@@ -110,63 +110,68 @@ export default function JobCard({ job, ctx }: { job: any; ctx: any }) {
             <p className="mt-2 text-xs text-slate-400">{t("CV'n ve ilan metni okunarak üretildi; işe alınma olasılığı değildir. Kural tabanlı puan: {score}", { score: job.ai_review.rule_score ?? "—" })}</p>
           </div>
         )}
-        <div className="rounded-xl border border-emerald-500/15 bg-emerald-500/[0.03] p-3"><div className="text-xs font-semibold text-emerald-200">{t("Neden uyuyor? · kural tabanlı tahmin")}</div><p className="mt-1 text-xs text-slate-400">{t("Bu puan işveren ATS puanı veya işe alınma olasılığı değildir; beceri örtüşmesine ve ilan başlığının hedef rolüne benzerliğine dayanır.")}</p><div className="mt-2 flex flex-wrap gap-1.5">{(skillGaps.matched_evidence || skillGaps.matched_skills || []).slice(0, 6).map((entry: any) => <span key={typeof entry === "string" ? entry : entry.required_skill} title={entry.evidence_source === "saved_cv_text" ? t("Kaydedilmiş CV metninde bulundu") : t("Profil beceri listesinde bulundu")} className="rounded-full border border-emerald-500/20 px-2 py-0.5 text-xs text-emerald-200">✓ {typeof entry === "string" ? entry : entry.profile_evidence}{typeof entry === "string" ? "" : entry.evidence_source === "saved_cv_text" ? ` · ${t("CV")}` : ` · ${t("Profil")}`}</span>)}{(skillGaps.missing_skills || []).slice(0, 6).map((skill: string) => <span key={skill} className="rounded-full border border-amber-500/20 px-2 py-0.5 text-xs text-amber-200">{t("Eksik")}: {skill}</span>)}{!(skillGaps.matched_skills || []).length && !(skillGaps.missing_skills || []).length && <span className="text-xs text-slate-400">{t("İlan metninde tanınan beceri bulunamadı; puan büyük ölçüde varsayılana dayanıyor.")}</span>}</div>{explanation && <p className="mt-2 text-xs text-slate-400">{t("Puan dökümü")}: {t("beceri")} {explanation.skill_points}/{explanation.skill_points_max ?? 70}{explanation.role_points !== undefined ? ` · ${t("rol uyumu")} ${explanation.role_points}/${explanation.role_points_max}` : ""} · {t("deneyim")} {explanation.experience_points}/{explanation.experience_points_max ?? 30}{explanation.target_role_missing ? ` · ${t("profilde hedef rol yok")}` : ""}{explanation.seniority_deduction > 0 ? ` · ${t("kıdem uyumsuzluğu")} −${explanation.seniority_deduction}` : ""}{explanation.risk_deduction > 0 ? ` · ${t("risk kesintisi")} −${explanation.risk_deduction}` : ""}{explanation.experience_missing ? ` · ${t("profilde deneyim yılı yok")}` : ""}{explanation.confidence === "low" ? ` · ${t("düşük güven")}` : ""}</p>}</div>
+        <details className="job-details">
+          <summary className="cursor-pointer text-xs font-semibold text-slate-300">{t("Ayrıntılar")}</summary>
+          <div className="mt-3 space-y-3">
+            <div className="rounded-xl border border-emerald-500/15 bg-emerald-500/[0.03] p-3"><div className="text-xs font-semibold text-emerald-200">{t("Neden uyuyor? · kural tabanlı tahmin")}</div><p className="mt-1 text-xs text-slate-400">{t("Bu puan işveren ATS puanı veya işe alınma olasılığı değildir; beceri örtüşmesine ve ilan başlığının hedef rolüne benzerliğine dayanır.")}</p><div className="mt-2 flex flex-wrap gap-1.5">{(skillGaps.matched_evidence || skillGaps.matched_skills || []).slice(0, 6).map((entry: any) => <span key={typeof entry === "string" ? entry : entry.required_skill} title={entry.evidence_source === "saved_cv_text" ? t("Kaydedilmiş CV metninde bulundu") : t("Profil beceri listesinde bulundu")} className="rounded-full border border-emerald-500/20 px-2 py-0.5 text-xs text-emerald-200">✓ {typeof entry === "string" ? entry : entry.profile_evidence}{typeof entry === "string" ? "" : entry.evidence_source === "saved_cv_text" ? ` · ${t("CV")}` : ` · ${t("Profil")}`}</span>)}{(skillGaps.missing_skills || []).slice(0, 6).map((skill: string) => <span key={skill} className="rounded-full border border-amber-500/20 px-2 py-0.5 text-xs text-amber-200">{t("Eksik")}: {skill}</span>)}{!(skillGaps.matched_skills || []).length && !(skillGaps.missing_skills || []).length && <span className="text-xs text-slate-400">{t("İlan metninde tanınan beceri bulunamadı; puan büyük ölçüde varsayılana dayanıyor.")}</span>}</div>{explanation && <p className="mt-2 text-xs text-slate-400">{t("Puan dökümü")}: {t("beceri")} {explanation.skill_points}/{explanation.skill_points_max ?? 70}{explanation.role_points !== undefined ? ` · ${t("rol uyumu")} ${explanation.role_points}/${explanation.role_points_max}` : ""} · {t("deneyim")} {explanation.experience_points}/{explanation.experience_points_max ?? 30}{explanation.target_role_missing ? ` · ${t("profilde hedef rol yok")}` : ""}{explanation.seniority_deduction > 0 ? ` · ${t("kıdem uyumsuzluğu")} −${explanation.seniority_deduction}` : ""}{explanation.risk_deduction > 0 ? ` · ${t("risk kesintisi")} −${explanation.risk_deduction}` : ""}{explanation.experience_missing ? ` · ${t("profilde deneyim yılı yok")}` : ""}{explanation.confidence === "low" ? ` · ${t("düşük güven")}` : ""}</p>}</div>
 
-        {/* Warnings & Diagnostics Row */}
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-3 pt-2">
-          {/* Red Flags & Ghost Reasons */}
-          <div className="p-3 rounded-xl bg-slate-900/60 border border-slate-800/80 space-y-1.5">
-            <div className="text-xs font-semibold text-slate-300 flex items-center gap-1.5">
-              <AlertTriangle className="w-3.5 h-3.5 text-amber-400" /> {t("Kırmızı Çizgiler & Riskler")}</div>
-            {hasRedFlags ? (
-              job.red_flags.map((rf: string, idx: number) => (
-                <div
-                  key={idx}
-                  className="text-xs text-rose-400 bg-rose-500/10 px-2 py-1 rounded border border-rose-500/20"
-                >
-                  {rf}
+            {/* Warnings & Diagnostics Row */}
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-3 pt-2">
+              {/* Red Flags & Ghost Reasons */}
+              <div className="p-3 rounded-xl bg-slate-900/60 border border-slate-800/80 space-y-1.5">
+                <div className="text-xs font-semibold text-slate-300 flex items-center gap-1.5">
+                  <AlertTriangle className="w-3.5 h-3.5 text-amber-400" /> {t("Kırmızı Çizgiler & Riskler")}</div>
+                {hasRedFlags ? (
+                  job.red_flags.map((rf: string, idx: number) => (
+                    <div
+                      key={idx}
+                      className="text-xs text-rose-400 bg-rose-500/10 px-2 py-1 rounded border border-rose-500/20"
+                    >
+                      {rf}
+                    </div>
+                  ))
+                ) : (
+                  <div className="text-xs text-emerald-400">{t("✓ Herhangi bir kırmızı çizgi uyuşmazlığı yok.")}</div>
+                )}
+
+                {isGhost && job.ghost_reasons?.length > 0 && (
+                  <div className="text-xs text-amber-400 bg-amber-500/10 px-2 py-1 rounded border border-amber-500/20">
+                    {t("Hayalet İlan Nedeni:")} {job.ghost_reasons[0]}
+                  </div>
+                )}
+              </div>
+
+              {/* Skill Gap & GitHub Suggestions */}
+              <div className="p-3 rounded-xl bg-slate-900/60 border border-slate-800/80 space-y-1.5">
+                <div className="text-xs font-semibold text-slate-300 flex items-center gap-1.5">
+                  <Layers className="w-3.5 h-3.5 text-indigo-400" /> {t("Yetenek Boşluğu (Skill Gap)")}</div>
+                <div className="flex flex-wrap gap-1">
+                  {skillGaps.matched_skills?.map((s: string) => (
+                    <span
+                      key={s}
+                      className="text-xs bg-emerald-500/10 text-emerald-400 px-1.5 py-0.5 rounded font-mono"
+                    >
+                      +{s}
+                    </span>
+                  ))}
+                  {skillGaps.missing_skills?.map((s: string) => (
+                    <span
+                      key={s}
+                      className="text-xs bg-rose-500/10 text-rose-400 px-1.5 py-0.5 rounded font-mono"
+                    >
+                      -{s}
+                    </span>
+                  ))}
                 </div>
-              ))
-            ) : (
-              <div className="text-xs text-emerald-400">{t("✓ Herhangi bir kırmızı çizgi uyuşmazlığı yok.")}</div>
-            )}
-
-            {isGhost && job.ghost_reasons?.length > 0 && (
-              <div className="text-xs text-amber-400 bg-amber-500/10 px-2 py-1 rounded border border-amber-500/20">
-                {t("Hayalet İlan Nedeni:")} {job.ghost_reasons[0]}
+                {skillGaps.actionable_recommendations?.[0] && (
+                  <div className="text-xs text-indigo-300 leading-tight">
+                    {skillGaps.actionable_recommendations[0]}
+                  </div>
+                )}
               </div>
-            )}
-          </div>
-
-          {/* Skill Gap & GitHub Suggestions */}
-          <div className="p-3 rounded-xl bg-slate-900/60 border border-slate-800/80 space-y-1.5">
-            <div className="text-xs font-semibold text-slate-300 flex items-center gap-1.5">
-              <Layers className="w-3.5 h-3.5 text-indigo-400" /> {t("Yetenek Boşluğu (Skill Gap)")}</div>
-            <div className="flex flex-wrap gap-1">
-              {skillGaps.matched_skills?.map((s: string) => (
-                <span
-                  key={s}
-                  className="text-xs bg-emerald-500/10 text-emerald-400 px-1.5 py-0.5 rounded font-mono"
-                >
-                  +{s}
-                </span>
-              ))}
-              {skillGaps.missing_skills?.map((s: string) => (
-                <span
-                  key={s}
-                  className="text-xs bg-rose-500/10 text-rose-400 px-1.5 py-0.5 rounded font-mono"
-                >
-                  -{s}
-                </span>
-              ))}
             </div>
-            {skillGaps.actionable_recommendations?.[0] && (
-              <div className="text-xs text-indigo-300 leading-tight">
-                {skillGaps.actionable_recommendations[0]}
-              </div>
-            )}
           </div>
-        </div>
+        </details>
 
         {/* Footer Actions */}
         <div className="flex items-center justify-between pt-2 border-t border-slate-800/60 text-xs">

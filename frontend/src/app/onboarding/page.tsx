@@ -2,7 +2,7 @@
 import { notify } from "@/lib/notify";
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
-import { Zap, CheckCircle2, ArrowRight, UserCheck, Code, Brain, PenLine, Search, MapPin, Check } from "lucide-react";
+import { CheckCircle2, ArrowRight, Search, MapPin, Check } from "lucide-react";
 import { fetchFromApi, requestFromApi } from "@/lib/api";
 import { useLanguage } from "@/lib/i18n";
 import SetupSteps from "@/components/SetupSteps";

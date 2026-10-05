@@ -1293,6 +1293,11 @@ export const pageTranslations: Record<string, string> = {
 };
 
 export const sharedTranslations: Record<string, string> = {
+  "Bugün Claude ile kullanılan token": "Claude tokens used today",
+  "Başvurularını aşamalara göre takip et.": "Track your applications by stage.",
+  "Başvurular yüklenemedi.": "Could not load applications.",
+  "İlanlar yüklenemedi.": "Could not load jobs.",
+  "işlem tamamlanamadı.": "actions could not be completed.",
   "Hayalet İlan Nedeni:": "Ghost-job signals:",
   "CV'nizden Çıkarılan STAR Adayları": "STAR examples from your resume",
   "STAR Cevap Pratik Alanı": "STAR answer practice",

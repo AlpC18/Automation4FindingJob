@@ -34,78 +34,79 @@ class ApplyPackageRequest(BaseModel):
 @router.post("/apply/generate_package")
 async def generate_application_package(req: ApplyPackageRequest):
     conn = get_db_connection()
-    cursor = conn.cursor()
-    cursor.execute("SELECT * FROM scraped_jobs WHERE id = ?", (req.job_id,))
-    row = cursor.fetchone()
-    if not row:
+    try:
+        cursor = conn.cursor()
+        cursor.execute("SELECT * FROM scraped_jobs WHERE id = ?", (req.job_id,))
+        row = cursor.fetchone()
+        if not row:
+            raise HTTPException(status_code=404, detail="Job not found")
+
+        job_data = dict(row)
+        profile = fetch_candidate_profile()
+        profile_version = ensure_profile_version(profile)
+        tailored_result = build_tailored_resume_profile(profile, job_data)
+        tailored_profile = tailored_result["profile"]
+        style_profile = {
+            **profile.get("style_profile", {}),
+            "writing_tone": profile.get("writing_tone", ""),
+            "work_style": profile.get("work_style", ""),
+        }
+
+        pipeline_res = await application_pipeline.run_pipeline_async(
+            job_data=job_data,
+            candidate_profile=profile,
+            style_profile=style_profile,
+            preferred_provider=req.provider,
+        )
+
+        xray_dork = decision_maker_engine.generate_xray_dork(
+            job_data["company"], job_data.get("location", "Remote")
+        )
+        rag_first_proj = pipeline_res["rag_context_used"][0] if pipeline_res["rag_context_used"] else None
+        cold_dm = decision_maker_engine.draft_three_sentence_outreach(
+            job_data["company"], job_data["title"], profile, rag_first_proj
+        )
+        micro_port = decision_maker_engine.synthesize_micro_portfolio(
+            job_data["title"], job_data["company"], pipeline_res["rag_context_used"]
+        )
+
+        tailoring = tailored_result["tailoring"]
+        provider_used = pipeline_res.get("provider_used", "Auto")
+        cursor.execute(
+            """
+            UPDATE scraped_jobs
+            SET cover_letter = ?,
+                human_texture_score = ?,
+                micro_portfolio = ?,
+                cold_outreach_dork = ?,
+                cold_outreach_msg = ?,
+                draft_source = ?,
+                status = 'Human Review'
+            WHERE id = ?
+            """,
+            (
+                pipeline_res["cover_letter"],
+                pipeline_res["human_texture_score"],
+                micro_port,
+                xray_dork,
+                cold_dm,
+                provider_used,
+                req.job_id,
+            ),
+        )
+        package_id = uuid.uuid4().hex
+        cursor.execute("""INSERT INTO application_packages
+            (id, job_id, profile_version, cover_letter, tailoring_json, tailored_profile_json)
+            VALUES (?, ?, ?, ?, ?, ?)""",
+            (package_id, req.job_id, profile_version, pipeline_res["cover_letter"], json.dumps(tailoring),
+             encrypt_secret(json.dumps(tailored_profile))))
+        cursor.execute("""INSERT INTO application_attribution(job_id, profile_version, target_role, platform)
+            VALUES (?, ?, ?, ?) ON CONFLICT(job_id) DO UPDATE SET profile_version=excluded.profile_version,
+            target_role=excluded.target_role, platform=excluded.platform, updated_at=CURRENT_TIMESTAMP""",
+            (req.job_id, profile_version, profile.get("target_role") or job_data.get("title", ""), job_data.get("platform", "")))
+        conn.commit()
+    finally:
         conn.close()
-        raise HTTPException(status_code=404, detail="Job not found")
-
-    job_data = dict(row)
-    profile = fetch_candidate_profile()
-    profile_version = ensure_profile_version(profile)
-    tailored_result = build_tailored_resume_profile(profile, job_data)
-    tailored_profile = tailored_result["profile"]
-    style_profile = {
-        **profile.get("style_profile", {}),
-        "writing_tone": profile.get("writing_tone", ""),
-        "work_style": profile.get("work_style", ""),
-    }
-
-    pipeline_res = await application_pipeline.run_pipeline_async(
-        job_data=job_data,
-        candidate_profile=profile,
-        style_profile=style_profile,
-        preferred_provider=req.provider,
-    )
-
-    xray_dork = decision_maker_engine.generate_xray_dork(
-        job_data["company"], job_data.get("location", "Remote")
-    )
-    rag_first_proj = pipeline_res["rag_context_used"][0] if pipeline_res["rag_context_used"] else None
-    cold_dm = decision_maker_engine.draft_three_sentence_outreach(
-        job_data["company"], job_data["title"], profile, rag_first_proj
-    )
-    micro_port = decision_maker_engine.synthesize_micro_portfolio(
-        job_data["title"], job_data["company"], pipeline_res["rag_context_used"]
-    )
-
-    tailoring = tailored_result["tailoring"]
-    provider_used = pipeline_res.get("provider_used", "Auto")
-    cursor.execute(
-        """
-        UPDATE scraped_jobs
-        SET cover_letter = ?,
-            human_texture_score = ?,
-            micro_portfolio = ?,
-            cold_outreach_dork = ?,
-            cold_outreach_msg = ?,
-            draft_source = ?,
-            status = 'Human Review'
-        WHERE id = ?
-        """,
-        (
-            pipeline_res["cover_letter"],
-            pipeline_res["human_texture_score"],
-            micro_port,
-            xray_dork,
-            cold_dm,
-            provider_used,
-            req.job_id,
-        ),
-    )
-    package_id = uuid.uuid4().hex
-    cursor.execute("""INSERT INTO application_packages
-        (id, job_id, profile_version, cover_letter, tailoring_json, tailored_profile_json)
-        VALUES (?, ?, ?, ?, ?, ?)""",
-        (package_id, req.job_id, profile_version, pipeline_res["cover_letter"], json.dumps(tailoring),
-         encrypt_secret(json.dumps(tailored_profile))))
-    cursor.execute("""INSERT INTO application_attribution(job_id, profile_version, target_role, platform)
-        VALUES (?, ?, ?, ?) ON CONFLICT(job_id) DO UPDATE SET profile_version=excluded.profile_version,
-        target_role=excluded.target_role, platform=excluded.platform, updated_at=CURRENT_TIMESTAMP""",
-        (req.job_id, profile_version, profile.get("target_role") or job_data.get("title", ""), job_data.get("platform", "")))
-    conn.commit()
-    conn.close()
 
     return {
         "job_id": req.job_id,

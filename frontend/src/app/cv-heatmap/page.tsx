@@ -1,13 +1,13 @@
 "use client";
 import { useLanguage } from "@/lib/i18n";
 import { useEffect, useState } from "react";
-import { Layers, CheckCircle2, AlertTriangle, XCircle, Sparkles, RefreshCw } from "lucide-react";
+import { Layers, CheckCircle2, XCircle } from "lucide-react";
 import { fetchFromApi } from "@/lib/api";
 
 export default function CVHeatmapPage() {
   const { translate: t } = useLanguage();
   const [profile, setProfile] = useState<any>(null);
-  const [loading, setLoading] = useState(true);
+  const [, setLoading] = useState(true);
 
   // Target job input for comparison
   const [jobText, setJobText] = useState("");

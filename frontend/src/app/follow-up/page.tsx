@@ -2,7 +2,7 @@
 import { notify } from "@/lib/notify";
 import { useLanguage } from "@/lib/i18n";
 import { useEffect, useState } from "react";
-import { Calendar, Clock, Mail, Copy, Check, ExternalLink, AlertCircle, CalendarPlus } from "lucide-react";
+import { Calendar, Clock, Copy, Check, ExternalLink, AlertCircle, CalendarPlus } from "lucide-react";
 import { fetchFromApi } from "@/lib/api";
 
 export default function FollowUpPage() {

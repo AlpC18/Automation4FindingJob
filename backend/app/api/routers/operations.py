@@ -125,6 +125,9 @@ class SetProviderRequest(BaseModel):
 
 @router.post("/llm/set_provider")
 def set_active_llm_provider(req: SetProviderRequest):
+    known = {item["id"] for item in llm_client.get_providers_status()["providers"]} | {"auto"}
+    if req.provider.lower() not in known:
+        raise HTTPException(status_code=422, detail="Bilinmeyen yapay zekâ sağlayıcısı.")
     llm_client.set_active_provider(req.provider, req.model)
     agent_logger.log_event(
         "LLM_HUB",

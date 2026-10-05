@@ -97,6 +97,12 @@ class WebResearchEngine:
         Returns:
             Dict with 'success', 'content', 'method', 'url', 'error'
         """
+        # The URL comes from the user: refuse local and private-network addresses before any request is made.
+        from backend.app.modules.scrape.job_link_health import _public_http_url
+        allowed, reason = _public_http_url(url)
+        if not allowed:
+            return {"success": False, "content": "", "method": "blocked", "url": url, "error": reason}
+
         agent_logger.log_event(
             "WEB_RESEARCH",
             f"Starting escalation fetch for {context}: {url}"

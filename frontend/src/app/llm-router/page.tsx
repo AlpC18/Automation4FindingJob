@@ -2,13 +2,13 @@
 import { notify } from "@/lib/notify";
 import { useLanguage } from "@/lib/i18n";
 import { useEffect, useState } from "react";
-import { Cpu, DollarSign, Zap, TrendingDown, Layers, Play, CheckCircle2, RefreshCw } from "lucide-react";
+import { Cpu, Zap, Layers, Play, RefreshCw } from "lucide-react";
 import { fetchFromApi } from "@/lib/api";
 
 export default function LLMRouterPage() {
   const { translate: t } = useLanguage();
   const [metrics, setMetrics] = useState<any>(null);
-  const [loading, setLoading] = useState(true);
+  const [, setLoading] = useState(true);
 
   // Test Runner State
   const [taskName, setTaskName] = useState("Drafter_Reviewer_Audit");

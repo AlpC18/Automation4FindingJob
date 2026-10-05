@@ -8,17 +8,13 @@ import { useEffect, useState, useRef } from "react";
 import {
   MessageSquare,
   Sparkles,
-  CheckCircle2,
   DollarSign,
-  Briefcase,
   Send,
-  HelpCircle,
   Copy,
   Check,
   Volume2,
   Mic,
   MicOff,
-  UserCheck,
   Zap
 } from "lucide-react";
 import { fetchFromApi } from "@/lib/api";

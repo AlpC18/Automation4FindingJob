@@ -1,6 +1,6 @@
 "use client";
 import { notify } from "@/lib/notify";
-import { useEffect, useState, useRef } from "react";
+import { useEffect, useState } from "react";
 import { Send, CheckCircle2, XCircle, Clock, Sparkles, RefreshCw, AlertCircle, FileText, ChevronDown } from "lucide-react";
 import { fetchFromApi } from "@/lib/api";
 import { getApiAuthToken, getWebSocketUrl } from "@/lib/runtime-config";

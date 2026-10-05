@@ -3,7 +3,7 @@ import { useLanguage } from "@/lib/i18n";
 
 import { useCallback, useEffect, useState } from "react";
 import Link from "next/link";
-import { ArrowUpRight, BriefcaseBusiness, CheckCircle2, Circle, Download, FolderOpen, Globe, Layers3, Monitor, Package, Plus, RefreshCw, Smartphone, Sparkles, Tablet } from "lucide-react";
+import { ArrowUpRight, BriefcaseBusiness, CheckCircle2, Circle, Download, FolderOpen, Globe, Layers3, Monitor, Package, Plus, Smartphone, Sparkles, Tablet } from "lucide-react";
 import { fetchFromApi, requestFromApi } from "@/lib/api";
 import { CareerEmpty, CareerHeading, CareerLinks, CareerMetric, CareerNotice, downloadText } from "@/components/CareerWorkspace";
 

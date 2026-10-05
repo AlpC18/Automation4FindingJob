@@ -5,21 +5,15 @@ import { useEffect, useState } from "react";
 import {
   Inbox,
   Send,
-  Calendar,
   Sparkles,
   CheckCircle2,
-  AlertCircle,
-  MessageSquare,
-  Bot,
   Video,
-  Clock,
   RefreshCw,
   Plus,
   Smartphone,
   ExternalLink,
   Mail,
   Layers,
-  Check
 } from "lucide-react";
 import { fetchFromApi } from "@/lib/api";
 
@@ -31,7 +25,7 @@ export default function InboxPage() {
 
   // Dispatching Telegram briefing
   const [dispatchingBriefing, setDispatchingBriefing] = useState(false);
-  const [briefingResult, setBriefingResult] = useState<string | null>(null);
+  const [, setBriefingResult] = useState<string | null>(null);
 
   // Telegram test command
   const [testCmd, setTestCmd] = useState("/status");

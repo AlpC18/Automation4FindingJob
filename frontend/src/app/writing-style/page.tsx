@@ -1,7 +1,7 @@
 "use client";
 import { useLanguage } from "@/lib/i18n";
 import { useState } from "react";
-import { PenLine, CheckCircle2, AlertTriangle, Wand2 } from "lucide-react";
+import { PenLine, CheckCircle2, Wand2 } from "lucide-react";
 import { fetchFromApi } from "@/lib/api";
 
 const PRESETS = [
