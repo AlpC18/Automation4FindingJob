@@ -5,7 +5,7 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import {
   ArrowUpRight, BarChart3, Bot, BriefcaseBusiness,
-  CalendarDays, CheckSquare, Compass, Cpu, FileText, Globe2,
+  CalendarDays, CheckSquare, ChevronDown, Compass, Cpu, FileText, Globe2,
   FileSearch, GraduationCap, Inbox, LayoutDashboard, LifeBuoy, Menu, MessageSquareText,
   Moon, Newspaper, Radio, Search, Send, Settings2, ShieldCheck, Sparkles, Activity,
   Sun, Target, UserRound, Users, Volume2, X,
@@ -16,6 +16,7 @@ import CommandPalette from "@/components/CommandPalette";
 import NotificationDrawer from "@/components/NotificationDrawer";
 import { useLanguage } from "@/lib/i18n";
 
+// The daily flow stays visible; everything else lives under "Daha fazla" so the menu is short.
 const groups = [
   {
     label: "ÇALIŞMA ALANI",
@@ -24,42 +25,51 @@ const groups = [
       { name: "Genel Bakış", href: "/", icon: LayoutDashboard },
       { name: "İş ilanları", href: "/jobs", icon: Search },
       { name: "Başvurular", href: "/kanban", icon: CheckSquare },
+      { name: "Gelen kutusu", href: "/inbox", icon: Inbox },
       { name: "Takip takvimi", href: "/follow-up", icon: CalendarDays },
-      { name: "Analitik", href: "/analytics", icon: BarChart3 },
     ],
   },
   {
     label: "KARİYERİNİ ŞEKİLLENDİR",
     tone: "career",
     links: [
-      { name: "Kategori ve alanlar", href: "/preferences", icon: Compass },
       { name: "Profilim", href: "/setup", icon: UserRound },
+      { name: "Kategori ve alanlar", href: "/preferences", icon: Compass },
       { name: "CV'yi analiz et", href: "/cv-analysis", icon: FileSearch },
-      { name: "Kariyer haritası", href: "/career-map", icon: Target },
-      { name: "Öğrenme planı", href: "/upskill", icon: GraduationCap },
-      { name: "Portfolyo", href: "/portfolio-site", icon: Globe2 },
     ],
   },
+  {
+    label: "SİSTEM",
+    tone: "system",
+    links: [
+      { name: "İlan kaynakları", href: "/sources", icon: Globe2 },
+      { name: "Yapay zekâ / API anahtarları", href: "/llm", icon: Cpu },
+    ],
+  },
+];
+
+const moreGroups = [
   {
     label: "ARAÇLAR",
     tone: "tools",
     links: [
+      { name: "Analitik", href: "/analytics", icon: BarChart3 },
       { name: "Mülakat hazırlığı", href: "/interview", icon: MessageSquareText },
       { name: "Sesli mülakat", href: "/voice-interview", icon: Volume2 },
-      { name: "Karar vericiler", href: "/decision-makers", icon: Users },
-      { name: "Otonom başvurular", href: "/auto-apply", icon: Send },
-      { name: "İş teklifi pazarlığı", href: "/offer-negotiator", icon: BriefcaseBusiness },
-      { name: "Soğuk erişim", href: "/cold-outreach", icon: Send },
-      { name: "Gelen kutusu", href: "/inbox", icon: Inbox },
-      { name: "İlan kaynakları", href: "/sources", icon: Globe2 },
-      { name: "Görülen ilanlar", href: "/seen-jobs", icon: BriefcaseBusiness },
-      { name: "Davranışsal profil", href: "/behavioral", icon: UserRound },
-      { name: "Yazım stili", href: "/writing-style", icon: FileText },
       { name: "STAR hazırlığı", href: "/star-prep", icon: Target },
+      { name: "Otonom başvurular", href: "/auto-apply", icon: Send },
+      { name: "Soğuk erişim", href: "/cold-outreach", icon: Send },
+      { name: "Karar vericiler", href: "/decision-makers", icon: Users },
+      { name: "İş teklifi pazarlığı", href: "/offer-negotiator", icon: BriefcaseBusiness },
       { name: "Maaş istihbaratı", href: "/salary-intel", icon: BarChart3 },
+      { name: "Kariyer haritası", href: "/career-map", icon: Target },
+      { name: "Öğrenme planı", href: "/upskill", icon: GraduationCap },
+      { name: "Portfolyo", href: "/portfolio-site", icon: Globe2 },
       { name: "CV analiz haritası", href: "/cv-heatmap", icon: Sparkles },
       { name: "Profil optimizasyonu", href: "/profile-optimizer", icon: UserRound },
-      { name: "Portal sağlığı", href: "/portal-health", icon: ShieldCheck },
+      { name: "Davranışsal profil", href: "/behavioral", icon: UserRound },
+      { name: "Yazım stili", href: "/writing-style", icon: FileText },
+      { name: "Görülen ilanlar", href: "/seen-jobs", icon: BriefcaseBusiness },
       { name: "İş akışı zaman çizelgesi", href: "/timeline", icon: CalendarDays },
     ],
   },
@@ -67,9 +77,9 @@ const groups = [
     label: "SİSTEM",
     tone: "system",
     links: [
+      { name: "Portal sağlığı", href: "/portal-health", icon: ShieldCheck },
       { name: "Hesap güvenliği", href: "/safety", icon: ShieldCheck },
       { name: "Veri ve gizlilik", href: "/privacy", icon: ShieldCheck },
-      { name: "Yapay zekâ / API anahtarları", href: "/llm", icon: Cpu },
       { name: "Model yönlendirici", href: "/llm-router", icon: Radio },
       { name: "Daemon ayarları", href: "/daemon-settings", icon: Settings2 },
       { name: "Raporlar", href: "/reports", icon: FileText },
@@ -89,6 +99,7 @@ export default function AppShell({ children }: { children: React.ReactNode }) {
   const { locale, setLocale, translate: t } = useLanguage();
   const [theme, setTheme] = useState<"dark" | "light">("dark");
   const [mobileOpen, setMobileOpen] = useState(false);
+  const [moreOpen, setMoreOpen] = useState(false);
 
   useEffect(() => {
     const saved = localStorage.getItem("career-agent-theme");
@@ -98,6 +109,34 @@ export default function AppShell({ children }: { children: React.ReactNode }) {
   }, []);
 
   useEffect(() => setMobileOpen(false), [pathname]);
+
+  const inMore = moreGroups.some((group) => group.links.some((item) => isActive(pathname, item.href)));
+
+  function renderGroup(group: (typeof groups)[number]) {
+    return (
+      <section key={`${group.tone}-${group.links[0].href}`} className={`nav-group nav-group-${group.tone}`}>
+        <h2 className="muted mb-2 px-3 text-[10px] font-bold tracking-[0.16em]">{t(group.label)}</h2>
+        <div className="space-y-1">
+          {group.links.map((item) => {
+            const Icon = item.icon;
+            const active = isActive(pathname, item.href);
+            return (
+              <Link
+                key={item.href}
+                href={item.href}
+                aria-current={active ? "page" : undefined}
+                className={`nav-link flex items-center gap-2.5 rounded-xl px-2.5 py-2 text-[12px] font-medium transition-colors ${active ? "active" : ""}`}
+              >
+                <Icon className="h-[17px] w-[17px] shrink-0" />
+                <span className="flex-1">{t(item.name)}</span>
+                {active && <span className="nav-indicator h-1.5 w-1.5 rounded-full" />}
+              </Link>
+            );
+          })}
+        </div>
+      </section>
+    );
+  }
 
   useEffect(() => {
     if (window.matchMedia("(max-width: 1023px) and (hover: none) and (pointer: coarse)").matches) {
@@ -147,29 +186,14 @@ export default function AppShell({ children }: { children: React.ReactNode }) {
         </div>
 
         <nav className="min-h-0 flex-1 space-y-4 overflow-y-auto px-2.5 py-4" aria-label={t("Ana menü")}>
-          {groups.map((group) => (
-            <section key={group.label} className={`nav-group nav-group-${group.tone}`}>
-              <h2 className="muted mb-2 px-3 text-[10px] font-bold tracking-[0.16em]">{t(group.label)}</h2>
-              <div className="space-y-1">
-                {group.links.map((item) => {
-                  const Icon = item.icon;
-                  const active = isActive(pathname, item.href);
-                  return (
-                    <Link
-                      key={item.href}
-                      href={item.href}
-                      aria-current={active ? "page" : undefined}
-                      className={`nav-link flex items-center gap-2.5 rounded-xl px-2.5 py-2 text-[12px] font-medium transition-colors ${active ? "active" : ""}`}
-                    >
-                      <Icon className="h-[17px] w-[17px] shrink-0" />
-                      <span className="flex-1">{t(item.name)}</span>
-                      {active && <span className="nav-indicator h-1.5 w-1.5 rounded-full" />}
-                    </Link>
-                  );
-                })}
-              </div>
-            </section>
-          ))}
+          {groups.map(renderGroup)}
+          <details className="nav-more" open={moreOpen || inMore} onToggle={(event) => setMoreOpen(event.currentTarget.open)}>
+            <summary className="muted flex cursor-pointer items-center gap-2 rounded-xl px-3 py-2 text-[12px] font-semibold">
+              <ChevronDown className="h-4 w-4 shrink-0" />
+              {t("Daha fazla")}
+            </summary>
+            <div className="mt-3 space-y-4">{moreGroups.map(renderGroup)}</div>
+          </details>
         </nav>
 
         <div className="sidebar-footer shrink-0 border-t p-3">

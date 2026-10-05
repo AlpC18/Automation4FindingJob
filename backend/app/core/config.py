@@ -89,6 +89,10 @@ class Settings(BaseSettings):
     GEMINI_MODEL: str = os.getenv("GEMINI_MODEL", "gemini-3.8-flash")
     DEEPSEEK_API_KEY: str = os.getenv("DEEPSEEK_API_KEY", "")
     DEEPSEEK_MODEL: str = os.getenv("DEEPSEEK_MODEL", "deepseek-chat")
+    # Any OpenAI-compatible service (Groq, OpenRouter, Cerebras, Mistral...), e.g. https://api.groq.com/openai/v1
+    CUSTOM_LLM_BASE_URL: str = os.getenv("CUSTOM_LLM_BASE_URL", "")
+    CUSTOM_LLM_API_KEY: str = os.getenv("CUSTOM_LLM_API_KEY", "")
+    CUSTOM_LLM_MODEL: str = os.getenv("CUSTOM_LLM_MODEL", "")
     OLLAMA_BASE_URL: str = os.getenv("OLLAMA_BASE_URL", "http://localhost:11434")
     OLLAMA_MODEL: str = os.getenv("OLLAMA_MODEL", "llama3")
     ACTIVE_LLM_PROVIDER: str = os.getenv("ACTIVE_LLM_PROVIDER", "auto")
@@ -96,10 +100,17 @@ class Settings(BaseSettings):
     # Platform / Sourcing APIs
     APIFY_API_TOKEN: str = os.getenv("APIFY_API_TOKEN", "")
     APIFY_ACTOR_LINKEDIN: str = os.getenv("APIFY_ACTOR_LINKEDIN", "valig/linkedin-jobs-scraper")
-    APIFY_ACTOR_UPWORK: str = os.getenv("APIFY_ACTOR_UPWORK", "")
+    APIFY_ACTOR_UPWORK: str = os.getenv("APIFY_ACTOR_UPWORK", "neatrat/upwork-job-scraper")
+    APIFY_ACTOR_INDEED: str = os.getenv("APIFY_ACTOR_INDEED", "valig/indeed-jobs-scraper")
+    APIFY_ACTOR_GLASSDOOR: str = os.getenv("APIFY_ACTOR_GLASSDOOR", "valig/glassdoor-jobs-scraper")
+    APIFY_ACTOR_KARIYERNET: str = os.getenv("APIFY_ACTOR_KARIYERNET", "blackfalcondata/kariyer-scraper")
     APIFY_ACTOR_KOSOVAJOB: str = os.getenv("APIFY_ACTOR_KOSOVAJOB", "")
     APIFY_INPUT_LINKEDIN: str = os.getenv("APIFY_INPUT_LINKEDIN", '{"keywords":"","location":"","limit":100}')
-    APIFY_INPUT_UPWORK: str = os.getenv("APIFY_INPUT_UPWORK", "{}")
+    APIFY_INPUT_UPWORK: str = os.getenv("APIFY_INPUT_UPWORK", '{"perPage":20}')
+    # Indeed searches one country per run; Glassdoor refuses to run without a location.
+    APIFY_INPUT_INDEED: str = os.getenv("APIFY_INPUT_INDEED", '{"country":"us"}')
+    APIFY_INPUT_GLASSDOOR: str = os.getenv("APIFY_INPUT_GLASSDOOR", '{"location":"United States"}')
+    APIFY_INPUT_KARIYERNET: str = os.getenv("APIFY_INPUT_KARIYERNET", "{}")
     APIFY_INPUT_KOSOVAJOB: str = os.getenv("APIFY_INPUT_KOSOVAJOB", "{}")
     APIFY_TIMEOUT_SECONDS: int = _env_int("APIFY_TIMEOUT_SECONDS", 90)
     # Bounds the size returned to the app for each billable Actor invocation.

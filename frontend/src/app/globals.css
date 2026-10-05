@@ -181,3 +181,7 @@ html[data-theme="light"] [class*="bg-[#0d131f]"] { background-color: var(--surfa
 @media (prefers-reduced-motion: reduce) {
   *, *::before, *::after { scroll-behavior: auto !important; animation-duration: 0.01ms !important; transition-duration: 0.01ms !important; }
 }
+.nav-more > summary { list-style: none; }
+.nav-more > summary::-webkit-details-marker { display: none; }
+.nav-more > summary:hover { color: var(--text); background: var(--surface-muted); }
+.nav-more[open] > summary svg { transform: rotate(180deg); }

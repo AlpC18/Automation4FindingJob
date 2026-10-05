@@ -69,3 +69,18 @@ def test_anthropic_calls_stop_once_the_daily_token_budget_is_spent(monkeypatch, 
     assert second["provider_used"] == "Fallback Engine (API Error)"
     assert len(sent) == 1
     assert "LLMBudgetExceeded" in caplog.text
+
+
+def test_custom_openai_compatible_provider_calls_the_configured_endpoint(monkeypatch):
+    sent = []
+    _client_returning(monkeypatch, 200, {"choices": [{"message": {"content": "A free model sentence."}}]}, sent)
+    monkeypatch.setattr(module, "get_provider_api_key", lambda provider: "free-key" if provider == "custom" else "")
+    monkeypatch.setattr(module.settings, "CUSTOM_LLM_BASE_URL", "https://api.example.test/openai/v1/")
+    monkeypatch.setattr(module.settings, "CUSTOM_LLM_MODEL", "some-free-model")
+
+    result = asyncio.run(module.llm_client.generate_text("system", "user", preferred_provider="custom", apply_humanizer=False))
+
+    assert str(sent[0].url) == "https://api.example.test/openai/v1/chat/completions"
+    assert sent[0].headers["authorization"] == "Bearer free-key"
+    assert result["text"] == "A free model sentence."
+    assert result["provider_used"] == "Custom (some-free-model)"

@@ -7,8 +7,7 @@ from typing import Any
 
 import httpx
 
-from backend.app.core.config import settings
-from backend.app.modules.scrape.source_registry import get_source_config
+from backend.app.modules.scrape.source_registry import apify_tokens
 
 FREE_PLAN_ALLOWANCE_USD = 5.0
 USAGE_CACHE_SECONDS = 60
@@ -58,10 +57,7 @@ def _fetch_status(token: str, slot: int) -> dict[str, Any]:
 
 
 def _tokens(source: str = "linkedin") -> list[str]:
-    configured = get_source_config(source)
-    tokens = configured.get("api_tokens") or []
-    if not tokens and settings.APIFY_API_TOKEN.strip():
-        tokens = [settings.APIFY_API_TOKEN.strip()]
+    tokens = apify_tokens(source)
     return list(dict.fromkeys(token.strip() for token in tokens if token and token.strip()))
 
 

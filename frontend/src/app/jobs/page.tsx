@@ -187,12 +187,10 @@ export default function JobsPage() {
       if (res && res.roles) {
         setDiscoveredRoles(res.roles);
         setLocationPresets(res.location_presets || []);
+        setSelectedLocationId((current) => current || res.location_presets?.[0]?.id || "");
         // Pre-select default checked roles
         const defaults = res.roles.filter((r: any) => r.default_checked).map((r: any) => r.id);
         setSelectedRoleIds(defaults);
-        const profileResponse = await fetchFromApi<any>("/setup/profile").catch(() => null);
-        const profile = profileResponse?.profile || profileResponse;
-        if (profile?.location) setCustomLocationInput(profile.location);
       }
     } catch (e) {
       console.error("Could not fetch discovered roles", e);
@@ -216,7 +214,8 @@ export default function JobsPage() {
       ? ["intern"]
       : discoveredRoles.filter((role) => selectedRoleIds.includes(role.id)).map((role) => role.title).concat(customRoles);
     if (!terms.length) { setScrapeFeedback(t("Zamanlamak için önce en az bir rol seç.")); return; }
-    const location = customLocationInput.trim() || locationPresets.find((item) => item.id === selectedLocationId)?.location_filter || "Remote";
+    const savedPreset = locationPresets.find((item) => item.id === selectedLocationId);
+    const location = customLocationInput.trim() || (savedPreset ? savedPreset.location_filter : "Remote");
     try {
       await fetchFromApi("/scrape/saved-searches", { method: "POST", body: JSON.stringify({ name: internshipOnly ? t("Staj ilanları") : terms.slice(0, 2).join(" + "), queries: terms, location, min_match_score: 65, enabled: true }) });
       await loadSavedSearches();
@@ -298,8 +297,9 @@ export default function JobsPage() {
     }
 
     const locPreset = locationPresets.find((p) => p.id === selectedLocationId);
-    const locFilter = customLocationInput.trim() || locPreset?.location_filter || "Remote";
-    const remoteFilter = locPreset?.remote_filter || "Remote";
+    // A preset may deliberately leave either filter empty (anywhere / any work mode).
+    const locFilter = customLocationInput.trim() || (locPreset ? locPreset.location_filter : "Remote");
+    const remoteFilter = locPreset ? locPreset.remote_filter : "Remote";
 
     try {
       setScraping(true);
@@ -559,39 +559,29 @@ export default function JobsPage() {
               </span>
 
               <div className="space-y-2">
-                {locationPresets.map((loc) => {
-                  const isSelected = selectedLocationId === loc.id;
-                  return (
-                    <div
-                      key={loc.id}
-                      onClick={() => {
-                        setSelectedLocationId(loc.id);
-                        setCustomLocationInput("");
-                      }}
-                      className={`p-3 rounded-xl border transition cursor-pointer select-none space-y-1 ${
-                        isSelected
-                          ? "bg-emerald-950/30 border-emerald-500/50 shadow-sm"
-                          : "bg-slate-900/40 border-slate-800/80 hover:border-slate-700"
-                      }`}
-                    >
-                      <div className="flex items-center gap-2.5">
-                        <div
-                          className={`w-3.5 h-3.5 rounded-full border flex items-center justify-center ${
-                            isSelected
-                              ? "border-emerald-500 bg-emerald-500"
-                              : "border-slate-600 bg-slate-950"
-                          }`}
-                        >
-                          {isSelected && <div className="w-1.5 h-1.5 rounded-full bg-slate-950"></div>}
-                        </div>
-                        <span className="text-xs font-bold text-white">{loc.title}</span>
-                      </div>
-                      <div className="text-[11px] text-slate-400 pl-6 leading-relaxed">
-                        {loc.description}
-                      </div>
-                    </div>
-                  );
-                })}
+                <div className="flex flex-wrap gap-2">
+                  {locationPresets.map((loc) => {
+                    const isSelected = selectedLocationId === loc.id;
+                    return (
+                      <button
+                        key={loc.id}
+                        type="button"
+                        aria-pressed={isSelected}
+                        onClick={() => {
+                          setSelectedLocationId(loc.id);
+                          setCustomLocationInput("");
+                        }}
+                        className={`rounded-full border px-3 py-1.5 text-xs font-semibold transition ${
+                          isSelected
+                            ? "border-emerald-500/60 bg-emerald-950/40 text-emerald-200"
+                            : "border-slate-800 bg-slate-900/40 text-slate-300 hover:border-slate-600"
+                        }`}
+                      >
+                        {loc.title}
+                      </button>
+                    );
+                  })}
+                </div>
 
                 {/* Custom Location input */}
                 <div className="pt-1">

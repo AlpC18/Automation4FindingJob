@@ -11,6 +11,7 @@ PROVIDER_ENV_KEYS = {
     "gemini": "GEMINI_API_KEY",
     "anthropic": "ANTHROPIC_API_KEY",
     "deepseek": "DEEPSEEK_API_KEY",
+    "custom": "CUSTOM_LLM_API_KEY",
 }
 
 

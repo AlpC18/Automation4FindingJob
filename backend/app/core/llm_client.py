@@ -66,7 +66,13 @@ class LLMClient:
             return "anthropic"
         if get_provider_api_key("deepseek"):
             return "deepseek"
+        if self._custom_ready():
+            return "custom"
         return "local_fallback"
+
+    @staticmethod
+    def _custom_ready() -> bool:
+        return bool(settings.CUSTOM_LLM_BASE_URL.strip() and settings.CUSTOM_LLM_MODEL.strip() and get_provider_api_key("custom"))
 
     def get_effective_provider(self, requested_provider: Optional[str] = None) -> str:
         prov = (requested_provider or "auto").lower()
@@ -114,6 +120,15 @@ class LLMClient:
                     "model": self.custom_model if self.provider == "deepseek" and self.custom_model else settings.DEEPSEEK_MODEL,
                     "available_models": ["deepseek-chat", "deepseek-coder"],
                     "is_configured": bool(get_provider_api_key("deepseek")),
+                    "type": "Cloud API"
+                },
+                {
+                    "id": "custom",
+                    "name": "OpenAI-compatible (Groq, OpenRouter...)",
+                    "model": self.custom_model if self.provider == "custom" and self.custom_model else settings.CUSTOM_LLM_MODEL,
+                    "available_models": [settings.CUSTOM_LLM_MODEL] if settings.CUSTOM_LLM_MODEL else [],
+                    "is_configured": self._custom_ready(),
+                    "base_url": settings.CUSTOM_LLM_BASE_URL,
                     "type": "Cloud API"
                 },
                 {
@@ -167,6 +182,10 @@ class LLMClient:
                 if not get_provider_api_key("deepseek"):
                     return {"status": "ERROR", "message": "DeepSeek API anahtarı bulunamadı.", "latency_ms": 0}
                 await self._call_deepseek(test_sys, test_user, temp=0.0)
+            elif prov == "custom":
+                if not self._custom_ready():
+                    return {"status": "ERROR", "message": "CUSTOM_LLM_BASE_URL, CUSTOM_LLM_MODEL ve API anahtarı gerekli.", "latency_ms": 0}
+                await self._call_custom(test_sys, test_user, temp=0.0)
             elif prov == "ollama":
                 await self._call_ollama(test_sys, test_user)
             elif prov == "local_fallback":
@@ -218,6 +237,9 @@ class LLMClient:
             elif provider == "deepseek" and get_provider_api_key("deepseek"):
                 raw_output = await self._call_deepseek(system_prompt, user_prompt, temperature)
                 provider_used = f"DeepSeek ({self.custom_model or settings.DEEPSEEK_MODEL})"
+            elif provider == "custom" and self._custom_ready():
+                raw_output = await self._call_custom(system_prompt, user_prompt, temperature)
+                provider_used = f"Custom ({self.custom_model if self.provider == 'custom' and self.custom_model else settings.CUSTOM_LLM_MODEL})"
             elif provider == "ollama":
                 raw_output = await self._call_ollama(system_prompt, user_prompt)
                 provider_used = f"Local Ollama ({self.custom_model or settings.OLLAMA_MODEL})"
@@ -341,6 +363,25 @@ class LLMClient:
             resp.raise_for_status()
             data = resp.json()
             return data["choices"][0]["message"]["content"]
+
+    async def _call_custom(self, system_prompt: str, user_prompt: str, temp: float) -> str:
+        """Chat completion against any OpenAI-compatible endpoint (CUSTOM_LLM_BASE_URL)."""
+        model = self.custom_model if self.provider == "custom" and self.custom_model else settings.CUSTOM_LLM_MODEL
+        async with httpx.AsyncClient(timeout=60.0) as client:
+            resp = await client.post(
+                f"{settings.CUSTOM_LLM_BASE_URL.rstrip('/')}/chat/completions",
+                headers={"Authorization": f"Bearer {get_provider_api_key('custom')}"},
+                json={
+                    "model": model,
+                    "messages": [
+                        {"role": "system", "content": system_prompt},
+                        {"role": "user", "content": user_prompt}
+                    ],
+                    "temperature": temp
+                }
+            )
+            resp.raise_for_status()
+            return resp.json()["choices"][0]["message"]["content"]
 
     async def _call_anthropic(self, system_prompt: str, user_prompt: str, temp: float) -> str:
         budget = settings.LLM_DAILY_TOKEN_BUDGET

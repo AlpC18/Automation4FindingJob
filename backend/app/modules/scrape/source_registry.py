@@ -59,6 +59,20 @@ def get_source_config(source: str) -> dict[str, Any]:
         conn.close()
 
 
+def apify_tokens(source: str) -> list[str]:
+    """A source's own Apify tokens, else the shared ones: APIFY_API_TOKEN, then tokens saved for another source."""
+    own = get_source_config(source)["api_tokens"]
+    if own:
+        return own
+    if settings.APIFY_API_TOKEN.strip():
+        return [settings.APIFY_API_TOKEN.strip()]
+    for other in ACTOR_SOURCES:
+        tokens = get_source_config(other)["api_tokens"]
+        if tokens:
+            return tokens
+    return []
+
+
 def save_source_config(source: str, *, actor_id: str, api_token: Optional[str], input_json: str, enabled: bool):
     if source not in ACTOR_SOURCES:
         raise ValueError("This provider does not accept an Actor configuration.")
@@ -180,7 +194,7 @@ def get_source_health() -> dict[str, dict[str, Any]]:
         config = get_source_config(source)
         global_actor = getattr(settings, f"APIFY_ACTOR_{source.upper()}", "").strip() if source in ACTOR_SOURCES else ""
         actor_id = config["actor_id"] or global_actor
-        has_token = bool(config["api_token"] or settings.APIFY_API_TOKEN)
+        has_token = bool(apify_tokens(source)) if source in ACTOR_SOURCES else False
         conn = get_db_connection()
         try:
             cursor = conn.cursor()
@@ -240,8 +254,8 @@ def public_source_config(source: str) -> dict[str, Any]:
         "actor_id": config["actor_id"] or getattr(settings, f"APIFY_ACTOR_{source.upper()}", ""),
         "input_json": config["input_json"] if config["has_custom_config"] else getattr(settings, f"APIFY_INPUT_{source.upper()}", "{}"),
         "enabled": config["enabled"],
-        "token_configured": bool(config["api_token"] or settings.APIFY_API_TOKEN),
-        "token_count": len(config["api_tokens"]) or (1 if settings.APIFY_API_TOKEN else 0),
+        "token_configured": bool(apify_tokens(source)),
+        "token_count": len(apify_tokens(source)),
         "token_needs_reentry": config["token_needs_reentry"],
     }
 

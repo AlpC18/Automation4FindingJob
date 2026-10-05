@@ -10,35 +10,15 @@ from typing import Dict, Any, List, Optional
 from backend.app.core.llm_client import llm_client
 from backend.app.core.event_logger import agent_logger
 
+# One-tap search areas. An empty location_filter searches everywhere; an empty remote_filter accepts any work mode.
 LOCATION_WORK_STYLE_PRESETS = [
-    {
-        "id": "hybrid_remote_istanbul",
-        "title": "Uzaktan veya hibrit, İstanbul",
-        "description": "İstanbul merkezli, tam ofis zorunluluğu kırmızı çizgi",
-        "location_filter": "Istanbul",
-        "remote_filter": "Hybrid/Remote"
-    },
-    {
-        "id": "remote_turkey",
-        "title": "Tamamen uzaktan, Türkiye geneli",
-        "description": "Şehir fark etmez, uzaktan şart",
-        "location_filter": "Turkey",
-        "remote_filter": "Remote"
-    },
-    {
-        "id": "remote_global",
-        "title": "Uzaktan, yurt dışı şirketler dahil",
-        "description": "Türkiye'den çalışılabilen Avrupa/ABD remote ilanları da aransın",
-        "location_filter": "Worldwide Remote",
-        "remote_filter": "Remote"
-    },
-    {
-        "id": "office_istanbul",
-        "title": "Ofis de olur",
-        "description": "İstanbul içi ofis pozisyonları elenmesin",
-        "location_filter": "Istanbul",
-        "remote_filter": "All"
-    }
+    {"id": "remote_global", "title": "Remote · Worldwide", "location_filter": "", "remote_filter": "Remote"},
+    {"id": "remote_germany", "title": "Germany · Remote", "location_filter": "Germany", "remote_filter": "Remote"},
+    {"id": "remote_uk", "title": "UK · Remote", "location_filter": "United Kingdom", "remote_filter": "Remote"},
+    {"id": "remote_usa", "title": "USA · Remote", "location_filter": "United States", "remote_filter": "Remote"},
+    {"id": "remote_turkey", "title": "Turkey · Remote", "location_filter": "Turkey", "remote_filter": "Remote"},
+    {"id": "germany_any", "title": "Germany · Any", "location_filter": "Germany", "remote_filter": ""},
+    {"id": "kosovo_any", "title": "Kosovo · Any", "location_filter": "Kosovo", "remote_filter": ""},
 ]
 
 class RoleDiscoveryEngine:

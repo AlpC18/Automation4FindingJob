@@ -220,7 +220,7 @@ def test_role_discovery_and_custom_search(monkeypatch):
     assert "roles" in data
     assert len(data["roles"]) >= 3
     assert "location_presets" in data
-    assert len(data["location_presets"]) == 4
+    assert len(data["location_presets"]) == 7
 
     first_role = data["roles"][0]
     assert "title" in first_role

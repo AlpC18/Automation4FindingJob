@@ -11,7 +11,7 @@ import httpx
 
 from backend.app.core.config import settings
 from backend.app.core.database import get_db_connection
-from backend.app.modules.scrape.source_registry import get_source_config, list_company_boards
+from backend.app.modules.scrape.source_registry import apify_tokens, get_source_config, list_company_boards
 from backend.app.modules.scrape.apify_budget import invalidate_apify_token_usage, select_apify_account
 from backend.app.modules.scrape.public_feeds import COMPANY_BOARD_PROVIDERS, PUBLIC_FEEDS
 
@@ -19,6 +19,9 @@ from backend.app.modules.scrape.public_feeds import COMPANY_BOARD_PROVIDERS, PUB
 def _text(item: Dict[str, Any], *keys: str, default: str = "") -> str:
     for key in keys:
         value = item.get(key)
+        if isinstance(value, dict):
+            # Some scrapers nest the value, e.g. {"employer": {"name": ...}} or {"description": {"text": ...}}.
+            value = next((value[field] for field in ("name", "text", "city", "countryName") if value.get(field)), None)
         if value is not None and str(value).strip():
             return re.sub(r"<[^>]+>", " ", str(value)).strip()
     return default
@@ -29,11 +32,11 @@ def normalize_job(item: Dict[str, Any], platform: str) -> Optional[Dict[str, Any
     title = _text(item, "title", "position", "job_title", "name")
     company = _text(item, "company", "company_name", "companyName", "organization", "employer", default="Unknown employer")
     description = _text(item, "description", "description_text", "summary", "snippet")
-    url = _text(item, "url", "job_url", "jobUrl", "apply_url", "applyUrl", "link", "canonical_url")
+    url = _text(item, "url", "job_url", "jobUrl", "apply_url", "applyUrl", "link", "canonical_url", "canonicalUrl")
     if not title or not url:
         return None
 
-    source_id = _text(item, "id", "job_id", "slug")
+    source_id = _text(item, "id", "job_id", "slug", "key", "jobId")
     stable_key = source_id or url or f"{platform}:{title}:{company}"
     identifier = f"{platform}_{hashlib.sha256(stable_key.encode('utf-8')).hexdigest()[:24]}"
 
@@ -47,11 +50,14 @@ def normalize_job(item: Dict[str, Any], platform: str) -> Optional[Dict[str, Any
     if not remote_type:
         remote_type = "Unknown"
 
-    salary = _text(item, "salary", "salary_range", "compensation")
+    salary = _text(item, "salary", "salary_range", "compensation", "budget")
     if not salary and (item.get("salary_min") or item.get("salary_max")):
         salary = f"{item.get('salary_min', '')} - {item.get('salary_max', '')} {item.get('salary_currency', '')}".strip()
 
-    posted = _text(item, "date", "posted_at", "postedAt", "publishedAt", "created_at", "publication_date", "posted_date")
+    place = item.get("location")
+    # Indeed and Glassdoor send the place as a record; keep the city and the country so a country search can match.
+    location = ", ".join(dict.fromkeys(str(place[key]) for key in ("name", "city", "countryName") if place.get(key))) if isinstance(place, dict) else ""
+    posted = _text(item, "date", "posted_at", "postedAt", "publishedAt", "datePublished", "absoluteDate", "created_at", "publication_date", "posted_date")
     deadline_match = re.match(r"\d{4}-\d{2}-\d{2}", _text(item, "deadline", "application_deadline", "applicationDeadline", "expires_at"))
     return {
         "id": identifier,
@@ -59,7 +65,7 @@ def normalize_job(item: Dict[str, Any], platform: str) -> Optional[Dict[str, Any
         "company": company,
         "platform": platform,
         "url": url,
-        "location": _text(item, "location", "candidate_required_location", "city", default="Unspecified"),
+        "location": location or _text(item, "location", "candidate_required_location", "city", "clientLocation", default="Unspecified"),
         "remote_type": remote_type,
         "salary_range": salary or "Not disclosed",
         "description": description or title,
@@ -78,6 +84,57 @@ def _matches_query(job: Dict[str, Any], query: str) -> bool:
     return all(term in haystack for term in terms)
 
 
+# Actor -> (input key for the search text, input key for the result cap, accepts a free-text location)
+ACTOR_INPUT_KEYS: Dict[str, Tuple[str, str, bool]] = {
+    "valig/linkedin-jobs-scraper": ("keywords", "limit", True),
+    "valig/indeed-jobs-scraper": ("title", "limit", True),
+    "valig/glassdoor-jobs-scraper": ("keywords", "limit", True),
+    "blackfalcondata/kariyer-scraper": ("query", "maxResults", True),
+    "neatrat/upwork-job-scraper": ("query", "perPage", False),
+}
+
+
+# Indeed searches one country per run, selected by code; keys are the names a search location may use.
+INDEED_COUNTRIES = {
+    "germany": "de", "deutschland": "de", "united kingdom": "uk", "uk": "uk", "england": "uk",
+    "united states": "us", "usa": "us", "turkey": "tr", "türkiye": "tr", "netherlands": "nl", "austria": "at",
+    "switzerland": "ch", "france": "fr", "spain": "es", "italy": "it", "sweden": "se", "ireland": "ie",
+    "poland": "pl", "canada": "ca", "australia": "au",
+}
+
+
+def _apply_search_area(actor_id: str, payload: Dict[str, Any], location: Optional[str], remote: bool) -> bool:
+    """Point a known Actor at the requested place; True when the Actor itself returns only remote jobs."""
+    actor = actor_id.lower()
+    if actor == "valig/indeed-jobs-scraper":
+        country = INDEED_COUNTRIES.get((location or "").strip().casefold())
+        if country:
+            payload["country"] = country
+        if remote:
+            payload["location"] = "Remote"
+        elif country:
+            payload.pop("location", None)
+        elif location:
+            payload["location"] = location
+        return remote
+    if actor == "valig/glassdoor-jobs-scraper":
+        if location:
+            payload["location"] = location
+        if remote:
+            payload["remoteWorkType"] = True
+        return remote
+    if location and ACTOR_INPUT_KEYS[actor][2]:
+        payload["location"] = location
+    return False
+
+
+def _title_matches(job: Dict[str, Any], query: str) -> bool:
+    """For sources that already searched by the query: keep a job when its title or tags name any search word."""
+    terms = [term.lower() for term in re.findall(r"[\w+#.-]+", query) if len(term) > 1]
+    headline = " ".join((job.get("title", ""), " ".join(job.get("source_tags", [])))).lower()
+    return not terms or any(term in headline for term in terms)
+
+
 def _decode_actor_input(raw: str, query: str, location: Optional[str], actor_id: str = "") -> Dict[str, Any]:
     try:
         payload = json.loads(raw or "{}")
@@ -85,14 +142,15 @@ def _decode_actor_input(raw: str, query: str, location: Optional[str], actor_id:
         raise ValueError("Apify actor input must be valid JSON") from exc
     if not isinstance(payload, dict):
         raise ValueError("Apify actor input must be a JSON object")
-    if actor_id.lower() == "valig/linkedin-jobs-scraper":
-        payload.setdefault("keywords", query)
-        payload.setdefault("limit", 100)
+    query_key, limit_key, takes_location = ACTOR_INPUT_KEYS.get(actor_id.lower(), ("", "", True))
+    if query_key:
+        payload.setdefault(query_key, query)
+        payload.setdefault(limit_key, 100)
     else:
         payload.setdefault("query", query)
         payload.setdefault("searchQuery", query)
         payload.setdefault("keyword", query)
-    if location:
+    if location and takes_location:
         payload.setdefault("location", location)
     return payload
 
@@ -109,7 +167,7 @@ class ApifyActorJobSource:
         actor_id = (actor_id or getattr(settings, f"APIFY_ACTOR_{platform.upper()}", "")).strip()
         api_tokens = (
             list(dict.fromkeys(item.strip() for item in api_token_override.replace(",", "\n").splitlines() if item.strip()))
-            if api_token_override else source_config.get("api_tokens") or ([settings.APIFY_API_TOKEN] if settings.APIFY_API_TOKEN else [])
+            if api_token_override else apify_tokens(platform)
         )
         if not api_tokens:
             raise RuntimeError("Apify API token is not configured.")
@@ -139,7 +197,7 @@ class ApifyActorJobSource:
             return {"source": platform, "actor_id": actor_id, "actor_name": actor.get("name"), "status": "connected", "verified_tokens": len(api_tokens) - failures}
         raise RuntimeError("No valid Apify account token was found. Refresh quota status and replace rejected keys.")
 
-    def fetch(self, platform: str, query: str, location: Optional[str] = None) -> List[Dict[str, Any]]:
+    def fetch(self, platform: str, query: str, location: Optional[str] = None, remote: bool = False) -> List[Dict[str, Any]]:
         source_config = get_source_config(platform)
         if not source_config["enabled"]:
             raise RuntimeError(f"{platform}: source disabled in source settings")
@@ -150,11 +208,12 @@ class ApifyActorJobSource:
 
         input_json = source_config["input_json"] if source_config["has_custom_config"] else getattr(settings, f"APIFY_INPUT_{platform.upper()}", "{}")
         payload = _decode_actor_input(input_json, query, location, actor_id)
-        if actor_id.lower() == "valig/linkedin-jobs-scraper":
-            payload["keywords"] = query
-            if location:
-                payload["location"] = location
-            payload["limit"] = min(int(payload.get("limit") or 100), int(settings.APIFY_MAX_ITEMS_PER_RUN), 1000)
+        query_key, limit_key, takes_location = ACTOR_INPUT_KEYS.get(actor_id.lower(), ("", "", True))
+        remote_only = False
+        if query_key:
+            payload[query_key] = query
+            remote_only = _apply_search_area(actor_id, payload, location, remote)
+            payload[limit_key] = min(int(payload.get(limit_key) or 100), int(settings.APIFY_MAX_ITEMS_PER_RUN), 1000)
         connection = get_db_connection()
         try:
             today_start = time.time() - (time.time() % 86400)
@@ -191,10 +250,20 @@ class ApifyActorJobSource:
         if not isinstance(data, list):
             raise RuntimeError(f"Apify {platform} Actor returned a non-list dataset")
         jobs = [normalized for item in data if isinstance(item, dict) if (normalized := normalize_job(item, platform))]
-        jobs = [job for job in jobs if _matches_query(job, query)]
-        if location:
+        # A known Actor ran the search itself, so its listings only need the role in the headline; a word buried in
+        # the description (or missing from it) says little. Unknown Actors keep the strict every-word check.
+        jobs = [job for job in jobs if (_title_matches if query_key else _matches_query)(job, query)]
+        if location and query_key and takes_location:
+            # The Actor searched this place itself, and its listings name the city rather than the country.
+            for job in jobs:
+                job["location_matched_by_source"] = True
+        elif location:
             location_key = location.strip().casefold()
             jobs = [job for job in jobs if location_key in (job.get("location") or "").casefold()]
+        if remote_only:
+            for job in jobs:
+                if job["remote_type"] == "Unknown":
+                    job["remote_type"] = "Remote"
         return jobs[:max_items]
 
 

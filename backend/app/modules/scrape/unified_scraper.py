@@ -65,8 +65,8 @@ class ApifyPortalScraper:
     def __init__(self, platform: str):
         self.platform_name = platform
 
-    def fetch_jobs(self, query: str = "Software Engineer", location: str = None) -> List[Dict[str, Any]]:
-        return apify_job_source.fetch(self.platform_name, query, location)
+    def fetch_jobs(self, query: str = "Software Engineer", location: str = None, remote: bool = False) -> List[Dict[str, Any]]:
+        return apify_job_source.fetch(self.platform_name, query, location, remote)
 
 
 def _default_platforms(known: List[str]) -> List[str]:
@@ -122,6 +122,9 @@ class UnifiedScraper:
         raw_fetched_count = 0
         
         # Build search queries list
+        requested_mode = str(remote_type or "").strip().casefold().replace("-", " ")
+        if requested_mode == "all":
+            requested_mode = ""
         active_queries = queries if (queries and len(queries) > 0) else [query or settings.DEFAULT_SCRAPE_QUERY]
         scan_id = create_scan_run(active_queries, platforms_to_run)
 
@@ -142,7 +145,10 @@ class UnifiedScraper:
                 started_at = time.monotonic()
                 try:
                     scraper = self.scrapers[plat_key]
-                    items = scraper.fetch_jobs(query=q, location=location_preference)
+                    if isinstance(scraper, ApifyPortalScraper):
+                        items = scraper.fetch_jobs(query=q, location=location_preference, remote=requested_mode == "remote")
+                    else:
+                        items = scraper.fetch_jobs(query=q, location=location_preference)
                     raw_fetched_count += len(items)
                     successful_platforms.add(plat_key)
                     # Only feeds that actually answered may have their old rows replaced.
@@ -155,11 +161,11 @@ class UnifiedScraper:
                         # A user's preference is never written as source-provided job data.
                         source_location = str(item.get("location") or "").strip()
                         unknown_locations = {"", "unspecified", "unknown", "not specified"}
-                        if location_preference and (source_location.casefold() in unknown_locations or location_preference.casefold() not in source_location.casefold()):
+                        matched_by_source = item.pop("location_matched_by_source", False)
+                        if location_preference and not matched_by_source and (source_location.casefold() in unknown_locations or location_preference.casefold() not in source_location.casefold()):
                             filtered["location_mismatch"] += 1
                             continue
                         source_mode = str(item.get("remote_type") or "Unknown").strip().casefold().replace("-", " ")
-                        requested_mode = str(remote_type or "").strip().casefold().replace("-", " ")
                         mode_aliases = {
                             "remote": {"remote", "fully remote", "remote work"},
                             "hybrid": {"hybrid", "remote / hybrid"},

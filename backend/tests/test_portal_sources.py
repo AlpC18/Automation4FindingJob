@@ -20,7 +20,7 @@ def test_portal_adapter_delegates_to_its_apify_actor(monkeypatch):
     calls = []
     monkeypatch.setattr(us.apify_job_source, "fetch", lambda *args: calls.append(args) or [])
     assert us.UnifiedScraper().scrapers["indeed"].fetch_jobs(query="Backend", location="Remote") == []
-    assert calls == [("indeed", "Backend", "Remote")]
+    assert calls == [("indeed", "Backend", "Remote", False)]
 
 
 def test_default_scan_adds_only_sources_enabled_in_settings(monkeypatch):

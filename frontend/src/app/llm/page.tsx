@@ -253,7 +253,7 @@ export default function LLMHubPage() {
                   )}
                 </div>
 
-                {["openai", "gemini", "anthropic", "deepseek"].includes(p.id) && (
+                {["openai", "gemini", "anthropic", "deepseek", "custom"].includes(p.id) && (
                   <div className="mt-3 rounded-xl border border-slate-800 bg-slate-900/40 p-3 space-y-2">
                     <div className="flex items-center justify-between gap-2">
                       <label htmlFor={`api-key-${p.id}`} className="text-[11px] font-semibold text-slate-200">{t("API anahtarı")}</label>
