@@ -78,6 +78,10 @@ def apply_migrations(connection, cursor=None):
             # Cached language-model judgement of the job against one profile version.
             ("scraped_jobs", "ai_review_json", "TEXT NOT NULL DEFAULT ''"),
         ],
+        "0020_saved_search_llm_provider": [
+            # AI that reviews this search's results when it runs on schedule; empty = no AI review.
+            ("saved_searches", "llm_provider", "TEXT NOT NULL DEFAULT ''"),
+        ],
     }
     for revision, columns in migrations.items():
         if revision in applied:

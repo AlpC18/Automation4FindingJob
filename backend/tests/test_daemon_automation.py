@@ -49,7 +49,7 @@ def test_nightly_sweep_scans_target_roles_then_ranks_and_reviews(monkeypatch):
     result = asyncio.run(sd.AutonomousSchedulerDaemon()._trigger_nightly_sweep_for_current_tenant())
 
     assert result["status"] == "success" and result["scraped_count"] == 7 and result["ai_reviewed"] == 3
-    assert calls == [("scan", {"queries": ["Junior Developer"]}), ("rank", profile), ("review", profile)]
+    assert calls == [("scan", {"queries": ["Junior Developer"], "target_platforms": ["remote", "kosovajob", "techcareer"]}), ("rank", profile), ("review", profile)]
 
 
 def test_telegram_dispatcher_exposes_the_method_its_callers_use(monkeypatch):

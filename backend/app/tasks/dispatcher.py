@@ -4,6 +4,7 @@ Intelligently dispatches jobs to Celery + Redis when available,
 or falls back smoothly to asyncio/FastAPI background tasks when in lightweight standalone mode.
 """
 
+import logging
 import uuid
 import asyncio
 from typing import Dict, Any, Optional
@@ -11,6 +12,8 @@ from backend.app.core.config import settings
 from backend.app.core.event_logger import agent_logger
 from backend.app.tasks.celery_app import celery_app, check_redis_connection
 from backend.app.tasks.job_store import create_job, get_job, get_job_stats, update_job
+
+logger = logging.getLogger(__name__)
 
 class TaskDispatcher:
     def __init__(self):
@@ -33,7 +36,7 @@ class TaskDispatcher:
                 if active:
                     workers = list(active.keys())
             except Exception:
-                pass
+                logger.warning("Could not inspect background workers.", exc_info=True)
 
         mode = "CELERY_REDIS" if (settings.USE_CELERY and redis_ok) else "ASYNC_LOCAL"
 

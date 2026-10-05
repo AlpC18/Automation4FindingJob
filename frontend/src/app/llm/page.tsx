@@ -1,4 +1,6 @@
 "use client";
+import dynamic from "next/dynamic";
+import PageTabs from "@/components/PageTabs";
 import { useLanguage } from "@/lib/i18n";
 
 import { useEffect, useState } from "react";
@@ -17,7 +19,7 @@ import {
 } from "lucide-react";
 import { fetchFromApi } from "@/lib/api";
 
-export default function LLMHubPage() {
+function LLMHubPage() {
   const { translate: t } = useLanguage();
   const [providersData, setProvidersData] = useState<any>(null);
   const [loading, setLoading] = useState(true);
@@ -427,4 +429,17 @@ export default function LLMHubPage() {
       </div>
     </div>
   );
+}
+
+// Loaded only when their tab is opened, so this page stays as light as before.
+const LLMRouterPage = dynamic(() => import("../llm-router/page"));
+
+// Related screens live here as tabs so the menu stays short; each still has its own route.
+const TABS = [
+    { label: "Yapay zekâ / API anahtarları", Component: LLMHubPage },
+    { label: "Model yönlendirici", Component: LLMRouterPage },
+];
+
+export default function LLMHubPageWithTabs() {
+  return <PageTabs tabs={TABS} />;
 }

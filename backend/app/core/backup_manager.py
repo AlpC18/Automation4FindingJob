@@ -27,7 +27,13 @@ BACKUP_PREFIX = "career-agent-"
 
 def backup_directory() -> Path:
     configured = getattr(settings, "BACKUP_DIR", None)
-    return Path(configured) if configured else Path(settings.DATA_PATH) / "backups"
+    # An empty BACKUP_DIR= line parses as Path("."), which must not turn the working directory into the backup folder.
+    if configured and str(configured) not in ("", "."):
+        configured = Path(configured)
+        if configured.exists() or configured.parent.exists():
+            return configured
+        logger.warning("BACKUP_DIR %s is unavailable (drive not connected?); using the local backup folder.", configured)
+    return Path(settings.DATA_PATH) / "backups"
 
 
 def _backup_files(data_root: Path, backup_root: Path) -> list[Path]:

@@ -8,7 +8,7 @@ import { useLanguage } from "@/lib/i18n";
 type Provider = { id: string; name: string; model: string; is_configured: boolean };
 
 /** Lets the user pick which configured AI the next search (role matching and scoring) runs on. */
-export default function AiProviderSelect() {
+export default function AiProviderSelect({ onChange }: { onChange?: (provider: string) => void }) {
   const { translate: t } = useLanguage();
   const [providers, setProviders] = useState<Provider[]>([]);
   const [active, setActive] = useState("");
@@ -19,6 +19,7 @@ export default function AiProviderSelect() {
       .then((res) => {
         setProviders((res.providers || []).filter((provider) => provider.is_configured));
         setActive(res.effective_provider || "");
+        onChange?.(res.effective_provider || "");
       })
       .catch((cause: any) => setError(cause?.message || t("Yapay zekâ listesi alınamadı.")));
   }, []);
@@ -29,6 +30,7 @@ export default function AiProviderSelect() {
     setError("");
     try {
       await fetchFromApi("/llm/set_provider", { method: "POST", body: JSON.stringify({ provider }) });
+      onChange?.(provider);
     } catch (cause: any) {
       setActive(previous);
       setError(cause?.message || t("Yapay zekâ değiştirilemedi."));

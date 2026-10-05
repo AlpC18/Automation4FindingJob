@@ -17,6 +17,7 @@ from backend.app.core.ws_manager import ws_manager
 from backend.app.modules.scrape.seen_jobs_tracker import seen_jobs_tracker
 from backend.app.modules.scrape.unified_scraper import unified_scraper
 from backend.app.modules.scrape.saved_search_service import run_enabled_saved_searches
+from backend.app.modules.scrape.source_registry import list_company_boards
 from backend.app.modules.apply.auto_apply_pipeline import auto_apply_pipeline
 from backend.app.modules.outcome.telegram_bot import telegram_dispatcher
 from backend.app.core.tenant import get_tenant_id
@@ -33,6 +34,16 @@ _TASK_LINES = (
     ("interview_prep", "hazırlanılacak mülakat"),
     ("offer_review", "değerlendirilecek teklif"),
 )
+
+
+def nightly_platforms() -> Optional[List[str]]:
+    """Sources for the unattended sweep: NIGHTLY_SCAN_PLATFORMS plus saved company boards; None means every source."""
+    platforms = [name.strip().lower() for name in settings.NIGHTLY_SCAN_PLATFORMS.split(",") if name.strip()]
+    if not platforms:
+        return None
+    if list_company_boards() and "company_boards" not in platforms:
+        platforms.append("company_boards")
+    return platforms
 
 
 def scan_queries(profile: Dict[str, Any]) -> List[str]:
@@ -139,6 +150,7 @@ class AutonomousSchedulerDaemon:
                 scrape_result = await asyncio.to_thread(
                     unified_scraper.run_multi_platform_scrape,
                     queries=scan_queries(profile),
+                    target_platforms=nightly_platforms(),
                 )
                 # Score what was just found; the morning prep picks drafts by these scores.
                 await asyncio.to_thread(rank_and_save_all_jobs, profile)

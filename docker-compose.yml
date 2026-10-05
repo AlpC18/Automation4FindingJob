@@ -21,6 +21,7 @@ x-backend-environment: &backend-environment
   CUSTOM_LLM_API_KEY: ${CUSTOM_LLM_API_KEY:-}
   CUSTOM_LLM_MODEL: ${CUSTOM_LLM_MODEL:-}
   ACTIVE_LLM_PROVIDER: ${ACTIVE_LLM_PROVIDER:-auto}
+  NIGHTLY_SCAN_PLATFORMS: ${NIGHTLY_SCAN_PLATFORMS:-remote,kosovajob,techcareer}
   OLLAMA_BASE_URL: ${OLLAMA_BASE_URL:-http://host.docker.internal:11434}
   OLLAMA_MODEL: ${OLLAMA_MODEL:-llama3}
   OPENAI_MODEL: ${OPENAI_MODEL:-gpt-4o}

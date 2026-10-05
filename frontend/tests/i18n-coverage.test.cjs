@@ -34,6 +34,10 @@ const sharedComponents = fs.readdirSync(componentRoot)
 const localizedFiles = [...pages, ...sharedComponents];
 const i18nSource = ts.createSourceFile(i18nPath, fs.readFileSync(i18nPath, "utf8"), ts.ScriptTarget.Latest, true, ts.ScriptKind.TSX);
 const translationKeys = collectTranslationKeys(i18nSource);
+// The bulk of the dictionary lives next to i18n.tsx.
+const dictionaryPath = path.join(__dirname, "../src/lib/i18n-translations.ts");
+const dictionarySource = ts.createSourceFile(dictionaryPath, fs.readFileSync(dictionaryPath, "utf8"), ts.ScriptTarget.Latest, true, ts.ScriptKind.TS);
+for (const key of collectTranslationKeys(dictionarySource)) translationKeys.add(key);
 
 test("every application route participates in localization", () => {
   assert.ok(pages.length > 0, "No app routes were found");

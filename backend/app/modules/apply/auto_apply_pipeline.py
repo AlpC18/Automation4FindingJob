@@ -8,6 +8,7 @@ Coordinates:
 - Rate limiting and daily safety controls
 """
 
+import logging
 import json
 from datetime import datetime, date
 from pathlib import Path
@@ -22,6 +23,8 @@ from backend.app.modules.apply.agentic_workflow import drafter_reviewer_pipeline
 from backend.app.modules.outcome.telegram_bot import telegram_dispatcher
 from backend.app.modules.outcome.kanban_manager import kanban_manager
 from backend.app.tasks.job_store import create_job, update_job
+
+logger = logging.getLogger(__name__)
 
 QUEUE_FILE = settings.DATA_PATH / "auto_apply_queue.json"
 
@@ -167,7 +170,7 @@ class AutoApplyPipeline:
                         f"Web panelinden onaylayıp iletebilirsiniz."
                     )
                 except Exception:
-                    pass
+                    logger.warning("Could not send the draft notification.", exc_info=True)
 
         self._save()
 

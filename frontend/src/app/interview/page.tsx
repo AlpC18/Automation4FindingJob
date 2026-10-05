@@ -1,4 +1,6 @@
 "use client";
+import dynamic from "next/dynamic";
+import PageTabs from "@/components/PageTabs";
 import { useLanguage } from "@/lib/i18n";
 
 import { useEffect, useState, useRef } from "react";
@@ -20,7 +22,7 @@ import {
 } from "lucide-react";
 import { fetchFromApi } from "@/lib/api";
 
-export default function InterviewPage() {
+function InterviewPage() {
   const { translate: t } = useLanguage();
   const [jobs, setJobs] = useState<any[]>([]);
   const [selectedJobId, setSelectedJobId] = useState("");
@@ -454,4 +456,19 @@ export default function InterviewPage() {
       </div>
     </div>
   );
+}
+
+// Loaded only when their tab is opened, so this page stays as light as before.
+const STARPrepPage = dynamic(() => import("../star-prep/page"));
+const VoiceInterviewPage = dynamic(() => import("../voice-interview/page"));
+
+// Related screens live here as tabs so the menu stays short; each still has its own route.
+const TABS = [
+    { label: "Mülakat hazırlığı", Component: InterviewPage },
+    { label: "STAR hazırlığı", Component: STARPrepPage },
+    { label: "Sesli mülakat", Component: VoiceInterviewPage },
+];
+
+export default function InterviewPageWithTabs() {
+  return <PageTabs tabs={TABS} />;
 }

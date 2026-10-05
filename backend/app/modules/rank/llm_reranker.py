@@ -121,9 +121,9 @@ def _save_reviews(reviews: Dict[str, Dict[str, Any]], jobs: List[Dict[str, Any]]
         conn.close()
 
 
-async def review_top_jobs(profile: Dict[str, Any], limit: int = REVIEW_LIMIT) -> Dict[str, Any]:
-    """Re-score the best rule-ranked jobs with the language model. Never raises: ranking must not fail because of it."""
-    if llm_client.get_effective_provider() == "local_fallback":
+async def review_top_jobs(profile: Dict[str, Any], limit: int = REVIEW_LIMIT, provider: Optional[str] = None) -> Dict[str, Any]:
+    """Re-score the best rule-ranked jobs with the language model (the active one unless `provider` names another). Never raises: ranking must not fail because of it."""
+    if llm_client.get_effective_provider(provider) == "local_fallback":
         return {"status": "skipped", "reason": "no_ai_provider", "reviewed": 0, "reused": 0, "failed": 0}
     jobs = _load_candidates(limit)
     profile_version = ensure_profile_version(profile)
@@ -146,7 +146,7 @@ async def review_top_jobs(profile: Dict[str, Any], limit: int = REVIEW_LIMIT) ->
         async with limiter:
             try:
                 result = await llm_client.generate_text(
-                    SYSTEM_PROMPT, f"CANDIDATE\n{candidate}\n\nJOB\n{_job_brief(job)}", apply_humanizer=False,
+                    SYSTEM_PROMPT, f"CANDIDATE\n{candidate}\n\nJOB\n{_job_brief(job)}", preferred_provider=provider, apply_humanizer=False,
                 )
             except Exception as exc:  # one job's failure must not cancel the other reviews
                 logger.warning("AI review failed for job %s (%s).", job["id"], type(exc).__name__)

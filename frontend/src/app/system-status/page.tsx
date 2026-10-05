@@ -1,5 +1,7 @@
 "use client";
 
+import dynamic from "next/dynamic";
+import PageTabs from "@/components/PageTabs";
 import Link from "next/link";
 import { useCallback, useEffect, useState } from "react";
 import {
@@ -22,7 +24,7 @@ const stateLabel = (status?: string, t?: (value: string) => string) => {
   return t ? t(labels[status || ""] || "Bilinmiyor") : labels[status || ""] || "Bilinmiyor";
 };
 
-export default function SystemStatusPage() {
+function SystemStatusPage() {
   const { translate: t } = useLanguage();
   const [health, setHealth] = useState<Health | null>(null);
   const [sources, setSources] = useState<any>(null);
@@ -124,4 +126,19 @@ export default function SystemStatusPage() {
       </section>
     </div>
   );
+}
+
+// Loaded only when their tab is opened, so this page stays as light as before.
+const PortalHealthPage = dynamic(() => import("../portal-health/page"));
+const TestSpritePage = dynamic(() => import("../testsprite/page"));
+
+// Related screens live here as tabs so the menu stays short; each still has its own route.
+const TABS = [
+    { label: "Sistem kontrolü", Component: SystemStatusPage },
+    { label: "Portal sağlığı", Component: PortalHealthPage },
+    { label: "Test merkezi", Component: TestSpritePage },
+];
+
+export default function SystemStatusPageWithTabs() {
+  return <PageTabs tabs={TABS} />;
 }

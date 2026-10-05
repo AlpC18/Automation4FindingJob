@@ -11,6 +11,7 @@ import os
 import re
 import time
 from datetime import date
+from pathlib import Path
 import httpx
 from typing import Dict, Any, List, Optional
 from backend.app.core.config import settings
@@ -53,32 +54,74 @@ class LLMClient:
         self.provider = settings.ACTIVE_LLM_PROVIDER.lower()
         self.custom_model: Optional[str] = None
         self.ollama_url = settings.OLLAMA_BASE_URL
-        # ponytail: in-memory (day, input tokens, output tokens, calls) counter, resets on restart; persist it if restarts become a loophole.
-        self._tokens_used = (None, 0, 0, 0)
+        # {"day": iso date, "by_provider": {provider: [input tokens, output tokens, calls]}}
+        self._usage: Dict[str, Any] = {}
+        self._load_state()
 
-    def _usage_today(self) -> tuple:
-        day, tokens_in, tokens_out, calls = self._tokens_used
-        return (tokens_in, tokens_out, calls) if day == date.today() else (0, 0, 0)
+    @staticmethod
+    def _state_path() -> Path:
+        return Path(settings.DATA_PATH) / "llm_state.json"
+
+    def _load_state(self) -> None:
+        """Restore the provider picked in the app and today's usage after a restart."""
+        try:
+            state = json.loads(self._state_path().read_text(encoding="utf-8"))
+        except (OSError, ValueError):
+            return
+        if not isinstance(state, dict):
+            return
+        # A provider picked in the app outlives restarts, until ACTIVE_LLM_PROVIDER itself is edited.
+        if state.get("env_provider") == settings.ACTIVE_LLM_PROVIDER.lower() and state.get("provider"):
+            self.provider = str(state["provider"]).lower()
+            self.custom_model = state.get("model") or None
+        if isinstance(state.get("usage"), dict):
+            self._usage = state["usage"]
+
+    def _save_state(self) -> None:
+        state = {"env_provider": settings.ACTIVE_LLM_PROVIDER.lower(), "provider": self.provider, "model": self.custom_model, "usage": self._usage}
+        try:
+            self._state_path().parent.mkdir(parents=True, exist_ok=True)
+            self._state_path().write_text(json.dumps(state), encoding="utf-8")
+        except OSError as exc:
+            logger.warning("Could not save the AI provider choice and usage (%s).", type(exc).__name__)
+
+    def _usage_today(self, provider: str) -> tuple:
+        if self._usage.get("day") != date.today().isoformat():
+            return (0, 0, 0)
+        return tuple(self._usage.get("by_provider", {}).get(provider) or (0, 0, 0))
 
     def _tokens_used_today(self) -> int:
-        tokens_in, tokens_out, _ = self._usage_today()
+        """Anthropic tokens today: the daily budget only guards the paid Claude key."""
+        tokens_in, tokens_out, _ = self._usage_today("anthropic")
         return tokens_in + tokens_out
 
-    def _record_tokens(self, tokens_in: int, tokens_out: int) -> None:
-        used_in, used_out, calls = self._usage_today()
-        self._tokens_used = (date.today(), used_in + tokens_in, used_out + tokens_out, calls + 1)
+    def _record_tokens(self, provider: str, tokens_in: Any, tokens_out: Any) -> None:
+        used_in, used_out, calls = self._usage_today(provider)
+        today = date.today().isoformat()
+        by_provider = dict(self._usage.get("by_provider", {})) if self._usage.get("day") == today else {}
+        by_provider[provider] = [used_in + int(tokens_in or 0), used_out + int(tokens_out or 0), calls + 1]
+        self._usage = {"day": today, "by_provider": by_provider}
+        self._save_state()
+
+    def _model_for(self, provider: str) -> str:
+        defaults = {
+            "openai": settings.OPENAI_MODEL, "gemini": settings.GEMINI_MODEL, "anthropic": settings.ANTHROPIC_MODEL,
+            "deepseek": settings.DEEPSEEK_MODEL, "custom": settings.CUSTOM_LLM_MODEL, "ollama": settings.OLLAMA_MODEL,
+        }
+        return self.custom_model if self.provider == provider and self.custom_model else defaults.get(provider, "")
 
     def get_usage_today(self) -> Dict[str, Any]:
-        """Today's Anthropic token use against the daily budget, with a list-price cost estimate."""
-        tokens_in, tokens_out, calls = self._usage_today()
-        model = self.custom_model if self.provider == "anthropic" and self.custom_model else settings.ANTHROPIC_MODEL
-        prices = ANTHROPIC_PRICES_USD_PER_MTOK.get(model)
+        """Today's token use on the active provider; the budget and the cost estimate exist only where they apply."""
+        provider = self.get_effective_provider()
+        tokens_in, tokens_out, calls = self._usage_today(provider)
+        model = self._model_for(provider)
+        prices = ANTHROPIC_PRICES_USD_PER_MTOK.get(model) if provider == "anthropic" else None
         # ponytail: prices every token at the current model; split per model if models get mixed within a day.
         cost = round((tokens_in * prices[0] + tokens_out * prices[1]) / 1_000_000, 4) if prices else None
-        budget = max(0, settings.LLM_DAILY_TOKEN_BUDGET)
+        budget = max(0, settings.LLM_DAILY_TOKEN_BUDGET) if provider == "anthropic" else 0
         used = tokens_in + tokens_out
         return {
-            "provider": "anthropic",
+            "provider": provider,
             "model": model,
             "input_tokens": tokens_in,
             "output_tokens": tokens_out,
@@ -190,6 +233,7 @@ class LLMClient:
         self.provider = provider_id.lower()
         # A model picked for the previous provider must not carry over to the new one.
         self.custom_model = model_name or None
+        self._save_state()
 
     async def test_provider_connection(self, provider_id: str) -> Dict[str, Any]:
         """
@@ -358,6 +402,10 @@ class LLMClient:
                 return parsed
         return {}
 
+    def _record_openai_usage(self, provider: str, data: Dict[str, Any]) -> None:
+        usage = data.get("usage") or {}
+        self._record_tokens(provider, usage.get("prompt_tokens"), usage.get("completion_tokens"))
+
     async def _call_openai(self, system_prompt: str, user_prompt: str, temp: float) -> str:
         model = self.custom_model if self.provider == "openai" and self.custom_model else settings.OPENAI_MODEL
         async with httpx.AsyncClient(timeout=30.0) as client:
@@ -375,6 +423,7 @@ class LLMClient:
             )
             resp.raise_for_status()
             data = resp.json()
+            self._record_openai_usage("openai", data)
             return data["choices"][0]["message"]["content"]
 
     async def _call_deepseek(self, system_prompt: str, user_prompt: str, temp: float) -> str:
@@ -397,6 +446,7 @@ class LLMClient:
             )
             resp.raise_for_status()
             data = resp.json()
+            self._record_openai_usage("deepseek", data)
             return data["choices"][0]["message"]["content"]
 
     async def _call_custom(self, system_prompt: str, user_prompt: str, temp: float) -> str:
@@ -416,7 +466,9 @@ class LLMClient:
                 }
             )
             resp.raise_for_status()
-            return resp.json()["choices"][0]["message"]["content"]
+            data = resp.json()
+            self._record_openai_usage("custom", data)
+            return data["choices"][0]["message"]["content"]
 
     async def _call_anthropic(self, system_prompt: str, user_prompt: str, temp: float) -> str:
         budget = settings.LLM_DAILY_TOKEN_BUDGET
@@ -443,7 +495,7 @@ class LLMClient:
             # (current models may emit a thinking block first), so keep every text block.
             data = resp.json()
             usage = data.get("usage") or {}
-            self._record_tokens(int(usage.get("input_tokens") or 0), int(usage.get("output_tokens") or 0))
+            self._record_tokens("anthropic", usage.get("input_tokens"), usage.get("output_tokens"))
             if data.get("stop_reason") == "max_tokens":
                 # A cut-off reply usually means broken JSON downstream; make the cause visible.
                 logger.warning("Anthropic reply was cut off at max_tokens=%s.", ANTHROPIC_MAX_TOKENS)
@@ -464,6 +516,8 @@ class LLMClient:
             )
             resp.raise_for_status()
             data = resp.json()
+            usage = data.get("usageMetadata") or {}
+            self._record_tokens("gemini", usage.get("promptTokenCount"), usage.get("candidatesTokenCount"))
             return data["candidates"][0]["content"]["parts"][0]["text"]
 
     async def _call_ollama(self, system_prompt: str, user_prompt: str) -> str:
@@ -479,7 +533,9 @@ class LLMClient:
                 }
             )
             resp.raise_for_status()
-            return resp.json().get("response", "")
+            data = resp.json()
+            self._record_tokens("ollama", data.get("prompt_eval_count"), data.get("eval_count"))
+            return data.get("response", "")
 
     def _fallback_generation(self, system_prompt: str, user_prompt: str) -> str:
         """

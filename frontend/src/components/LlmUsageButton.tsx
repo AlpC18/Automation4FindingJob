@@ -63,7 +63,7 @@ export default function LlmUsageButton() {
             {tile(t("Çağrı başına"), dollars(usage.average_cost_per_call_usd))}
           </div>
           <div className="mt-3 h-1.5 overflow-hidden rounded-full" style={{ background: "var(--surface-muted)" }}><div className={`h-full rounded-full transition-all ${usage.percent_used >= 90 ? "bg-amber-500" : "bg-emerald-500"}`} style={{ width: `${usage.percent_used}%` }} /></div>
-          <p className="mt-3 text-[10px] leading-relaxed" style={{ color: "var(--muted)" }}>{t("Günlük sınır dolunca şablon motoru yanıt verir. Sayaç yalnızca Anthropic çağrılarını sayar ve uygulama yeniden başlayınca sıfırlanır.")}</p>
+          <p className="mt-3 text-[10px] leading-relaxed" style={{ color: "var(--muted)" }}>{t("Günlük sınır yalnızca Claude için geçerlidir; dolunca şablon motoru yanıt verir. Maliyet yalnızca fiyatı bilinen modellerde gösterilir.")}</p>
         </>}
         {error && <p role="status" className="mt-3 text-xs text-red-500">{error}</p>}
         <Link href="/llm" onClick={() => setOpen(false)} className="mt-3 block rounded-lg border px-3 py-2 text-center text-xs font-semibold" style={{ borderColor: "var(--border)" }}>{t("Anahtarları yönet")}</Link>

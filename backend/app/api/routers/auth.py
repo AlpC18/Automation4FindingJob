@@ -172,7 +172,7 @@ def resend_verification(payload: PasswordResetRequest, http_request: Request):
                     f"E-posta adresinizi doğrulamak için bağlantıyı açın (1 saat geçerlidir):\n\n{_verification_url(token)}\n",
                 )
             except Exception:
-                pass
+                logger.warning("Could not send an account email.", exc_info=True)
     return {"message": "Adres uygunsa doğrulama talimatları gönderildi."}
 
 
@@ -200,7 +200,7 @@ def request_password_reset(payload: PasswordResetRequest, http_request: Request)
                     f"Parolanızı sıfırlamak için bağlantıyı açın (30 dakika geçerlidir):\n\n{reset_url}\n\nBu talep size ait değilse e-postayı yok sayın.",
                 )
             except Exception:
-                pass
+                logger.warning("Could not send an account email.", exc_info=True)
     return {"message": "Adres kayıtlıysa parola sıfırlama talimatları gönderildi."}
 
 

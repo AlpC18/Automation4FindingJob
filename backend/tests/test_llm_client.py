@@ -59,7 +59,7 @@ def test_anthropic_calls_stop_once_the_daily_token_budget_is_spent(monkeypatch, 
     body = {"content": [{"type": "text", "text": "A real model sentence."}], "usage": {"input_tokens": 60, "output_tokens": 50}}
     _client_returning(monkeypatch, 200, body, sent)
     monkeypatch.setattr(module.settings, "LLM_DAILY_TOKEN_BUDGET", 100, raising=False)
-    monkeypatch.setattr(module.llm_client, "_tokens_used", (None, 0, 0, 0), raising=False)
+    monkeypatch.setattr(module.llm_client, "_usage", {})
 
     first = asyncio.run(module.llm_client.generate_text("system", "user", preferred_provider="anthropic", apply_humanizer=False))
     with caplog.at_level(logging.WARNING, logger=module.__name__):
@@ -94,7 +94,7 @@ def test_usage_report_counts_tokens_and_estimates_cost_at_list_price(monkeypatch
     monkeypatch.setattr(module.settings, "ANTHROPIC_MODEL", "claude-sonnet-5-5")
     monkeypatch.setattr(module.llm_client, "provider", "anthropic")
     monkeypatch.setattr(module.llm_client, "custom_model", None)
-    monkeypatch.setattr(module.llm_client, "_tokens_used", (None, 0, 0, 0))
+    monkeypatch.setattr(module.llm_client, "_usage", {})
 
     for _ in range(2):
         asyncio.run(module.llm_client.generate_text("system", "user", preferred_provider="anthropic", apply_humanizer=False))
@@ -114,3 +114,37 @@ def test_switching_provider_drops_the_model_chosen_for_the_previous_one(monkeypa
     assert (module.llm_client.provider, module.llm_client.custom_model) == ("anthropic", None)
     module.llm_client.set_active_provider("anthropic", "claude-haiku-4-5")
     assert module.llm_client.custom_model == "claude-haiku-4-5"
+
+
+def test_usage_is_counted_for_the_free_provider_without_a_budget_or_price(monkeypatch):
+    sent = []
+    body = {"choices": [{"message": {"content": "A free model sentence."}}], "usage": {"prompt_tokens": 40, "completion_tokens": 60}}
+    _client_returning(monkeypatch, 200, body, sent)
+    monkeypatch.setattr(module, "get_provider_api_key", lambda provider: "free-key" if provider == "custom" else "")
+    monkeypatch.setattr(module.settings, "CUSTOM_LLM_BASE_URL", "https://api.example.test/v1")
+    monkeypatch.setattr(module.settings, "CUSTOM_LLM_MODEL", "some-free-model")
+    monkeypatch.setattr(module.llm_client, "provider", "custom")
+    monkeypatch.setattr(module.llm_client, "custom_model", None)
+    monkeypatch.setattr(module.llm_client, "_usage", {})
+
+    asyncio.run(module.llm_client.generate_text("system", "user", apply_humanizer=False))
+    usage = module.llm_client.get_usage_today()
+
+    assert (usage["provider"], usage["model"], usage["tokens_used"], usage["calls"]) == ("custom", "some-free-model", 100, 1)
+    assert (usage["budget_tokens"], usage["remaining_tokens"], usage["estimated_cost_usd"]) == (0, None, None)
+
+
+def test_provider_choice_and_usage_survive_a_restart(monkeypatch, tmp_path):
+    monkeypatch.setattr(module.settings, "DATA_PATH", tmp_path)
+    monkeypatch.setattr(module.settings, "ACTIVE_LLM_PROVIDER", "anthropic")
+    first = module.LLMClient()
+    first.set_active_provider("custom", "some-free-model")
+    first._record_tokens("custom", 10, 5)
+
+    restarted = module.LLMClient()
+    assert (restarted.provider, restarted.custom_model) == ("custom", "some-free-model")
+    assert restarted._usage_today("custom") == (10, 5, 1)
+
+    # Editing ACTIVE_LLM_PROVIDER in .env is a newer decision than the saved pick.
+    monkeypatch.setattr(module.settings, "ACTIVE_LLM_PROVIDER", "gemini")
+    assert module.LLMClient().provider == "gemini"

@@ -1,5 +1,6 @@
 """Safe, on-demand source-link health checks for scraped job records."""
 
+import logging
 import ipaddress
 import socket
 from concurrent.futures import ThreadPoolExecutor
@@ -10,6 +11,8 @@ from urllib.parse import urljoin, urlsplit
 import httpx
 
 from backend.app.core.database import get_db_connection
+
+logger = logging.getLogger(__name__)
 
 _link_check_executor = ThreadPoolExecutor(max_workers=2, thread_name_prefix="job-link-check")
 
@@ -150,7 +153,7 @@ def schedule_job_link_checks(job_ids: list[str]) -> int:
             task_check_job_links.delay(distinct_ids, tenant_id)
             return len(distinct_ids)
     except Exception:
-        pass
+        logger.warning("Could not queue the job link check on a worker; checking in-process instead.", exc_info=True)
 
     _link_check_executor.submit(_run_checks, distinct_ids, tenant_id)
     return len(distinct_ids)

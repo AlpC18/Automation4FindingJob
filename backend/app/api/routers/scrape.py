@@ -61,6 +61,9 @@ class SourceConfigRequest(BaseModel):
     enabled: bool = True
 
 
+SAVED_SEARCH_AI_PROVIDERS = {"openai", "gemini", "anthropic", "deepseek", "custom", "ollama"}
+
+
 class SavedSearchRequest(BaseModel):
     name: str
     queries: List[str]
@@ -68,6 +71,8 @@ class SavedSearchRequest(BaseModel):
     min_match_score: float = 0
     # Saving a search never schedules it implicitly; automation is opt-in.
     enabled: bool = False
+    # AI provider that reviews this search's results on scheduled runs; empty = no AI review.
+    llm_provider: Optional[str] = ""
 
 
 class SavedSearchScheduleRequest(BaseModel):
@@ -90,15 +95,18 @@ def create_saved_search(req: SavedSearchRequest):
     queries = list(dict.fromkeys(query.strip() for query in req.queries if query.strip()))
     if not queries or not req.name.strip():
         raise HTTPException(status_code=422, detail="Arama adı ve en az bir rol gerekli.")
+    llm_provider = (req.llm_provider or "").strip().lower()
+    if llm_provider and llm_provider not in SAVED_SEARCH_AI_PROVIDERS:
+        raise HTTPException(status_code=422, detail="Bilinmeyen yapay zekâ sağlayıcısı.")
     search_id = uuid.uuid4().hex
     conn = get_db_connection()
     try:
-        conn.cursor().execute("INSERT INTO saved_searches(id, name, queries_json, location, min_match_score, enabled) VALUES (?, ?, ?, ?, ?, ?)",
-                              (search_id, req.name.strip(), json.dumps(queries), req.location or "", max(0, min(100, req.min_match_score)), int(req.enabled)))
+        conn.cursor().execute("INSERT INTO saved_searches(id, name, queries_json, location, min_match_score, enabled, llm_provider) VALUES (?, ?, ?, ?, ?, ?, ?)",
+                              (search_id, req.name.strip(), json.dumps(queries), req.location or "", max(0, min(100, req.min_match_score)), int(req.enabled), llm_provider))
         conn.commit()
     finally:
         conn.close()
-    return {"id": search_id, "name": req.name.strip(), "queries": queries, "location": req.location or "", "min_match_score": req.min_match_score, "enabled": req.enabled}
+    return {"id": search_id, "name": req.name.strip(), "queries": queries, "location": req.location or "", "min_match_score": req.min_match_score, "enabled": req.enabled, "llm_provider": llm_provider}
 
 
 @router.delete("/scrape/saved-searches/{search_id}")

@@ -4,10 +4,11 @@ Analyzes documented candidate CV skills and projects to suggest related target r
 lateral pivot opportunities, and tailored work style / location configurations.
 """
 
+import asyncio
 import json
 import re
 from typing import Dict, Any, List, Optional
-from backend.app.core.llm_client import llm_client
+from backend.app.core.llm_client import is_template_engine, llm_client
 from backend.app.core.event_logger import agent_logger
 
 # One-tap search areas. An empty location_filter searches everywhere; an empty remote_filter accepts any work mode.
@@ -60,12 +61,16 @@ Return ONLY valid JSON array with schema:
 ]
 """
         try:
-            raw_response = llm_client.generate_text(
+            # This runs in a worker thread (sync endpoint), so it owns its event loop.
+            result = asyncio.run(llm_client.generate_text(
                 system_prompt="You are an expert career architect. Return only JSON array.",
-                prompt=prompt,
-                max_tokens=600,
-                temperature=0.3
-            )
+                user_prompt=prompt,
+                temperature=0.3,
+                apply_humanizer=False,
+            ))
+            if is_template_engine(result["provider_used"]):
+                raise RuntimeError("no language model answered")
+            raw_response = result["text"]
             # Clean markdown codeblocks
             cleaned = re.sub(r"^```(?:json)?\s*", "", raw_response.strip(), flags=re.MULTILINE)
             cleaned = re.sub(r"```$", "", cleaned.strip(), flags=re.MULTILINE)

@@ -11,12 +11,15 @@ Syncs job search data to a Notion database for visual tracking:
 Requires: NOTION_API_KEY and NOTION_DATABASE_ID in environment.
 """
 
+import logging
 import json
 import os
 from datetime import datetime
 from typing import Dict, Any, List, Optional
 
 from backend.app.core.event_logger import agent_logger
+
+logger = logging.getLogger(__name__)
 
 NOTION_API_KEY = os.getenv("NOTION_API_KEY", "")
 NOTION_DATABASE_ID = os.getenv("NOTION_DATABASE_ID", "")
@@ -173,7 +176,7 @@ class NotionSync:
             try:
                 props["Son Tarih"] = {"date": {"start": deadline}}
             except Exception:
-                pass
+                logger.warning("Could not set the deadline on the Notion page.", exc_info=True)
 
         return props
 

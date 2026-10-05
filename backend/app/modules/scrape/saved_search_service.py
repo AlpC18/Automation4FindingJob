@@ -1,10 +1,12 @@
 """Execute a saved role search, rank its results and persist actionable alerts."""
 
+import asyncio
 import json
 import uuid
 
 from backend.app.api.profile import fetch_candidate_profile
 from backend.app.core.database import get_db_connection
+from backend.app.modules.rank.llm_reranker import review_top_jobs
 from backend.app.modules.rank.scoring_engine import rank_and_save_all_jobs
 from backend.app.modules.scrape.unified_scraper import unified_scraper
 
@@ -29,7 +31,12 @@ def run_saved_search(search_id: str) -> dict:
         location_preference=saved["location"] or None,
         replace_current_feed=False,
     )
-    ranked = rank_and_save_all_jobs(fetch_candidate_profile())
+    profile = fetch_candidate_profile()
+    ranked = rank_and_save_all_jobs(profile)
+    provider = saved["llm_provider"] if "llm_provider" in saved.keys() else ""
+    if provider:
+        # Runs in a worker thread, so it owns its event loop. The review never raises.
+        asyncio.run(review_top_jobs(profile, provider=provider))
     matches = [job for job in ranked if job["id"] not in before and job.get("match_score", 0) >= saved["min_match_score"]]
     conn = get_db_connection()
     try:

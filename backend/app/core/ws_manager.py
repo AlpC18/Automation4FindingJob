@@ -7,12 +7,15 @@ Provides live pub/sub streaming to connected frontend clients:
 - Instant notifications (seen jobs, ghost alerts, deadline sweeps)
 """
 
+import logging
 import asyncio
 import json
 from typing import Dict, Any, List, Set, Optional
 from fastapi import WebSocket, WebSocketDisconnect
 from backend.app.core.event_logger import agent_logger
 from backend.app.core.tenant import get_tenant_id
+
+logger = logging.getLogger(__name__)
 
 class WebSocketManager:
     """Manages active WebSocket connections and channel broadcasting."""
@@ -79,7 +82,7 @@ class WebSocketManager:
         try:
             await websocket.send_text(json.dumps(message))
         except Exception:
-            pass
+            logger.debug("Could not send a message to a websocket client.", exc_info=True)
 
     def broadcast_sync(self, event_type: str, data: Dict[str, Any]):
         """Synchronous wrapper for broadcasting from non-async contexts."""

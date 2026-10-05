@@ -4,6 +4,7 @@ Launches anti-detect headless/headful browser sessions, rotates user agents,
 persists session cookies, and autonomously fills multi-step application forms.
 """
 
+import logging
 import json
 import asyncio
 from pathlib import Path
@@ -12,6 +13,8 @@ from urllib.parse import unquote, urlsplit
 from backend.app.core.config import settings
 from backend.app.core.security import decrypt_secret
 from backend.app.core.tenant import get_tenant_id
+
+logger = logging.getLogger(__name__)
 
 def proxy_settings(proxy_url: str) -> Optional[Dict[str, str]]:
     """Turn RESIDENTIAL_PROXY_URL into Playwright's proxy option; None means no proxy is configured.
@@ -84,7 +87,7 @@ class StealthBrowserWorker:
                             cookies = json.loads(decrypt_secret(f.read()))
                             await context.add_cookies(cookies)
                     except Exception:
-                        pass
+                        logger.warning("Could not load saved browser cookies.", exc_info=True)
 
                 page = await context.new_page()
                 

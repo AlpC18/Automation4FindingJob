@@ -132,6 +132,8 @@ class Settings(BaseSettings):
     # Dynamic sourcing and scheduler controls
     SCRAPER_MODE: str = os.getenv("SCRAPER_MODE", "auto")
     SCRAPER_PLATFORMS: str = os.getenv("SCRAPER_PLATFORMS", "linkedin,upwork,kosovajob,techcareer,remote")
+    # Sources for the automatic nightly sweep. Paid Apify sources run at night only if listed here; empty = all.
+    NIGHTLY_SCAN_PLATFORMS: str = os.getenv("NIGHTLY_SCAN_PLATFORMS", "remote,kosovajob,techcareer")
     DEFAULT_SCRAPE_QUERY: str = os.getenv("DEFAULT_SCRAPE_QUERY", "Developer")
     SCHEDULER_TIMEZONE: str = os.getenv("SCHEDULER_TIMEZONE", "Europe/Belgrade")
     SCHEDULER_NIGHTLY_TIME: str = os.getenv("SCHEDULER_NIGHTLY_TIME", "03:30")

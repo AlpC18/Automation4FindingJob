@@ -4,6 +4,7 @@ import hashlib
 import json
 import re
 import time
+from datetime import date, timedelta
 from typing import Any, Callable, Dict, List, Optional, Set, Tuple
 from urllib.parse import quote
 
@@ -58,6 +59,9 @@ def normalize_job(item: Dict[str, Any], platform: str) -> Optional[Dict[str, Any
     # Indeed and Glassdoor send the place as a record; keep the city and the country so a country search can match.
     location = ", ".join(dict.fromkeys(str(place[key]) for key in ("name", "city", "countryName") if place.get(key))) if isinstance(place, dict) else ""
     posted = _text(item, "date", "posted_at", "postedAt", "publishedAt", "datePublished", "absoluteDate", "created_at", "publication_date", "posted_date")
+    age_days = item.get("ageInDays")
+    if not posted and isinstance(age_days, int) and age_days >= 0:
+        posted = (date.today() - timedelta(days=age_days)).isoformat()  # Glassdoor gives an age, not a date
     deadline_match = re.match(r"\d{4}-\d{2}-\d{2}", _text(item, "deadline", "application_deadline", "applicationDeadline", "expires_at"))
     return {
         "id": identifier,

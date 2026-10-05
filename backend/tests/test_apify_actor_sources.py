@@ -93,3 +93,35 @@ def test_last_scan_cost_is_the_spend_since_the_scan_started(monkeypatch):
     summary = apify_budget.get_apify_quota_summary()
     assert summary["last_scan_cost_usd"] == 0.06
     assert summary["remaining_usd"] == 4.69
+
+
+def test_glassdoor_age_in_days_becomes_a_posting_date():
+    from datetime import date, timedelta
+
+    job = normalize_job({"id": 7, "title": "Engineer", "url": "https://www.glassdoor.com/job-listing/j?jl=7", "ageInDays": 12}, "glassdoor")
+    assert job["posted_date"] == (date.today() - timedelta(days=12)).isoformat()
+
+
+def test_nightly_sweep_stays_on_free_sources_unless_configured(monkeypatch):
+    from backend.app.tasks import scheduler_daemon
+
+    monkeypatch.setattr(scheduler_daemon, "list_company_boards", lambda: [])
+    monkeypatch.setattr(scheduler_daemon.settings, "NIGHTLY_SCAN_PLATFORMS", "remote,kosovajob,techcareer")
+    assert scheduler_daemon.nightly_platforms() == ["remote", "kosovajob", "techcareer"]
+    monkeypatch.setattr(scheduler_daemon, "list_company_boards", lambda: [{"provider": "lever", "slug": "x"}])
+    assert scheduler_daemon.nightly_platforms()[-1] == "company_boards"
+    monkeypatch.setattr(scheduler_daemon.settings, "NIGHTLY_SCAN_PLATFORMS", "")
+    assert scheduler_daemon.nightly_platforms() is None
+
+
+def test_empty_or_disconnected_backup_dir_falls_back_to_the_data_folder(monkeypatch, tmp_path):
+    from pathlib import Path
+
+    from backend.app.core import backup_manager
+
+    monkeypatch.setattr(backup_manager.settings, "DATA_PATH", tmp_path)
+    for configured in (None, Path(""), Path("/Volumes/not-connected-drive/backups/app")):
+        monkeypatch.setattr(backup_manager.settings, "BACKUP_DIR", configured)
+        assert backup_manager.backup_directory() == tmp_path / "backups"
+    monkeypatch.setattr(backup_manager.settings, "BACKUP_DIR", tmp_path / "external")
+    assert backup_manager.backup_directory() == tmp_path / "external"
