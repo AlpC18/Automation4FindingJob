@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import io
 import re
+import unicodedata
 import zipfile
 from typing import Any
 from xml.etree import ElementTree
@@ -79,6 +80,31 @@ _SECTION = re.compile(r"^(summary|profile|about(?: me)?|experience|work experien
 _DATE = re.compile(r"\b(?:(?:19|20)\d{2})(?:\s*[-–—]\s*(?:(?:19|20)\d{2}|present|current|now))?\b|\b(?:present|current|now)\b", re.IGNORECASE)
 
 
+# Headings as they appear on real CVs, English and Turkish. Compared after _heading_key().
+SECTION_ALIASES = {
+    "summary": {"summary", "profile", "about", "about me", "professional summary", "professional profile", "objective",
+                "career objective", "ozet", "hakkimda", "profil", "kariyer hedefi", "on yazi"},
+    "experience": {"experience", "work experience", "employment", "professional experience", "work history", "internships",
+                   "deneyim", "is deneyimi", "is deneyimleri", "calisma deneyimi", "profesyonel deneyim", "staj", "stajlar"},
+    "education": {"education", "academic background", "qualifications", "education and certifications", "egitim",
+                  "egitim bilgileri", "ogrenim"},
+    "skills": {"skills", "technical skills", "core skills", "competencies", "technologies", "core skills and technologies",
+               "skills and technologies", "skills and tools", "tech stack", "tools", "yetenekler", "beceriler",
+               "teknik beceriler", "teknik yetenekler", "yetkinlikler", "teknolojiler"},
+    "languages": {"languages", "language skills", "diller", "dil", "yabanci dil", "yabanci diller", "dil bilgisi"},
+}
+# Headings that end the section before them without starting one this parser reads.
+OTHER_HEADINGS = {"projects", "key projects", "certifications", "certificates", "references", "interests", "hobbies", "awards",
+                  "publications", "volunteering", "courses", "projeler", "sertifikalar", "referanslar", "ilgi alanlari",
+                  "hobiler", "oduller", "kurslar", "gonullu calismalar"}
+
+
+def _heading_key(line: str) -> str:
+    """Lowercase ASCII form of a heading, so "EĞİTİM:", "Eğitim" and "Skills & Tools" compare equal to their alias."""
+    folded = unicodedata.normalize("NFKD", line.replace("ı", "i").replace("İ", "I")).encode("ascii", "ignore").decode("ascii")
+    return re.sub(r"\s+", " ", folded.replace("&", " and ").strip(": ").lower())
+
+
 def extract_profile_fields(text: str) -> dict[str, Any]:
     """Conservative local extraction: return only values directly found in the CV."""
     lines = [re.sub(r"\s+", " ", line).strip(" \t•●▪-") for line in text.splitlines()]
@@ -118,20 +144,13 @@ def extract_profile_fields(text: str) -> dict[str, Any]:
 
     section = ""
     section_lines: dict[str, list[str]] = {key: [] for key in ("summary", "experience", "education", "skills", "languages")}
-    section_aliases = {
-        "summary": {"summary", "profile", "about", "about me", "professional summary", "professional profile"},
-        "experience": {"experience", "work experience", "employment", "professional experience", "work history"},
-        "education": {"education", "academic background", "qualifications"},
-        "skills": {"skills", "technical skills", "core skills", "competencies", "technologies"},
-        "languages": {"languages", "language skills"},
-    }
     for line in lines:
-        normalized = line.strip(": ").lower()
-        matched = next((key for key, aliases in section_aliases.items() if normalized in aliases), None)
+        normalized = _heading_key(line)
+        matched = next((key for key, aliases in SECTION_ALIASES.items() if normalized in aliases), None)
         if matched:
             section = matched
             continue
-        if _SECTION.match(line) and normalized not in {alias for aliases in section_aliases.values() for alias in aliases}:
+        if normalized in OTHER_HEADINGS or _SECTION.match(line):
             section = ""
             continue
         if section:

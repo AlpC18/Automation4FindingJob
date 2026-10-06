@@ -8,7 +8,7 @@ from backend.app.core.security import decrypt_secret, encrypt_secret
 
 
 PROFILE_ENCRYPTED_COLUMNS = (
-    "full_name", "email", "phone", "location", "skills_json", "experience_json",
+    "full_name", "email", "phone", "location", "target_role", "skills_json", "experience_json",
     "education_json", "raw_cv_text", "clean_ats_cv_text", "style_profile_json",
     "languages_json", "github_url", "summary", "work_preference", "work_style",
     "writing_tone",

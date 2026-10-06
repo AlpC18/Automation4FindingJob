@@ -42,3 +42,22 @@ test.describe("Pages changed by the review fixes (live backend)", () => {
     expect(body.jobs.length).toBeLessThanOrEqual(5);
   });
 });
+
+test.describe("Saved CV (live backend)", () => {
+  test("uploading a CV once saves the file and the profile, and both are still there after a reload", async ({ page }) => {
+    await page.goto("/setup");
+    const card = page.getByRole("region", { name: "Kayıtlı CV" });
+    await card.locator('input[type="file"]').setInputFiles("tests/e2e/fixtures/sample-cv.pdf");
+
+    await expect(card.getByText("CV'n ve profilin kaydedildi.")).toBeVisible();
+    await expect(card.getByText(/sample-cv\.pdf/)).toBeVisible();
+    await expect(card.getByText(/CV'de bulunamadı, aşağıdan kendin ekle: .*Hedef rol/)).toBeVisible();
+
+    await page.reload();
+    await expect(page.getByRole("region", { name: "Kayıtlı CV" }).getByText(/sample-cv\.pdf/)).toBeVisible();
+
+    const download = page.waitForEvent("download");
+    await page.getByRole("region", { name: "Kayıtlı CV" }).getByRole("button", { name: "İndir" }).click();
+    expect((await download).suggestedFilename()).toBe("sample-cv.pdf");
+  });
+});

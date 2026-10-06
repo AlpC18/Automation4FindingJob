@@ -42,6 +42,7 @@ def system_metrics():
 # Shared identity/authentication tables are kept in a separate control DB and
 # are never included in export or workspace-data deletion.
 WORKSPACE_DATA_TABLES = (
+    "cv_documents",
     "career_job_vectors", "application_attribution", "application_packages", "follow_up_queue",
     "inbox_messages", "telegram_events", "oauth_accounts", "linkedin_sessions",
     "seen_jobs", "account_activity_log", "cv_interview_questions", "form_memory",
@@ -50,7 +51,7 @@ WORKSPACE_DATA_TABLES = (
     "profile_revisions", "llm_provider_credentials", "job_scan_runs",
     "job_source_snapshots", "company_feedback", "job_flags", "application_status_history", "cv_analysis_runs", "job_link_checks", "apify_usage_history",
 )
-SENSITIVE_EXPORT_COLUMNS = {"access_token", "refresh_token", "encrypted_token", "encrypted_api_key", "raw_cookie_preview"}
+SENSITIVE_EXPORT_COLUMNS = {"access_token", "refresh_token", "encrypted_token", "encrypted_api_key", "raw_cookie_preview", "encrypted_content"}
 
 
 def _workspace_table_exists(cursor, table: str) -> bool:

@@ -10,6 +10,7 @@ from pydantic import BaseModel, Field
 from backend.app.api.profile import encrypt_profile_values, fetch_candidate_profile
 from backend.app.core.database import get_db_connection
 from backend.app.core.file_scanner import enforce_upload_scan
+from backend.app.core.security import decrypt_secret
 from backend.app.core.profile_versioning import compare_profile_revisions, ensure_profile_version, list_profile_revisions
 from backend.app.core.security_email import is_configured as smtp_is_configured
 from backend.app.core.llm_client import llm_client
@@ -29,6 +30,9 @@ from backend.app.modules.setup.rag_engine import rag_memory
 from backend.app.modules.setup.role_discovery import role_discovery_engine
 from backend.app.modules.setup.stylometry import analyze_stylometry
 from backend.app.modules.setup.cv_analysis_history import list_analysis_runs, record_analysis_run
+from backend.app.modules.setup.saved_cv import (
+    delete_cv_document, get_cv_file, get_cv_metadata, merge_cv_into_profile, missing_essentials, save_cv_document,
+)
 
 router = APIRouter()
 
@@ -266,7 +270,8 @@ def update_profile(req: ProfileUpdateRequest):
     existing_categories = json.loads((existing_value("target_categories_json", 2) or "[]")) if existing else []
     existing_roles = json.loads((existing_value("target_roles_json", 3) or "[]")) if existing else []
     categories_json = json.dumps(req.target_categories if req.target_categories is not None else existing_categories)
-    previous_target_role = existing_value("target_role", 1) if existing else ""
+    # Stored encrypted like the other profile text; compare the plain value.
+    previous_target_role = decrypt_secret(existing_value("target_role", 1) or "") if existing else ""
     roles = req.target_roles if req.target_roles is not None else (
         existing_roles if req.target_role == previous_target_role else ([req.target_role] if req.target_role else [])
     )
@@ -304,6 +309,73 @@ def update_profile(req: ProfileUpdateRequest):
     profile = fetch_candidate_profile()
     version = ensure_profile_version(profile)
     return {"status": "SUCCESS", "message": "Profile updated and ATS standardized", "profile_version": version}
+
+
+async def _read_cv_upload(file: UploadFile) -> tuple[str, bytes, str, Optional[int]]:
+    """Size limit, malware scan and text extraction shared by every CV upload."""
+    try:
+        content = await file.read(10 * 1024 * 1024 + 1)
+    finally:
+        await file.close()
+    if len(content) > 10 * 1024 * 1024:
+        raise HTTPException(status_code=413, detail="CV dosyası en fazla 10 MB olabilir.")
+    try:
+        enforce_upload_scan(content)
+    except ValueError as exc:
+        raise HTTPException(status_code=422, detail=str(exc)) from exc
+    except RuntimeError as exc:
+        raise HTTPException(status_code=503, detail=str(exc)) from exc
+    filename = (file.filename or "").replace("\\", "/").rsplit("/", 1)[-1]
+    try:
+        text, page_count = extract_cv_text(filename, content)
+    except CVParseError as exc:
+        raise HTTPException(status_code=exc.status_code, detail=str(exc)) from exc
+    return filename, content, text, page_count
+
+
+@router.post("/setup/cv")
+async def save_cv(response: Response, file: UploadFile = File(...)):
+    """Keep the CV file and save the profile from it in one step; nothing the user typed is overwritten."""
+    response.headers["Cache-Control"] = "no-store"
+    filename, content, text, page_count = await _read_cv_upload(file)
+    if not text.strip():
+        raise HTTPException(status_code=422, detail="CV'de okunabilir metin bulunamadı; taranmış görüntü yerine metin içeren bir dosya yükleyin.")
+    merged, filled = merge_cv_into_profile(fetch_candidate_profile(), extract_profile_fields(text), text)
+    update_profile(ProfileUpdateRequest(
+        full_name=merged.get("full_name") or "", email=merged.get("email") or "", target_role=merged.get("target_role") or "",
+        years_of_experience=int(merged.get("years_of_experience") or 0), skills=merged.get("skills") or [],
+        raw_cv_text=text, phone=merged.get("phone") or "", location=merged.get("location") or "",
+        work_preference=merged.get("work_preference") or "", languages=merged.get("languages") or [],
+        github_url=merged.get("github_url") or "", summary=merged.get("summary") or "",
+        experience=merged.get("experience") or [], education=merged.get("education") or [],
+        work_style=merged.get("work_style") or "", writing_tone=merged.get("writing_tone") or "",
+    ))
+    cv = save_cv_document(filename, file.content_type or "application/octet-stream", content, page_count)
+    profile = fetch_candidate_profile()
+    return {"cv": cv, "profile": profile, "filled_fields": filled, "missing_fields": missing_essentials(profile)}
+
+
+@router.get("/setup/cv")
+def get_saved_cv():
+    return {"cv": get_cv_metadata()}
+
+
+@router.get("/setup/cv/download")
+def download_saved_cv():
+    saved = get_cv_file()
+    if not saved:
+        raise HTTPException(status_code=404, detail="Kayıtlı CV yok.")
+    safe_name = "".join(char for char in saved["filename"] if char.isalnum() or char in "._- ") or "cv"
+    return Response(
+        content=saved["content"], media_type=saved["content_type"],
+        headers={"Content-Disposition": f'attachment; filename="{safe_name}"', "Cache-Control": "no-store"},
+    )
+
+
+@router.delete("/setup/cv")
+def delete_saved_cv():
+    """Remove the stored file; the profile built from it stays."""
+    return {"deleted": delete_cv_document()}
 
 
 class StylometryRequest(BaseModel):

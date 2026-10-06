@@ -15,6 +15,7 @@ import {
 import { buildApiUrl, fetchFromApi, requestFromApi } from "@/lib/api";
 import PdfJsPreview from "@/components/PdfJsPreview";
 import { useLanguage } from "@/lib/i18n";
+import SavedCvCard from "@/components/SavedCvCard";
 import CvImportReview, { type CvAiAnalysis, type CvProfileFields, type CvQualityReport } from "@/components/CvImportReview";
 
 export default function SetupPage() {
@@ -42,7 +43,7 @@ export default function SetupPage() {
 
   async function loadSetupData() {
     try {
-      setLoading(true);
+      // The loading screen is for the first load only; a refresh after saving must not blank the page.
       const [pRes, rRes] = await Promise.all([
         fetchFromApi("/setup/profile").catch(() => ({ profile: null, missing_data_interview_questions: [] })),
         fetchFromApi("/setup/rag_projects").catch(() => ({ projects: [] }))
@@ -203,6 +204,8 @@ export default function SetupPage() {
         <p className="text-xs text-slate-400 mt-1">
           {t("CV'ni, yazım tarzını ve projelerini buraya ekle; başvurular bu bilgilerle hazırlanır.")}</p>
       </div>
+
+      <SavedCvCard onSaved={loadSetupData} />
 
       {/* Grid: 2 Columns */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">

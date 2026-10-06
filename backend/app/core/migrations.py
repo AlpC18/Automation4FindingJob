@@ -86,6 +86,7 @@ def apply_migrations(connection, cursor=None):
         "0022_saved_search_remote_type": [
             ("saved_searches", "remote_type", "TEXT NOT NULL DEFAULT ''"),
         ],
+        "0023_saved_cv_document": [],
     }
     for revision, columns in migrations.items():
         if revision in applied:
@@ -283,5 +284,19 @@ def apply_migrations(connection, cursor=None):
             cursor.execute("CREATE INDEX IF NOT EXISTS idx_scraped_jobs_feed ON scraped_jobs(stale_at, match_score DESC, created_at DESC)")
             cursor.execute("CREATE INDEX IF NOT EXISTS idx_scraped_jobs_platform ON scraped_jobs(platform)")
             cursor.execute("CREATE INDEX IF NOT EXISTS idx_scraped_jobs_status ON scraped_jobs(status)")
+        if revision == "0023_saved_cv_document":
+            # The candidate's own CV file, encrypted; one row per workspace.
+            cursor.execute("""
+                CREATE TABLE IF NOT EXISTS cv_documents (
+                    id TEXT PRIMARY KEY,
+                    filename TEXT NOT NULL,
+                    content_type TEXT NOT NULL DEFAULT '',
+                    size_bytes INTEGER NOT NULL DEFAULT 0,
+                    content_hash TEXT NOT NULL,
+                    page_count INTEGER,
+                    encrypted_content TEXT NOT NULL,
+                    uploaded_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+                )
+            """)
         cursor.execute("INSERT INTO schema_migrations(revision) VALUES (?)", (revision,))
         connection.commit()
