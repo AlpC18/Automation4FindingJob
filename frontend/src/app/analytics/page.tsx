@@ -1,4 +1,5 @@
 "use client";
+import { notify } from "@/lib/notify";
 
 import { useEffect, useState } from "react";
 import {
@@ -27,7 +28,7 @@ export default function AnalyticsPage() {
       try {
         setLoading(true);
         const [aRes, fRes, rRes] = await Promise.all([
-          fetchFromApi("/outcome/analytics").catch(() => null),
+          fetchFromApi("/outcome/analytics").catch(() => { notify(t("Veriler yüklenemedi. Sayfayı yenileyip tekrar dene.")); return null; }),
           fetchFromApi("/outcome/follow_ups").catch(() => ({ follow_ups: [] })),
           fetchFromApi("/setup/profile/revisions?limit=8").catch(() => ({ revisions: [] }))
         ]);

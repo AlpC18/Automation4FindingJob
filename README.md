@@ -63,7 +63,6 @@ Servisler açıldığında:
 | **1.4 Humanizer & Multi-Agent** | `/apply` | Anti-AI Humanizer Engine, LangGraph sıralı iş akışı, Form Memory Store (Easy Apply), Micro-Case Study ve Karar Verici X-Ray Dorkları. |
 | **1.5 Mülakat & Pazarlık** | `/interview` | Senaryo bazlı teknik/STAR mülakat simülatörü ve PRD 3.4 standardında Karşı Teklif (Counter-Offer) e-posta üreteci. |
 | **1.6 Takip & Analitik** | `/outcome` | Kanban başvuru takip paneli, Dönüşüm Hunisi (Conversion Funnel), A/B üslup testleri ve 7./14. gün kibar takip otomasyonu. |
-| **1.7 TestSprite QA** | `/testsprite` | Uçtan uca otonom kalite güvencesi testi ve Auto-Fix onarımı. |
 
 ---
 

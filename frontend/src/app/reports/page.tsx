@@ -1,4 +1,5 @@
 "use client";
+import { notify } from "@/lib/notify";
 import { useLanguage } from "@/lib/i18n";
 import { useState } from "react";
 import { FileText, Download, Loader2 } from "lucide-react";
@@ -17,6 +18,7 @@ export default function ReportsPage() {
       setResult(res);
     } catch (e) {
       console.error(e);
+      notify(t("Rapor oluşturulamadı. Tekrar dene."));
     } finally {
       setGenerating(null);
     }

@@ -43,6 +43,9 @@ def role_relevance(job_title: str, target_roles: list) -> Optional[float]:
     return max(shares) if shares else None
 
 
+JOB_TEXT_FIELDS = ("title", "company", "description", "location", "remote_type", "posted_date", "salary_range")
+
+
 def score_job_against_profile(job_data: Dict[str, Any], candidate_profile: Dict[str, Any]) -> Dict[str, Any]:
     cand_skills = candidate_profile.get("skills") or []
     cand_exp = candidate_profile.get("years_of_experience")
@@ -52,8 +55,10 @@ def score_job_against_profile(job_data: Dict[str, Any], candidate_profile: Dict[
         cand_exp = None
     if cand_exp == 0 and not (candidate_profile.get("experience") or candidate_profile.get("raw_cv_text")):
         cand_exp = None
-    desc = job_data.get("description", "")
-    title = job_data.get("title", "")
+    # A saved job can hold NULL in any text column; every check below expects text.
+    job_data = {**job_data, **{field: job_data.get(field) or "" for field in JOB_TEXT_FIELDS}}
+    desc = job_data["description"]
+    title = job_data["title"]
     
     # Treat an explicit skill phrase in the saved CV as evidence, but never
     # infer skills from the job description itself.

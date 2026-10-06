@@ -30,19 +30,22 @@ BROWSER_UA = (
 BOT_UA = 'CareerAgent-Bot/1.0'
 
 
-def _curl_fetch(url: str, user_agent: str, timeout: int = 15) -> Tuple[str, int]:
-    """Fetch a URL with curl. Returns (body, http_code)."""
+MAX_REDIRECTS = 5
+
+
+def _curl_once(url: str, user_agent: str, timeout: int) -> Tuple[str, int, str]:
+    """One request, redirects not followed. Returns (body, http_code, redirect_url)."""
     try:
         result = subprocess.run(
             [
-                'curl', '-sS', '-L',
-                '--max-redirs', '5',
+                'curl', '-sS',
+                '--proto', '=http,https',
                 '--max-time', str(timeout),
                 '-A', user_agent,
                 '-H', 'Accept: text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8',
                 '-H', 'Accept-Language: en-US,en;q=0.9,tr;q=0.8',
                 '-o', '-',
-                '-w', '\n%{http_code}',
+                '-w', '\n%{http_code} %{redirect_url}',
                 '--', url
             ],
             capture_output=True,
@@ -50,18 +53,32 @@ def _curl_fetch(url: str, user_agent: str, timeout: int = 15) -> Tuple[str, int]
             encoding='utf-8',
             errors='replace'
         )
-        output = result.stdout
-        lines = output.rsplit('\n', 1)
-        if len(lines) == 2:
-            body, code_str = lines
-            try:
-                return body, int(code_str.strip())
-            except ValueError:
-                pass
-        return output, 0
+        body, _, trailer = result.stdout.rpartition('\n')
+        code_str, _, redirect_url = trailer.partition(' ')
+        try:
+            return body, int(code_str.strip()), redirect_url.strip()
+        except ValueError:
+            return result.stdout, 0, ""
     except Exception as e:
         agent_logger.log_event("WEB_RESEARCH", f"curl failed for {url}: {e}")
-        return "", 0
+        return "", 0, ""
+
+
+def _curl_fetch(url: str, user_agent: str, timeout: int = 15) -> Tuple[str, int]:
+    """Fetch a URL with curl. Returns (body, http_code)."""
+    # Redirects are followed here, not by curl, so each hop gets the public-address check.
+    # ponytail: the check resolves DNS separately from curl; pin the resolved IP with --resolve if rebinding matters.
+    from backend.app.modules.scrape.job_link_health import _public_http_url
+    for _ in range(MAX_REDIRECTS + 1):
+        body, code, redirect_url = _curl_once(url, user_agent, timeout)
+        if not (300 <= code < 400 and redirect_url):
+            return body, code
+        allowed, reason = _public_http_url(redirect_url)
+        if not allowed:
+            agent_logger.log_event("WEB_RESEARCH", f"Redirect from {url} refused: {reason}")
+            return "", 0
+        url = redirect_url
+    return "", 0
 
 
 def _extract_text_from_html(html: str) -> str:

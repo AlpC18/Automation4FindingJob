@@ -6,7 +6,7 @@ autonomous daily quotas, randomized human jitter delays, and activity auditing.
 
 import time
 import random
-from datetime import datetime, date
+from datetime import datetime, date, timedelta, timezone
 from typing import Dict, Any, Tuple
 from backend.app.core.config import settings
 from backend.app.core.database import get_db_connection
@@ -18,16 +18,20 @@ class AccountHealthManager:
             "upwork": settings.DAILY_LIMIT_UPWORK,
             "kosovajob": settings.DAILY_LIMIT_KOSOVAJOB,
             "remote": settings.DAILY_LIMIT_GLOBAL_REMOTE,
+            "outreach": settings.DAILY_LIMIT_OUTREACH,
         }
 
     def get_today_usage(self, platform: str) -> int:
         conn = get_db_connection()
         cursor = conn.cursor()
-        today_str = date.today().isoformat()
+        # The log is stamped in UTC, so the day is counted in UTC too; a local date would
+        # miss everything logged between local midnight and UTC midnight.
+        today = datetime.now(timezone.utc).date()
+        # A range, not DATE(timestamp): the range can use an index on the column.
         cursor.execute("""
             SELECT COUNT(*) as count FROM account_activity_log
-            WHERE platform = ? AND DATE(timestamp) = ? AND action_type IN ('apply', 'message')
-        """, (platform.lower(), today_str))
+            WHERE platform = ? AND timestamp >= ? AND timestamp < ? AND action_type IN ('apply', 'message')
+        """, (platform.lower(), today.isoformat(), (today + timedelta(days=1)).isoformat()))
         row = cursor.fetchone()
         count = row["count"] if row else 0
         conn.close()

@@ -30,7 +30,6 @@ RUN pip install --no-cache-dir -r requirements.txt
 RUN python -m playwright install --with-deps chromium
 
 COPY backend/ ./backend/
-COPY #\ Yapay\ Zeka\ Destekli\ Otonom\ Kariyer\ ve\ .md ./
 
 ENV PYTHONPATH=/app
 EXPOSE 8000

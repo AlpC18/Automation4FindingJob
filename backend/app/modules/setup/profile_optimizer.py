@@ -7,7 +7,7 @@ Transforms candidate web presence to attract inbound recruiter discovery:
 """
 
 from typing import Dict, Any, List, Optional
-from backend.app.core.llm_client import llm_client
+from backend.app.core.llm_client import LLMUnavailable, llm_client
 from backend.app.core.event_logger import agent_logger
 
 class ProfileOptimizerAgent:
@@ -21,7 +21,8 @@ class ProfileOptimizerAgent:
         """Generates high-conversion LinkedIn headline, about section, and strategic keywords."""
         role = target_role or candidate_profile.get("target_role", "Software Engineer")
         skills = ", ".join(candidate_profile.get("skills", [])[:10])
-        exp_years = candidate_profile.get("years_of_experience", 3)
+        exp_years = candidate_profile.get("years_of_experience")
+        exp_years = exp_years if exp_years not in (None, "") else "not specified"
         
         prompt = f"""
 Candidate Info:
@@ -40,21 +41,10 @@ Please provide an optimized LinkedIn profile upgrade in JSON format with keys:
             user_prompt=prompt
         )
 
+        if not res:
+            raise LLMUnavailable("Yapay zekâ sağlayıcısı yanıt vermedi; LinkedIn önerisi üretilemedi.")
         agent_logger.log_event("PROFILE_OPTIMIZER", f"Generated LinkedIn optimization for role: {role}")
-        return res if res else {
-            "headlines": [
-                f"{role} | Distributed Systems & AI Systems | Python, FastAPI, Docker",
-                f"Senior {role} • Building Scalable Autonomous Agents & Web Architectures",
-                f"{role} @ High-Growth Tech | Cloud & Modern Backend Infrastructure"
-            ],
-            "about_section": f"I am a {role} with {exp_years}+ years of experience building resilient backend architectures, AI agents, and data systems...",
-            "featured_skills": candidate_profile.get("skills", [])[:10],
-            "profile_tips": [
-                "Başlığınızda şirket adı yerine çözdüğünüz ana problemleri ve temel teknolojileri öne çıkarın.",
-                "Hakkımda kısmının ilk 3 satırını mobil ekranda 'Devamını Gör'e basmadan okunacak şekilde güçlü bir kanca ile başlatın.",
-                "Projeler kısmına canlı demo linklerini ve GitHub repolarını doğrudan ekleyin."
-            ]
-        }
+        return res
 
     async def audit_github_profile(
         self,
@@ -62,10 +52,7 @@ Please provide an optimized LinkedIn profile upgrade in JSON format with keys:
         sample_projects: Optional[List[Dict[str, Any]]] = None
     ) -> Dict[str, Any]:
         """Evaluates public GitHub presence and suggests portfolio upgrades."""
-        projects = sample_projects or [
-            {"name": "Autonomous-Career-Agent", "desc": "End-to-end multi-agent AI system with FastAPI and Next.js"},
-            {"name": "Distributed-Crawler", "desc": "High-throughput stealth web scraper with Celery and proxy rotation"}
-        ]
+        projects = sample_projects or "(none provided; give general advice and do not assume any repository)"
 
         prompt = f"""
 GitHub Username: {github_username}

@@ -20,6 +20,7 @@ import TodayActions from "@/components/TodayActions";
 export default function DashboardOverview() {
   const { translate: t } = useLanguage();
   const [jobs, setJobs] = useState<any[]>([]);
+  const [feedCounts, setFeedCounts] = useState({ current: 0, ghost: 0, highMatch: 0 });
   const [health, setHealth] = useState<any>({});
   const [funnel, setFunnel] = useState<any>({});
   const [readiness, setReadiness] = useState<any>(null);
@@ -33,12 +34,14 @@ export default function DashboardOverview() {
     try {
       setLoading(true);
       const [jobsData, healthData, funnelData, readinessData] = await Promise.all([
-        fetchFromApi("/scrape/jobs").catch(() => ({ jobs: [] })),
+        // Five rows and the totals; the full feed is only loaded on the jobs page.
+        fetchFromApi("/scrape/jobs?include_history=false&limit=5").catch(() => ({ jobs: [] })),
         fetchFromApi("/scrape/health").catch(() => ({})),
         fetchFromApi("/outcome/analytics").catch(() => ({})),
         fetchFromApi("/setup/readiness").catch(() => null)
       ]);
       setJobs(jobsData.jobs || []);
+      setFeedCounts({ current: jobsData.current_feed_total ?? 0, ghost: jobsData.ghost_total ?? 0, highMatch: jobsData.high_match_total ?? 0 });
       setHealth(healthData || {});
       setFunnel(funnelData || {});
       setReadiness(readinessData);
@@ -101,9 +104,8 @@ export default function DashboardOverview() {
     } finally { setResponsesLoading(false); }
   }
 
-  const currentFeedJobs = jobs.filter((job) => ["Draft", "New", ""].includes(job.status || "Draft"));
-  const ghostCount = currentFeedJobs.filter(j => j.ghost_score >= 35).length;
-  const highMatchCount = currentFeedJobs.filter(j => j.match_score >= 70).length;
+  const ghostCount = feedCounts.ghost;
+  const highMatchCount = feedCounts.highMatch;
 
   return (
     <div className="space-y-8">
@@ -155,7 +157,7 @@ export default function DashboardOverview() {
               <Briefcase className="w-4 h-4" />
             </div>
           </div>
-          <div className="text-2xl font-bold text-white mt-3">{currentFeedJobs.length}</div>
+          <div className="text-2xl font-bold text-white mt-3">{feedCounts.current}</div>
           <div className="text-xs text-slate-400 mt-1">{t("Apify kaynakları, RemoteOK ve Arbeitnow")}</div>
           <div className="mt-3 text-xs font-medium text-slate-300 opacity-70 group-hover:opacity-100">{t("İlanları görüntüle")} <ArrowRight className="inline h-3 w-3" /></div>
         </Link>
@@ -174,7 +176,7 @@ export default function DashboardOverview() {
 
         <Link href="/jobs?scope=current&ghost=1" aria-label={t("Hayalet ilan risk listesini aç")} className="group block p-5 rounded-2xl bg-[#0e1524] border border-slate-800/80 transition hover:border-rose-500/40 hover:bg-slate-800/70 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-rose-400">
           <div className="flex items-center justify-between">
-            <span className="text-xs font-medium text-slate-400">{t("Hayalet İlan Riski (Ghost)")}</span>
+            <span className="text-xs font-medium text-slate-400">{t("Hayalet İlan Riski")}</span>
             <div className="p-2 rounded-lg bg-rose-500/10 text-rose-400">
               <ShieldAlert className="w-4 h-4" />
             </div>
@@ -239,11 +241,11 @@ export default function DashboardOverview() {
             <h2 className="text-sm font-semibold text-white">{t("Öne Çıkan Fırsatlar & Algoritmik Skorlar")}</h2>
             <p className="text-xs text-slate-400">{t("Tahmini profil uyumu, ilan riskleri ve kırmızı çizgiler")}</p>
           </div>
-          <Link href="/jobs" className="text-xs text-blue-400 hover:underline">{t("Tüm İlanları Gör")} ({currentFeedJobs.length}) →</Link>
+          <Link href="/jobs" className="text-xs text-blue-400 hover:underline">{t("Tüm İlanları Gör")} ({feedCounts.current}) →</Link>
         </div>
 
         <div className="space-y-3">
-          {currentFeedJobs.slice(0, 5).map((job) => (
+          {jobs.map((job) => (
             <div
               key={job.id}
               className="p-4 rounded-xl bg-slate-900/40 border border-slate-800/80 hover:border-slate-700 transition flex flex-col md:flex-row md:items-center justify-between gap-4"

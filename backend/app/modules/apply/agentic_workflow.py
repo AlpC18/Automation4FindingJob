@@ -26,6 +26,13 @@ COVER_LETTER_CV_CHARS = 4500
 COVER_LETTER_JOB_CHARS = 3000
 
 
+COVER_LETTER_SYSTEM_PROMPT = (
+    "You write job application cover letters in the candidate's own voice. "
+    "Use only the facts in the message, write in the language of the job description, "
+    "and reply with the letter text only."
+)
+
+
 def build_cover_letter_prompt(job_data: Dict[str, Any], candidate_profile: Dict[str, Any], relevant_projects: list) -> str:
     """Everything the drafter may use: the real CV and the full job text, and nothing invented.
 
@@ -334,16 +341,18 @@ class MultiAgentApplicationPipeline:
         user_prompt = build_cover_letter_prompt(job_data, candidate_profile, relevant_projects)
 
         llm_res = await llm_client.generate_text(
-            system_prompt=ANTI_AI_HUMANIZER_SYSTEM_PROMPT,
+            system_prompt=COVER_LETTER_SYSTEM_PROMPT,
             user_prompt=user_prompt,
             preferred_provider=preferred_provider,
             apply_humanizer=False
         )
 
-        raw_draft = llm_res.get("text") or self._generate_initial_draft(
+        # A provider failure comes back as a generic template, never as empty text,
+        # so the profile-based draft has to be chosen explicitly.
+        raw_draft = self._generate_initial_draft(
             job_title, company, cand_name, relevant_projects,
             candidate_profile, company_research
-        )
+        ) if llm_res["is_template_fallback"] else llm_res["text"]
 
         # 4. Reviewer Agent
         review = self.reviewer.review(
@@ -355,18 +364,16 @@ class MultiAgentApplicationPipeline:
 
         # 5. Apply feedback if needed
         if not review["passed"]:
-            try:
-                revision_prompt = self._build_revision_prompt(raw_draft, review)
-                revision_res = await llm_client.generate_text(
-                    system_prompt="You are an expert cover letter editor. Revise the draft based on the reviewer's feedback.",
-                    user_prompt=revision_prompt,
-                    preferred_provider=preferred_provider,
-                    apply_humanizer=False
-                )
-                if revision_res.get("text"):
-                    raw_draft = revision_res["text"]
-            except Exception:
+            revision_res = await llm_client.generate_text(
+                system_prompt="You are an expert cover letter editor. Revise the draft based on the reviewer's feedback.",
+                user_prompt=self._build_revision_prompt(raw_draft, review),
+                preferred_provider=preferred_provider,
+                apply_humanizer=False
+            )
+            if revision_res["is_template_fallback"]:
                 raw_draft = self._apply_review_feedback(raw_draft, review)
+            else:
+                raw_draft = revision_res["text"]
 
         # 6. Humanizer & QA Loop
         result = self._execute_qa_loop(
@@ -440,26 +447,26 @@ class MultiAgentApplicationPipeline:
         candidate_profile: Dict[str, Any],
         company_research: Optional[Dict[str, Any]] = None,
     ) -> str:
+        # Used when no AI provider answers. It states only what the profile and saved projects hold;
+        # the reader should get a short honest letter, not confident filler.
+        lines = [f"I am writing regarding the {job_title} role."]
+        skills = [str(skill) for skill in (candidate_profile.get("skills") or [])[:5]]
+        if skills:
+            lines.append(f"My main skills are {', '.join(skills)}.")
         top_project = relevant_projects[0] if relevant_projects else None
-        proj_mention = ""
-        if top_project:
-            proj_mention = (
-                f"In my recent work on {top_project.get('title')}, "
-                f"I implemented {', '.join(top_project.get('tech_stack', [])[:3])}, "
-                f"achieving {top_project.get('metrics', 'significant improvements')}."
-            )
-
-        company_hook = ""
-        if company_research and company_research.get("website_content"):
-            company_hook = " Your work in this space caught my attention."
+        if top_project and top_project.get("title"):
+            stack = ", ".join(top_project.get("tech_stack", [])[:3])
+            sentence = f"Recently I worked on {top_project['title']}" + (f" using {stack}" if stack else "")
+            if top_project.get("metrics"):
+                sentence += f"; the result was {top_project['metrics']}"
+            lines.append(sentence + ".")
+        body = " ".join(lines)
 
         return f"""Hi {company} team,
 
-I am writing regarding the {job_title} role.{company_hook} Having worked extensively with modern engineering systems, I noticed your focus on reliable execution and modern tech stacks.
+{body}
 
-{proj_mention} My approach focuses on pragmatic software architecture, clean automation, and shipping dependable systems without unnecessary complexity.
-
-I would welcome a conversation to discuss how my hands-on experience can support {company}'s current technical roadmap.
+I would welcome a conversation about the role.
 
 Best regards,
 {cand_name}"""
@@ -515,9 +522,10 @@ class _DrafterReviewerCompatibilityAdapter:
     """Compatibility facade for the auto-apply queue's older API."""
 
     async def run_pipeline(self, job_data: Dict[str, Any], max_revisions: int = 1) -> Dict[str, Any]:
+        from backend.app.api.profile import fetch_candidate_profile
         return await application_pipeline.run_pipeline_async(
             job_data=job_data,
-            candidate_profile={"full_name": "Candidate", "skills": []},
+            candidate_profile=fetch_candidate_profile(),
             style_profile={},
         )
 

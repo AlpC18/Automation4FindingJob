@@ -18,6 +18,7 @@ import re
 import unicodedata
 from datetime import date, datetime, timezone
 from pathlib import Path
+from backend.app.core.json_store import read_json_store
 from typing import Dict, Any, List, Optional
 from urllib.parse import urlparse
 
@@ -121,11 +122,7 @@ class SalaryLookup:
         """Load salary data from disk."""
         self._loaded_path = self.data_path
         if self.data_path.is_file():
-            try:
-                self._data = json.loads(self.data_path.read_text(encoding="utf-8"))
-            except (json.JSONDecodeError, OSError) as e:
-                agent_logger.log_event("SALARY_LOOKUP", f"Error loading salary data: {e}")
-                self._data = {"metadata": {}, "companies": []}
+            self._data = read_json_store(self.data_path, {"metadata": {}, "companies": []})
         else:
             self._data = {
                 "metadata": {

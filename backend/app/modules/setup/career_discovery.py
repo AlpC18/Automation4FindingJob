@@ -10,7 +10,7 @@ transferable skills, and motivational drivers (energizers vs drainers).
 from typing import Dict, Any, List, Optional
 import json
 import re
-from backend.app.core.llm_client import llm_client
+from backend.app.core.llm_client import LLMUnavailable, llm_client
 from backend.app.core.event_logger import agent_logger
 
 # Domain mapping for transferable technical competencies
@@ -43,6 +43,15 @@ TECH_DOMAIN_ADJACENCIES = {
     ]
 }
 
+DOMAIN_SKILL_KEYWORDS = {
+    "backend_engineering": {"python", "fastapi", "django", "go", "java", "sql", "postgresql", "kafka"},
+    "machine_learning": {"ai", "ml", "pytorch", "tensorflow", "llm", "langchain", "rag", "scikit-learn"},
+    "fullstack": {"react", "vue", "next.js", "typescript", "javascript", "tailwind"},
+    "automation_devops": {"docker", "kubernetes", "aws", "gcp", "azure", "ci/cd", "terraform"},
+}
+MAX_LATERAL_TRACKS = 3
+
+
 class CareerDiscoveryEngine:
     """Discovers high-potential career moves and hidden industry verticals."""
 
@@ -62,69 +71,49 @@ class CareerDiscoveryEngine:
         2. Lateral Pivot (High transferable skill overlap)
         3. Emerging / Wildcard (AI & High-impact tech frontier)
         """
-        skills = candidate_profile.get("skills", [])
-        skills_str = ", ".join(skills) if isinstance(skills, list) else str(skills)
-        years_exp = candidate_profile.get("years_of_experience", 3)
-        current_role = candidate_profile.get("target_role", "Software Engineer")
-        achievements = []
+        skills = candidate_profile.get("skills") or []
+        skills = [str(skill) for skill in skills] if isinstance(skills, list) else [str(skills)]
+        years_exp = candidate_profile.get("years_of_experience")
+        current_role = candidate_profile.get("target_role") or "Software Engineer"
 
-        for exp in candidate_profile.get("experience", []):
-            if isinstance(exp, dict):
-                achievements.extend(exp.get("achievements", []))
-
-        work_style = ""
-        if behavioral_profile:
-            dims = behavioral_profile.get("dimensions", {})
-            work_style = dims.get("work_style", {}).get("label", "Autonomous")
-
-        # Deterministic Base Mapping
-        detected_domains = []
-        skills_lower = [s.lower() for s in skills]
-        
-        if any(s in skills_lower for s in ["python", "fastapi", "django", "go", "java", "sql", "postgresql", "kafka"]):
-            detected_domains.append("backend_engineering")
-        if any(s in skills_lower for s in ["ai", "ml", "pytorch", "tensorflow", "llm", "langchain", "rag", "scikit-learn"]):
-            detected_domains.append("machine_learning")
-        if any(s in skills_lower for s in ["react", "vue", "next.js", "typescript", "javascript", "tailwind"]):
-            detected_domains.append("fullstack")
-        if any(s in skills_lower for s in ["docker", "kubernetes", "aws", "gcp", "azure", "ci/cd", "terraform"]):
-            detected_domains.append("automation_devops")
-
-        adjacent_roles = []
-        for domain in detected_domains:
-            for role in TECH_DOMAIN_ADJACENCIES.get(domain, []):
-                if role not in adjacent_roles and role.lower() != current_role.lower():
-                    adjacent_roles.append(role)
-
-        # Build trajectory matrix
-        core_tracks = [
-            {
-                "title": f"Senior {current_role}",
-                "track_type": "core_progression",
-                "match_reason": f"{years_exp}+ yıllık birikim üzerine doğrudan kıdem artışı ve mimari liderlik.",
-                "readiness_score": 90
-            }
-        ]
+        # Every suggestion below is tied to skills the candidate saved; nothing is assumed.
+        matched: Dict[str, List[str]] = {}
+        for domain, keywords in DOMAIN_SKILL_KEYWORDS.items():
+            found = [skill for skill in skills if skill.lower() in keywords]
+            if found:
+                matched[domain] = found
+        detected_domains = list(matched)
 
         lateral_tracks = []
-        for role in adjacent_roles[:3]:
-            lateral_tracks.append({
-                "title": role,
-                "track_type": "lateral_pivot",
-                "match_reason": f"Mevcut yetenek kümeniz ({skills_str[:50]}...) ile %80+ aktarılabilir yetenek örtüşmesi.",
-                "readiness_score": 82
-            })
+        for domain, found in matched.items():
+            for role in TECH_DOMAIN_ADJACENCIES[domain]:
+                if role.lower() == current_role.lower() or any(track["title"] == role for track in lateral_tracks):
+                    continue
+                lateral_tracks.append({
+                    "title": role,
+                    "track_type": "lateral_pivot",
+                    "match_reason": f"Kayıtlı becerilerin ({', '.join(found[:4])}) bu role aktarılabilir.",
+                    "readiness_score": 80,
+                })
+        lateral_tracks = lateral_tracks[:MAX_LATERAL_TRACKS]
 
-        wildcard_tracks = [
-            {
-                "title": "Autonomous Agent Systems Architect",
-                "track_type": "emerging_frontier",
-                "match_reason": "AI araçları, otonom crawler'lar ve çoklu model orkestrasyonu deneyiminizle doğrudan örtüşen yeni nesil pozisyon.",
-                "readiness_score": 85
-            }
-        ]
+        experience = f"{years_exp} yıllık deneyimin üzerine " if years_exp not in (None, "") else ""
+        core_tracks = [{
+            "title": f"Senior {current_role}",
+            "track_type": "core_progression",
+            "match_reason": f"{experience}aynı alanda kıdem ve sorumluluk artışı.".capitalize(),
+            "readiness_score": 90,
+        }]
 
-        agent_logger.log_event("CAREER_DISCOVERY", f"Discovered {len(adjacent_roles)} adjacent roles across {len(detected_domains)} domains.")
+        ai_skills = matched.get("machine_learning", [])
+        wildcard_tracks = [{
+            "title": "LLM Application Engineer",
+            "track_type": "emerging_frontier",
+            "match_reason": f"Yapay zekâ becerilerin ({', '.join(ai_skills[:4])}) yeni açılan bu role doğrudan uyuyor.",
+            "readiness_score": 70,
+        }] if ai_skills else []
+
+        agent_logger.log_event("CAREER_DISCOVERY", f"Discovered {len(lateral_tracks)} adjacent roles across {len(detected_domains)} domains.")
 
         return {
             "candidate_current_role": current_role,
@@ -132,18 +121,7 @@ class CareerDiscoveryEngine:
             "core_progression": core_tracks,
             "lateral_pivots": lateral_tracks,
             "emerging_frontiers": wildcard_tracks,
-            "transferable_skill_highlights": [
-                "Büyük ölçekli sistem tasarımı ve API mimarisi",
-                "Veri çekme, web otomasyonu ve anti-detection stratejileri",
-                "LLM destekli karar alma ve otonom iş akışları",
-                "Mikroservis konteynerizasyonu ve asenkron kuyruk yönetimi"
-            ],
-            "recommended_search_queries": [
-                f"{current_role} Remote Europe",
-                "AI Platform Engineer Global",
-                "Senior Backend Distributed Systems",
-                "Founding Full Stack Engineer Autonomous Systems"
-            ]
+            "recommended_search_queries": [f"{current_role} Remote", *(track["title"] for track in lateral_tracks)],
         }
 
     async def generate_ai_career_roadmaps(
@@ -168,8 +146,11 @@ Return in crisp, structured markdown."""
         res = await llm_client.generate_text(
             system_prompt="You are an elite Tech Career Strategist and Principal Engineering Manager.",
             user_prompt=prompt,
-            temperature=0.4
+            temperature=0.4,
+            apply_humanizer=False
         )
+        if res["is_template_fallback"]:
+            raise LLMUnavailable("Yapay zekâ sağlayıcısı yanıt vermedi; geçiş planı üretilemedi.")
         return {
             "pivot_role": target_pivot,
             "action_plan_markdown": res.get("text", "")

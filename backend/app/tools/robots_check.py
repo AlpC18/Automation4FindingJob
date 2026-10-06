@@ -61,6 +61,7 @@ def _groups(text: str) -> dict:
     """Parse robots.txt into {agent: [(is_allow, pattern), ...]}."""
     groups = {}
     current_agents = []
+    in_rules = False  # consecutive User-agent lines share the rules that follow them
     for line in text.splitlines():
         line = line.strip()
         if not line or line.startswith('#'):
@@ -73,10 +74,12 @@ def _groups(text: str) -> dict:
 
         if key == 'user-agent':
             agent = value.lower()
-            current_agents = [agent]
+            current_agents = [agent] if in_rules else [*current_agents, agent]
+            in_rules = False
             if agent not in groups:
                 groups[agent] = []
         elif key in ('allow', 'disallow') and current_agents:
+            in_rules = True
             is_allow = key == 'allow'
             for agent in current_agents:
                 groups.setdefault(agent, []).append((is_allow, value))
@@ -99,7 +102,8 @@ def _match(pattern: str, path: str) -> int:
 def allowed(text: str, agent: str, path: str) -> bool:
     """Check if a path is allowed for the given agent based on robots.txt content."""
     g = _groups(text)
-    rules = g.get(agent.lower()) or g.get('*') or []
+    # robots.txt names the product token ("CareerAgent-Bot"), not the versioned header value.
+    rules = g.get(agent.lower().split('/')[0]) or g.get('*') or []
     best_len, best_allow = -1, True
     for is_allow, pat in rules:
         n = _match(pat, path)

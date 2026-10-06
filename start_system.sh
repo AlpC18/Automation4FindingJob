@@ -19,7 +19,8 @@ if [ -f "$DIR/.env" ] && [ "${CAREER_ENV_LOADED:-}" != "1" ]; then
     exec "$DIR/backend/.venv/bin/dotenv" -f "$DIR/.env" run -- /usr/bin/env CAREER_ENV_LOADED=1 "$0" "$@"
 fi
 
-BACKEND_HOST="${API_HOST:-0.0.0.0}"
+# Local only by default: single-user mode has no login, so the API must not be reachable from the network.
+BACKEND_HOST="${API_HOST:-127.0.0.1}"
 BACKEND_PORT="${BACKEND_PORT:-${API_PORT:-8000}}"
 FRONTEND_HOST="${FRONTEND_HOST:-127.0.0.1}"
 FRONTEND_PORT="${FRONTEND_PORT:-3000}"

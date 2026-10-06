@@ -3,7 +3,7 @@
 import uuid
 from typing import Any, Optional
 
-from backend.app.core.database import get_db_connection
+from backend.app.core.database import get_db_connection, in_chunks
 
 
 VALID_FLAGS = {"favorite", "hidden"}
@@ -29,13 +29,16 @@ def get_job_flags(job_id: str) -> dict[str, Any]:
 def get_job_flags_for_ids(job_ids: list[str]) -> dict[str, dict[str, Any]]:
     if not job_ids:
         return {}
-    placeholders = ",".join("?" for _ in job_ids)
     conn = get_db_connection()
     try:
-        rows = conn.cursor().execute(
-            f"SELECT job_id, favorite, hidden, note, updated_at FROM job_flags WHERE job_id IN ({placeholders})",
-            job_ids,
-        ).fetchall()
+        cursor = conn.cursor()
+        rows = []
+        for chunk in in_chunks(job_ids):
+            placeholders = ",".join("?" for _ in chunk)
+            rows.extend(cursor.execute(
+                f"SELECT job_id, favorite, hidden, note, updated_at FROM job_flags WHERE job_id IN ({placeholders})",
+                chunk,
+            ).fetchall())
         result = {}
         for row in rows:
             item = dict(row)

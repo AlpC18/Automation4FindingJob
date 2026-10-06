@@ -35,7 +35,7 @@ class Settings(BaseSettings):
     ENVIRONMENT: str = os.getenv("ENVIRONMENT", "development")
     LOG_LEVEL: str = os.getenv("LOG_LEVEL", "INFO")
     API_V1_PREFIX: str = "/api"
-    API_HOST: str = os.getenv("API_HOST", "0.0.0.0")
+    API_HOST: str = os.getenv("API_HOST", "127.0.0.1")
     API_PORT: int = _env_int("API_PORT", 8000)
     BACKEND_PUBLIC_URL: str = os.getenv("BACKEND_PUBLIC_URL", f"http://localhost:{_env_int('API_PORT', 8000)}")
     FRONTEND_PUBLIC_URL: str = os.getenv("FRONTEND_PUBLIC_URL", "http://localhost:3000")
@@ -147,6 +147,10 @@ class Settings(BaseSettings):
     DAILY_LIMIT_UPWORK: int = 20
     DAILY_LIMIT_KOSOVAJOB: int = 35
     DAILY_LIMIT_GLOBAL_REMOTE: int = 30
+    # Cold emails to people who did not ask for them; replies to recruiters are not counted.
+    DAILY_LIMIT_OUTREACH: int = int(os.getenv("DAILY_LIMIT_OUTREACH", "10"))
+    # Driving LinkedIn with the saved login breaks its terms and can get the account restricted, so it is opt-in.
+    LINKEDIN_AUTOMATION_ENABLED: bool = _env_bool("LINKEDIN_AUTOMATION_ENABLED", False)
     
     # Telegram Bot & Mobile Dispatch
     TELEGRAM_BOT_TOKEN: str = os.getenv("TELEGRAM_BOT_TOKEN", "")

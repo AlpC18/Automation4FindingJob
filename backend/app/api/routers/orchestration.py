@@ -1,4 +1,4 @@
-"""Real-time orchestration, follow-up, outreach, and LLM routing endpoints."""
+"""Real-time orchestration, follow-up and outreach endpoints."""
 
 from typing import Any, Dict, List, Optional
 
@@ -6,7 +6,6 @@ from fastapi import APIRouter, Query, WebSocket, WebSocketDisconnect
 from pydantic import BaseModel
 
 from backend.app.api.profile import fetch_candidate_profile
-from backend.app.core.llm_router import llm_cost_router
 from backend.app.core.database import get_db_connection
 from backend.app.core.ws_manager import ws_manager
 from backend.app.modules.apply.cold_outreach import cold_outreach_engine
@@ -168,27 +167,3 @@ class OutreachStatusRequest(BaseModel):
 @router.post("/api/apply/outreach/status")
 def update_outreach_status(req: OutreachStatusRequest):
     return {"success": cold_outreach_engine.mark_outreach_status(req.outreach_id, req.status)}
-
-
-class RouteGenerateRequest(BaseModel):
-    task_name: str
-    system_prompt: str
-    user_prompt: str
-    temperature: Optional[float] = 0.5
-
-
-@router.post("/llm/route_generate")
-@router.post("/api/llm/route_generate")
-async def route_and_generate_llm(req: RouteGenerateRequest):
-    return await llm_cost_router.route_and_generate(
-        task_name=req.task_name,
-        system_prompt=req.system_prompt,
-        user_prompt=req.user_prompt,
-        temperature=req.temperature or 0.5,
-    )
-
-
-@router.get("/llm/cost_metrics")
-@router.get("/api/llm/cost_metrics")
-def get_llm_cost_metrics():
-    return llm_cost_router.get_cost_metrics()

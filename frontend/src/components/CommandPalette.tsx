@@ -18,7 +18,6 @@ import {
   Zap,
   Mail,
   Award,
-  Cpu,
 } from "lucide-react";
 import { useLanguage } from "@/lib/i18n";
 
@@ -46,7 +45,6 @@ export default function CommandPalette() {
     { id: "fol", name: "Akıllı Takip & Mülakat Takvimi", category: "Navigasyon", href: "/follow-up", icon: Calendar },
     { id: "outreach", name: "Yöneticiye Doğrudan Ulaşma (Cold Outreach)", category: "Navigasyon", href: "/cold-outreach", icon: Mail },
     { id: "negotiator", name: "Maaş & Teklif Pazarlık Koçu", category: "Navigasyon", href: "/offer-negotiator", icon: Award },
-    { id: "router", name: "Model yönlendirici", category: "Navigasyon", href: "/llm-router", icon: Cpu },
     { id: "onb", name: "Hızlı kurulum", category: "Navigasyon", href: "/onboarding", icon: Zap },
     { id: "star", name: "STAR Mülakat Hazırlık Koçu", category: "Navigasyon", href: "/star-prep", icon: Target },
     { id: "sal", name: "Maaş İstihbarat Arama Motoru", category: "Navigasyon", href: "/salary-intel", icon: DollarSign },

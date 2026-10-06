@@ -114,14 +114,15 @@ export default function InboxPage() {
       });
       setOauthFeedback(`${provider.toUpperCase()} hesabı bağlantısı kesildi.`);
       await loadData();
-    } catch (e) {
-      // ignore
+    } catch {
+      setOauthFeedback(t("{provider} bağlantısı kesilemedi.", { provider: provider.toUpperCase() }));
     }
   }
 
   useEffect(() => {
     loadData();
     const refreshJobs = window.setInterval(async () => {
+      if (document.hidden) return;
       try {
         const response = await fetchFromApi("/tasks/jobs?limit=30");
         setBackgroundJobs(response.jobs || []);

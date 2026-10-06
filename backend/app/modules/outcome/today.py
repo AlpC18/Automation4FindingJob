@@ -166,7 +166,7 @@ def get_today_actions() -> Dict[str, Any]:
         board=kanban_manager.get_kanban_board(),
         auto_queue=auto_apply_pipeline.list_queue(),
         follow_ups=get_pending_follow_ups(),
-        inbox_messages=inbox_agent.get_all_messages(),
+        inbox_messages=inbox_agent.get_all_messages(status="UNREAD"),  # the builder only acts on unread mail
         new_match_count=_count_new_matches(),
         closing_soon=_closing_soon_jobs(),
     )

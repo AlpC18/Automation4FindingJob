@@ -3,7 +3,7 @@
 import { notify } from "@/lib/notify";
 import dynamic from "next/dynamic";
 import PageTabs from "@/components/PageTabs";
-import { useEffect, useRef, useState } from "react";
+import { useDeferredValue, useEffect, useMemo, useRef, useState } from "react";
 import Link from "next/link";
 import {
   Search,
@@ -346,10 +346,12 @@ function JobsPage() {
     }
   }
 
-  const filteredJobs = jobs.filter((j) => {
+  // Typing stays responsive: the list is refiltered after the keystroke, and only when a filter changed.
+  const deferredText = useDeferredValue(textFilter);
+  const filteredJobs = useMemo(() => jobs.filter((j) => {
     if (currentOnly && !["Draft", "New", ""].includes(j.status || "Draft")) return false;
     if (ghostOnly && (j.ghost_score || 0) < 35) return false;
-    const text = textFilter.trim().toLowerCase();
+    const text = deferredText.trim().toLowerCase();
     if (text && !`${j.title} ${j.company} ${j.description}`.toLowerCase().includes(text)) return false;
     if (internshipOnly && !isInternshipJob(j)) return false;
     if (selectedPlatform !== "all" && String(j.platform || "").toLowerCase() !== selectedPlatform.toLowerCase()) return false;
@@ -362,7 +364,8 @@ function JobsPage() {
     ? String(b.created_at || "").localeCompare(String(a.created_at || ""))
     : sortOrder === "company"
       ? String(a.company || "").localeCompare(String(b.company || ""))
-      : (b.match_score || 0) - (a.match_score || 0));
+      : (b.match_score || 0) - (a.match_score || 0)),
+  [jobs, currentOnly, ghostOnly, deferredText, internshipOnly, selectedPlatform, selectedTier, locationFilter, remoteFilter, minimumMatch, sortOrder]);
 
   function toggleJobSelection(id: string) {
     setSelectedJobIds((current) => current.includes(id) ? current.filter((item) => item !== id) : [...current, id]);

@@ -1,4 +1,5 @@
 "use client";
+import { notify } from "@/lib/notify";
 import { useLanguage } from "@/lib/i18n";
 import { useEffect, useState } from "react";
 import { GitCommit, Clock } from "lucide-react";
@@ -15,7 +16,7 @@ export default function TimelinePage() {
         const res = await fetchFromApi("/scrape/jobs");
         setJobs(res.jobs || []);
       })
-      .catch(() => {})
+      .catch(() => notify(t("Veriler yüklenemedi. Sayfayı yenileyip tekrar dene.")))
       .finally(() => setLoading(false));
   }, []);
 

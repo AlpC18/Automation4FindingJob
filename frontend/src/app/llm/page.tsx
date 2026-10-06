@@ -1,6 +1,4 @@
 "use client";
-import dynamic from "next/dynamic";
-import PageTabs from "@/components/PageTabs";
 import { useLanguage } from "@/lib/i18n";
 
 import { useEffect, useState } from "react";
@@ -15,7 +13,7 @@ import {
 } from "lucide-react";
 import { fetchFromApi } from "@/lib/api";
 
-function LLMHubPage() {
+export default function LLMHubPage() {
   const { translate: t } = useLanguage();
   const [providersData, setProvidersData] = useState<any>(null);
   const [loading, setLoading] = useState(true);
@@ -377,6 +375,11 @@ function LLMHubPage() {
         {/* Playground Result Display */}
         {generatedResult && (
           <div className="mt-4 p-5 rounded-xl bg-slate-950 border border-slate-800 space-y-4">
+            {generatedResult.is_template_fallback && (
+              <p role="alert" className="rounded-lg border border-amber-500/30 bg-amber-500/10 p-3 text-xs text-amber-300">
+                {t("Yapay zekâ sağlayıcısı yanıt vermedi. Aşağıdaki metin hazır bir şablondur, senin için üretilmedi.")}
+              </p>
+            )}
             {/* Texture Metrics Row */}
             <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
               <div className="p-3 rounded-lg bg-slate-900 border border-slate-800 text-center">
@@ -399,8 +402,12 @@ function LLMHubPage() {
               </div>
               <div className="p-3 rounded-lg bg-slate-900 border border-slate-800 text-center">
                 <div className="text-xs text-slate-400">{t("Doğrulama Durumu")}</div>
-                <div className="text-xs font-bold text-emerald-400 mt-0.5 flex items-center justify-center gap-1">
-                  <CheckCircle2 className="w-3.5 h-3.5" /> {t("İnsan Seviyesi")}</div>
+                {generatedResult.is_human_verified && !generatedResult.is_template_fallback ? (
+                  <div className="text-xs font-bold text-emerald-400 mt-0.5 flex items-center justify-center gap-1">
+                    <CheckCircle2 className="w-3.5 h-3.5" /> {t("İnsan Seviyesi")}</div>
+                ) : (
+                  <div className="text-xs font-bold text-amber-300 mt-0.5">{t("Gözden geçir")}</div>
+                )}
               </div>
             </div>
 
@@ -425,17 +432,4 @@ function LLMHubPage() {
       </div>
     </div>
   );
-}
-
-// Loaded only when their tab is opened, so this page stays as light as before.
-const LLMRouterPage = dynamic(() => import("../llm-router/page"));
-
-// Related screens live here as tabs so the menu stays short; each still has its own route.
-const TABS = [
-    { label: "Yapay zekâ / API anahtarları", Component: LLMHubPage },
-    { label: "Model yönlendirici", Component: LLMRouterPage },
-];
-
-export default function LLMHubPageWithTabs() {
-  return <PageTabs tabs={TABS} />;
 }

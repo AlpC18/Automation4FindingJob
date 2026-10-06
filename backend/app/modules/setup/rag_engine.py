@@ -8,6 +8,7 @@ import json
 import math
 import re
 from pathlib import Path
+from backend.app.core.json_store import read_json_store
 from typing import List, Dict, Any, Optional
 from backend.app.core.config import settings
 from backend.app.core.tenant import get_tenant_id
@@ -43,16 +44,9 @@ class RAGVectorMemory:
         if settings.MULTI_TENANT_ENABLED:
             self._documents = []
             return
-        if self.storage_path.exists():
-            try:
-                with open(self.storage_path, "r", encoding="utf-8") as f:
-                    self._documents = json.load(f)
-            except Exception:
-                self._documents = []
-        else:
-            # A new installation starts empty. Projects must come from the
-            # candidate's own portfolio or an explicitly imported repository.
-            self._documents = []
+        # A new installation starts empty. Projects must come from the
+        # candidate's own portfolio or an explicitly imported repository.
+        self._documents = read_json_store(Path(self.storage_path), [])
 
     def _save(self):
         tenant_id = get_tenant_id()

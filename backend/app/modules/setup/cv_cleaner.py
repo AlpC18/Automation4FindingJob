@@ -51,7 +51,7 @@ def convert_to_ats_standard(cv_data: Dict[str, Any]) -> str:
     lines = []
     
     # Header
-    name = cv_data.get("full_name", "CANDIDATE").upper()
+    name = (cv_data.get("full_name") or "").upper()
     email = cv_data.get("email", "")
     phone = cv_data.get("phone", "")
     location = cv_data.get("location", "")
@@ -87,10 +87,9 @@ def convert_to_ats_standard(cv_data: Dict[str, Any]) -> str:
         lines.append("PROFESSIONAL EXPERIENCE")
         lines.append("-" * 30)
         for exp in experiences:
-            title = exp.get("title", "Software Engineer")
-            company = exp.get("company", "Company")
-            period = exp.get("period", "2022 - Present")
-            lines.append(f"{title.upper()} - {company.upper()}   [{period}]")
+            # Only what the profile holds: a made-up title or date on a CV is a false statement.
+            heading = " - ".join(part.upper() for part in (exp.get("title"), exp.get("company")) if part)
+            lines.append(f"{heading}   [{exp['period']}]" if exp.get("period") else heading)
             for bullet in exp.get("bullets", []):
                 lines.append(f"  - {bullet}")
             lines.append("")
@@ -101,10 +100,8 @@ def convert_to_ats_standard(cv_data: Dict[str, Any]) -> str:
         lines.append("EDUCATION & CERTIFICATIONS")
         lines.append("-" * 30)
         for edu in education:
-            degree = edu.get("degree", "Bachelor's Degree")
-            school = edu.get("school", "University")
-            year = edu.get("year", "2023")
-            lines.append(f"{degree} - {school} ({year})")
+            entry = " - ".join(part for part in (edu.get("degree"), edu.get("school")) if part)
+            lines.append(f"{entry} ({edu['year']})" if edu.get("year") else entry)
         lines.append("")
         
     return "\n".join(lines)

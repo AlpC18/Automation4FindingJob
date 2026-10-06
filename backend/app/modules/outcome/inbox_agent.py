@@ -184,10 +184,14 @@ class InboxAutomationAgent:
             "matched_job_id": matched_job_id
         }
 
-    def get_all_messages(self) -> List[Dict[str, Any]]:
+    def get_all_messages(self, status: Optional[str] = None) -> List[Dict[str, Any]]:
+        """Newest first; `status` narrows the read for callers that only act on one kind."""
         conn = get_db_connection()
         cursor = conn.cursor()
-        cursor.execute("SELECT * FROM inbox_messages ORDER BY id DESC")
+        if status:
+            cursor.execute("SELECT * FROM inbox_messages WHERE status = ? ORDER BY id DESC", (status,))
+        else:
+            cursor.execute("SELECT * FROM inbox_messages ORDER BY id DESC")
         rows = cursor.fetchall()
         conn.close()
         return [dict(r) for r in rows]

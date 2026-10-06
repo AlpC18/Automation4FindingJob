@@ -14,6 +14,8 @@ Requires: NOTION_API_KEY and NOTION_DATABASE_ID in environment.
 import logging
 import json
 import os
+
+import httpx
 from datetime import datetime
 from typing import Dict, Any, List, Optional
 
@@ -65,38 +67,18 @@ class NotionSync:
         properties = self._build_properties(job_data)
 
         try:
-            import subprocess
-            if notion_page_id:
-                # Update existing page
-                payload = json.dumps({"properties": properties})
-                result = subprocess.run(
-                    ["curl", "-s", "-X", "PATCH",
-                     f"{NOTION_API_URL}/pages/{notion_page_id}",
-                     "-H", f"Authorization: Bearer {self.api_key}",
-                     "-H", "Content-Type: application/json",
-                     "-H", "Notion-Version: 2022-06-28",
-                     "-d", payload],
-                    capture_output=True, text=True, timeout=15
-                )
-                response = json.loads(result.stdout)
-                action = "updated"
-            else:
-                # Create new page
-                payload = json.dumps({
-                    "parent": {"database_id": self.database_id},
-                    "properties": properties,
-                })
-                result = subprocess.run(
-                    ["curl", "-s", "-X", "POST",
-                     f"{NOTION_API_URL}/pages",
-                     "-H", f"Authorization: Bearer {self.api_key}",
-                     "-H", "Content-Type: application/json",
-                     "-H", "Notion-Version: 2022-06-28",
-                     "-d", payload],
-                    capture_output=True, text=True, timeout=15
-                )
-                response = json.loads(result.stdout)
-                action = "created"
+            # Sent in a header by httpx: on a curl command line the key was readable by other local processes.
+            with httpx.Client(timeout=15) as client:
+                if notion_page_id:
+                    reply = client.patch(f"{NOTION_API_URL}/pages/{notion_page_id}", headers=self._headers(), json={"properties": properties})
+                    action = "updated"
+                else:
+                    reply = client.post(
+                        f"{NOTION_API_URL}/pages", headers=self._headers(),
+                        json={"parent": {"database_id": self.database_id}, "properties": properties},
+                    )
+                    action = "created"
+            response = reply.json()
 
             if "id" in response:
                 agent_logger.log_event(

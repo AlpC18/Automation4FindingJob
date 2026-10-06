@@ -17,19 +17,7 @@
     "http://127.0.0.1:18000/*",
     "http://localhost:8000/*",
     "http://127.0.0.1:8000/*",
-    "http://localhost:13000/*",
-    "http://127.0.0.1:13000/*",
-    "https://*.linkedin.com/*",
-    "https://*.upwork.com/*",
-    "https://*.kosovajob.com/*",
-    "https://*.indeed.com/*",
-    "https://*.fiverr.com/*",
-    "https://*.freelancer.com/*",
-    "https://*.toptal.com/*",
-    "https://*.gjirafa.com/*",
-    "https://*.kariyer.net/*",
-    "https://*.glassdoor.com/*",
-    "https://*.wellfound.com/*"
+    "https://*.linkedin.com/*"
   ],
   "action": {
     "default_popup": "popup.html",

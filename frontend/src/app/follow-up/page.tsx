@@ -23,7 +23,7 @@ export default function FollowUpPage() {
   useEffect(() => {
     fetchFromApi("/outcome/follow_up/pending")
       .then((res) => setPendingList(res.pending_follow_ups || []))
-      .catch(() => {})
+      .catch(() => notify(t("Veriler yüklenemedi. Sayfayı yenileyip tekrar dene.")))
       .finally(() => setLoading(false));
   }, []);
 

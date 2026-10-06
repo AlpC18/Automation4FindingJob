@@ -144,7 +144,8 @@ class ATSPdfGenerator:
         # 3. Core Technical Skills
         story.append(Paragraph("CORE SKILLS & TECHNOLOGIES", self.styles['SectionHeading']))
         skills = profile.get("skills", [])
-        skill_text = " • ".join(clean_xml(s) for s in skills)
+        # Plain separators: the bullet glyph comes out of the PDF text layer as a control character.
+        skill_text = ", ".join(clean_xml(s) for s in skills)
         story.append(Paragraph(skill_text, self.styles['BodyClean']))
         story.append(Spacer(1, 6))
 
@@ -170,7 +171,7 @@ class ATSPdfGenerator:
             story.append(t)
 
             for bullet in exp.get("bullets", []):
-                story.append(Paragraph(f"• {clean_xml(bullet)}", self.styles['BulletClean']))
+                story.append(Paragraph(f"- {clean_xml(bullet)}", self.styles['BulletClean']))
             story.append(Spacer(1, 5))
 
         # 5. Key Engineering Projects / RAG Highlights

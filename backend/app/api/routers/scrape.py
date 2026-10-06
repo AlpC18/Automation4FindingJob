@@ -164,7 +164,10 @@ def list_notifications():
 def mark_notification_read(notification_id: str):
     conn = get_db_connection()
     try:
-        conn.cursor().execute("UPDATE user_notifications SET read_at = CURRENT_TIMESTAMP WHERE id = ?", (notification_id,))
+        cursor = conn.cursor()
+        cursor.execute("UPDATE user_notifications SET read_at = CURRENT_TIMESTAMP WHERE id = ?", (notification_id,))
+        if cursor.rowcount == 0:
+            raise HTTPException(status_code=404, detail="Notification not found.")
         conn.commit()
         return {"read": True}
     finally:
@@ -286,6 +289,11 @@ def _serialize_job(row) -> dict:
     return job
 
 
+# The dashboard cards count jobs at these thresholds.
+GHOST_RISK_SCORE = 35
+HIGH_MATCH_SCORE = 70
+
+
 @router.get("/scrape/jobs")
 def get_all_jobs(
     q: Optional[str] = Query(default=None, max_length=200),
@@ -299,7 +307,9 @@ def get_all_jobs(
     include_hidden: bool = False,
     flag: Optional[Literal["favorite", "hidden"]] = None,
     sort: str = Query(default="match", pattern="^(match|recent|company)$"),
+    limit: Optional[int] = Query(default=None, ge=1, le=500),
 ):
+    """The whole matching feed by default; `limit` returns only the first rows, with counts for all of them."""
     conn = get_db_connection()
     cursor = conn.cursor()
     clauses = ["1 = 1"]
@@ -338,8 +348,22 @@ def get_all_jobs(
         "recent": "created_at DESC",
         "company": "lower(company) ASC, lower(title) ASC",
     }[sort]
+    where = " AND ".join(clauses)
+    current = "COALESCE(status, 'Draft') IN ('Draft', 'New', '')"
     try:
-        cursor.execute(f"SELECT * FROM scraped_jobs WHERE {' AND '.join(clauses)} ORDER BY {ordering}", params)
+        cursor.execute(
+            f"""SELECT COUNT(*) AS total,
+                       COALESCE(SUM(CASE WHEN {current} THEN 1 ELSE 0 END), 0) AS current_feed_total,
+                       COALESCE(SUM(CASE WHEN {current} AND COALESCE(ghost_score, 0) >= ? THEN 1 ELSE 0 END), 0) AS ghost_total,
+                       COALESCE(SUM(CASE WHEN {current} AND COALESCE(match_score, 0) >= ? THEN 1 ELSE 0 END), 0) AS high_match_total
+                FROM scraped_jobs WHERE {where}""",
+            [GHOST_RISK_SCORE, HIGH_MATCH_SCORE, *params],
+        )
+        counts = dict(cursor.fetchone())
+        cursor.execute(
+            f"SELECT * FROM scraped_jobs WHERE {where} ORDER BY {ordering}" + (" LIMIT ?" if limit else ""),
+            [*params, limit] if limit else params,
+        )
         rows = cursor.fetchall()
     finally:
         conn.close()
@@ -352,8 +376,7 @@ def get_all_jobs(
         job["hidden"] = bool(item.get("hidden", False))
         job["flag_note"] = item.get("note", "")
         job["source_link_check"] = link_checks.get(job["id"])
-    current_feed_jobs = [job for job in jobs if (job.get("status") or "Draft") in {"Draft", "New", ""}]
-    return {"jobs": jobs, "total": len(jobs), "current_feed_total": len(current_feed_jobs)}
+    return {"jobs": jobs, **counts}
 
 
 class JobFlagRequest(BaseModel):

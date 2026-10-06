@@ -116,7 +116,7 @@ async def test_stealth_browser_worker():
     # never report a successful application without confirmation.
     assert res["applied"] is False
     assert res["submission_confirmed"] is False
-    assert res["status"] in ("INSPECTED", "SIMULATED", "SUBMIT_ATTEMPTED")
+    assert res["status"] == "DISABLED"  # LinkedIn automation is opt-in
 
 def test_agent_event_logger():
     agent_logger.log_event("TEST", "Verification event logged.")

@@ -12,6 +12,7 @@ Reports are fully offline-viewable single HTML files with embedded CSS.
 """
 
 import json
+from html import escape
 from datetime import datetime
 from pathlib import Path
 from typing import Dict, Any, List, Optional
@@ -19,6 +20,17 @@ from typing import Dict, Any, List, Optional
 from backend.app.core.config import settings
 from backend.app.core.event_logger import agent_logger
 from backend.app.core.tenant import tenant_data_path
+
+def _text(value: Any) -> str:
+    """Scraped and typed-in text is shown as text, never as markup."""
+    return escape(str(value)) if value not in (None, "") else "—"
+
+
+def _link(url: Any) -> str:
+    """Only web links are clickable; a `javascript:` URL from a listing must not be."""
+    url = str(url or "")
+    return escape(url, quote=True) if url.lower().startswith(("http://", "https://")) else "#"
+
 
 def _reports_dir():
     path = tenant_data_path("reports")
@@ -161,14 +173,13 @@ a:hover {{ text-decoration: underline; }}
             score = j.get("match_score", j.get("score", 0))
             badge_class = "badge-high" if score >= 75 else "badge-mid" if score >= 50 else "badge-low"
             status = j.get("status", "new")
-            url = j.get("url", "#")
             rows += f"""<tr>
-<td><a href="{url}" target="_blank">{j.get("title", "—")}</a></td>
-<td>{j.get("company", "—")}</td>
-<td>{j.get("location", "—")}</td>
+<td><a href="{_link(j.get("url"))}" target="_blank" rel="noopener noreferrer">{_text(j.get("title"))}</a></td>
+<td>{_text(j.get("company"))}</td>
+<td>{_text(j.get("location"))}</td>
 <td><span class="badge {badge_class}">{score:.0f}</span></td>
-<td><span class="badge badge-new">{status}</span></td>
-<td>{j.get("deadline", "—")}</td>
+<td><span class="badge badge-new">{_text(status)}</span></td>
+<td>{_text(j.get("deadline"))}</td>
 </tr>"""
 
         return f"""<div class="card"><h2>İş İlanları ({len(jobs)})</h2>
@@ -186,8 +197,8 @@ a:hover {{ text-decoration: underline; }}
     def _applications_table_section(self, apps: List[Dict]) -> str:
         rows = ""
         for a in apps[:50]:
-            rows += f"""<tr><td>{a.get("company", "—")}</td><td>{a.get("role", a.get("title", "—"))}</td>
-<td>{a.get("status", "—")}</td><td>{a.get("date", "—")}</td><td>{a.get("notes", "—")}</td></tr>"""
+            rows += f"""<tr><td>{_text(a.get("company"))}</td><td>{_text(a.get("role", a.get("title")))}</td>
+<td>{_text(a.get("status"))}</td><td>{_text(a.get("date"))}</td><td>{_text(a.get("notes"))}</td></tr>"""
         return f"""<div class="card"><h2>Başvurular</h2>
 <table><thead><tr><th>Şirket</th><th>Pozisyon</th><th>Durum</th><th>Tarih</th><th>Not</th></tr></thead>
 <tbody>{rows}</tbody></table></div>"""

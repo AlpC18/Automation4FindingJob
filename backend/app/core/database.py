@@ -26,7 +26,8 @@ class _PostgresCursor:
         normalized = query
         if normalized.lstrip().upper().startswith("PRAGMA"):
             return self
-        normalized = normalized.replace("?", "%s")
+        # A literal % (as in LIKE '%' || ?) must be doubled, or the driver reads it as a placeholder.
+        normalized = normalized.replace("%", "%%").replace("?", "%s")
         if "AUTOINCREMENT" in normalized.upper():
             normalized = re.sub(
                 r"INTEGER\s+PRIMARY\s+KEY\s+AUTOINCREMENT",
@@ -38,7 +39,7 @@ class _PostgresCursor:
         return self
 
     def executemany(self, query: str, params):
-        self._cursor.executemany(query.replace("?", "%s"), params)
+        self._cursor.executemany(query.replace("%", "%%").replace("?", "%s"), params)
         return self
 
     def fetchone(self):
@@ -50,6 +51,10 @@ class _PostgresCursor:
     @property
     def lastrowid(self):
         return getattr(self._cursor, "lastrowid", None)
+
+    @property
+    def rowcount(self):
+        return self._cursor.rowcount
 
 
 class _PostgresConnection:
@@ -91,6 +96,15 @@ def _connect_database(tenant_id: Optional[str] = None):
     conn.execute("PRAGMA busy_timeout = 30000;")
     conn.row_factory = sqlite3.Row
     return conn
+
+
+SQL_IN_CHUNK = 500
+
+
+def in_chunks(items: List[Any], size: int = SQL_IN_CHUNK):
+    """Slices for `WHERE id IN (...)`: one statement only takes a limited number of bound values."""
+    for start in range(0, len(items), size):
+        yield items[start:start + size]
 
 
 def get_db_connection():

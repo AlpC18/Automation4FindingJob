@@ -8,7 +8,8 @@ Empowers candidates during the highest-stakes phase of the job search:
 """
 
 from typing import Dict, Any, List, Optional
-from backend.app.core.llm_client import llm_client
+from backend.app.core.llm_client import LLMUnavailable, llm_client
+from backend.app.prompts.humanizer_prompts import WRITING_RULES
 from backend.app.core.event_logger import agent_logger
 from backend.app.modules.rank.salary_lookup import salary_lookup
 
@@ -81,7 +82,7 @@ class OfferNegotiatorEngine:
         """Drafts a gracious, high-leverage counter-offer letter."""
         leverage_prompts = {
             "competing_offer": f"Candidate holds a parallel competing offer offering around {currency} {target_base:,.0f}.",
-            "skill_alignment": "Candidate brings rare, direct-fit experience in autonomous agent systems and distributed architecture.",
+            "skill_alignment": "Candidate's skills are a direct fit for the role.",
             "market_data": f"Industry benchmark data for {title} in this market reflects a median compensation of {currency} {target_base:,.0f}."
         }
 
@@ -105,27 +106,14 @@ Write a professional, collaborative counter-offer letter in JSON with keys:
 3. "alternative_negotiation_points": 3 non-salary items to ask for if salary is strictly non-negotiable (e.g., signing bonus, earlier 6-month performance review, remote stipend, additional PTO).
 """
         res = await llm_client.generate_json(
-            system_prompt="You are a Master Executive Compensation Negotiator who has helped hundreds of tech leaders negotiate 15-30% salary increases.",
+            system_prompt="You write salary counter-offer emails on behalf of a job candidate." + WRITING_RULES,
             user_prompt=prompt
         )
 
+        if not res:
+            raise LLMUnavailable("Yapay zekâ sağlayıcısı yanıt vermedi; karşı teklif mektubu üretilemedi.")
         agent_logger.log_event("OFFER_NEGOTIATOR", f"Generated counter offer letter for {company}")
-        return res if res else {
-            "email_subject": f"Offer Discussion – {title}",
-            "counter_letter_body": (
-                f"Thank you so much for extending the offer for the {title} position. "
-                f"I am genuinely thrilled about the opportunity to join {company}.\n\n"
-                f"Based on the scope of the role and my hands-on background in scalable AI systems, "
-                f"I would like to explore if we can bridge the base salary to {currency} {target_base:,.0f}. "
-                f"With this adjustment, I am ready to sign and fully commit to the team immediately.\n\n"
-                f"Looking forward to finalizing our partnership!"
-            ),
-            "alternative_negotiation_points": [
-                f"{currency} 10,000 tek seferlik İmza Bonusu (Signing Bonus)",
-                "6. ayda erken maaş ve performans değerlendirmesi taahhüdü",
-                "Yıllık 3,000 USD teknoloji & konferans gelişim bütçesi"
-            ]
-        }
+        return res
 
     def simulate_objection(self, objection_type: str) -> Dict[str, Any]:
         """Provides instant verbal and written responses to common recruiter pushback."""

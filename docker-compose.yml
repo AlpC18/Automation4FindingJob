@@ -95,7 +95,7 @@ services:
     build:
       <<: *backend-build
     ports:
-      - "${BACKEND_PORT:-8000}:${API_PORT:-8000}"
+      - "${PUBLISH_ADDRESS:-127.0.0.1}:${BACKEND_PORT:-8000}:${API_PORT:-8000}"
     environment:
       <<: *backend-environment
       REDIS_URL: ${COMPOSE_REDIS_URL:-redis://:${REDIS_PASSWORD:?Set REDIS_PASSWORD in .env}@redis:6379/0}
@@ -127,7 +127,7 @@ services:
     environment:
       REDIS_PASSWORD: ${REDIS_PASSWORD:?Set REDIS_PASSWORD in .env}
     ports:
-      - "${REDIS_PORT:-6379}:6379"
+      - "127.0.0.1:${REDIS_PORT:-6379}:6379"
     volumes:
       - redis-data:/data
     networks:
@@ -156,7 +156,7 @@ services:
       POSTGRES_USER: ${POSTGRES_USER:-career}
       POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?Set POSTGRES_PASSWORD in .env}
     ports:
-      - "${POSTGRES_PORT:-5432}:5432"
+      - "127.0.0.1:${POSTGRES_PORT:-5432}:5432"
     volumes:
       - postgres-data:/var/lib/postgresql/data
     networks:
@@ -240,7 +240,7 @@ services:
         NODE_VERSION: ${NODE_VERSION:-20}
         NEXT_PUBLIC_API_URL: ${NEXT_PUBLIC_API_URL:-http://localhost:8000/api}
     ports:
-      - "${FRONTEND_PORT:-3000}:3000"
+      - "${PUBLISH_ADDRESS:-127.0.0.1}:${FRONTEND_PORT:-3000}:3000"
     environment:
       # Runtime values are written into public/runtime-config.js at startup.
       RUNTIME_API_URL: ${PUBLIC_API_URL:-http://localhost:8000/api}

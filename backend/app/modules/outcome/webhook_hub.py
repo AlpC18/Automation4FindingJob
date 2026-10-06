@@ -12,6 +12,11 @@ from typing import Dict, Any, List, Optional
 from backend.app.core.event_logger import agent_logger
 
 
+# The address is typed in by the user; without this check the server could be pointed at
+# local files or services on the private network.
+from backend.app.modules.scrape.job_link_health import _public_http_url
+
+
 class WebhookHub:
     """Dispatches event cards to Slack and Discord endpoints."""
 
@@ -30,6 +35,9 @@ class WebhookHub:
         """Sends rich Slack block kit card to a channel webhook."""
         if not webhook_url:
             return {"success": False, "error": "Slack webhook URL not provided."}
+        allowed, reason = _public_http_url(webhook_url)
+        if not allowed:
+            return {"success": False, "error": reason}
 
         blocks = [
             {
@@ -88,6 +96,9 @@ class WebhookHub:
         """Sends rich Discord embed message."""
         if not webhook_url:
             return {"success": False, "error": "Discord webhook URL not provided."}
+        allowed, reason = _public_http_url(webhook_url)
+        if not allowed:
+            return {"success": False, "error": reason}
 
         embed = {
             "title": f"🎯 {title}",

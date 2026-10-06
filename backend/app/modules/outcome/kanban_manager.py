@@ -16,6 +16,10 @@ from backend.app.core.llm_client import is_template_engine
 
 VALID_KANBAN_STAGES = ["Draft", "Human Review", "Applied", "Interview", "Offer", "Rejected"]
 
+# The board shows cards and drafts; the full posting text is only needed on the jobs page.
+BOARD_OMITTED_COLUMNS = ("description",)
+
+
 class KanbanManager:
     def get_kanban_board(self) -> Dict[str, List[Dict[str, Any]]]:
         conn = get_db_connection()
@@ -40,6 +44,8 @@ class KanbanManager:
         board = {stage: [] for stage in VALID_KANBAN_STAGES}
         for row in rows:
             item = dict(row)
+            for column in BOARD_OMITTED_COLUMNS:
+                item.pop(column, None)
             status = item.get("status", "Draft")
             if status not in board:
                 status = "Draft"

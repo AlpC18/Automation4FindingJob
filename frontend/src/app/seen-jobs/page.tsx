@@ -1,4 +1,5 @@
 "use client";
+import { notify } from "@/lib/notify";
 import { useLanguage } from "@/lib/i18n";
 import { useEffect, useState } from "react";
 import { Eye, Clock, RefreshCw } from "lucide-react";
@@ -16,7 +17,7 @@ export default function SeenJobsPage() {
     setLoading(true);
     try {
       const [s, n, c] = await Promise.all([
-        fetchFromApi("/scrape/seen_jobs/stats").catch(() => null),
+        fetchFromApi("/scrape/seen_jobs/stats").catch(() => { notify(t("Veriler yüklenemedi. Sayfayı yenileyip tekrar dene.")); return null; }),
         fetchFromApi("/scrape/seen_jobs/new").catch(() => ({ jobs: {} })),
         fetchFromApi("/scrape/seen_jobs/closing_soon?days=7").catch(() => ({ jobs: [] })),
       ]);

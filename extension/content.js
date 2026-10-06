@@ -397,7 +397,7 @@
 
     if (data) {
       document.getElementById("cac-ats-score").innerText = data.match_score == null ? "—" : `≈ %${Math.round(data.match_score)}`;
-      document.getElementById("cac-ghost-score").innerText = `%${Math.round(data.ghost_score || 15)}`;
+      document.getElementById("cac-ghost-score").innerText = data.ghost_score == null ? "—" : `%${Math.round(data.ghost_score)}`;
       statusDiv.innerText = "✓ Analiz tamamlandı!";
     } else {
       statusDiv.innerText = "Backend erişilemiyor veya oturum açılmamış.";
@@ -421,6 +421,9 @@
       btn.style.background = "#334155";
       document.getElementById("cac-track-status").innerText = "✅";
       document.getElementById("cac-track-status").style.color = "#34d399";
+    } else {
+      btn.innerText = "❌ Hata";
+      setTimeout(() => { btn.innerText = "➕ Takip Et"; }, 2000);
     }
   };
 
@@ -435,10 +438,11 @@
       user_prompt: `Apply for role: ${job.title} at ${job.company}. Job description: ${job.description.slice(0, 500)}`,
     });
 
-    if (data && data.text) {
+    // A provider failure returns a stock template; it must not be shown as a generated letter.
+    if (data && data.text && !data.is_template_fallback) {
       document.getElementById("cac-cl-container").style.display = "block";
       document.getElementById("cac-cl-text").value = data.text;
-      statusDiv.innerText = `✓ Üretildi (İnsansı Doku: %${data.human_texture_score || 92})`;
+      statusDiv.innerText = `✓ Üretildi (İnsansı Doku: %${data.human_texture_score})`;
     } else {
       statusDiv.innerText = "Hata: Mektup üretilemedi.";
     }

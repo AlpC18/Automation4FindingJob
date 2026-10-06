@@ -111,7 +111,7 @@ class AutonomousSchedulerDaemon:
         try:
             hour, minute = (int(part) for part in value.strip().split(":", 1))
             return time(hour=hour, minute=minute)
-        except (TypeError, ValueError):
+        except (AttributeError, TypeError, ValueError):
             return fallback
 
     @staticmethod

@@ -20,7 +20,6 @@ from backend.app.modules.rank.red_flag_detector import detect_red_flags
 from backend.app.modules.apply.decision_maker import decision_maker_engine
 from backend.app.modules.apply.form_automator import form_automator
 from backend.app.modules.scrape.rate_limiter import account_health
-from backend.app.modules.testsprite.test_runner import testsprite_runner
 from backend.app.modules.rank import scoring_engine
 
 def test_anti_ai_humanizer_detects_forbidden_words():
@@ -126,19 +125,13 @@ def test_decision_maker_xray_dork():
     assert '("Manager" OR "Director" OR "Lead"' in dork
 
 def test_form_memory_retrieval():
-    res = form_automator.answer_question(
-        "Will you now or in the future require visa sponsorship?",
-        {"skills": ["python"]}
-    )
-    assert res["answer"] == "No"
+    question = "What is your current notice period?"
+    form_automator.save_human_answer_to_memory(question, "One month")
+    res = form_automator.answer_question(question, {"skills": ["python"]})
+    assert res["answer"] == "One month"
     assert res["source"] == "FORM_MEMORY"
 
 def test_account_health_quota():
     allowed, msg, metrics = account_health.can_perform_action("linkedin", "apply")
     assert allowed is True
     assert metrics["limit"] > 0
-
-def test_testsprite_autonomous_suite():
-    suite_res = testsprite_runner.run_all_e2e_tests()
-    assert suite_res["suite_status"] == "PASSED"
-    assert suite_res["failed_tests"] == 0

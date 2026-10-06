@@ -125,6 +125,7 @@ export default function KanbanPage() {
       }
     } catch (error) {
       console.error("Kanban stage update failed", error);
+      notify(t("Aşama güncellenemedi."));
     }
   }
 
@@ -162,6 +163,8 @@ export default function KanbanPage() {
         body: JSON.stringify({ question: testQuestion })
       });
       setQuestionResult(res);
+    } catch {
+      notify(t("Form sorusu test edilemedi."));
     } finally {
       setTestingQuestion(false);
     }
@@ -235,8 +238,14 @@ export default function KanbanPage() {
         <div className="p-3 rounded-xl bg-amber-500/10 border border-amber-500/20 text-xs flex items-center justify-between">
           <div>
             <span className="font-semibold text-amber-300">{t("Form Hafıza Yanıtı:")}</span>{" "}
-            <span className="text-white font-mono">{questionResult.answer}</span>{" "}
-            <span className="text-slate-400 text-xs">({questionResult.source} {t("• Güven: %")} {Math.round(questionResult.confidence * 100)})</span>
+            {questionResult.status === "REQUIRES_HUMAN_INPUT" ? (
+              <span className="text-white">{t("Kayıtlı yanıt yok; bu soruyu kendin yanıtlamalısın.")}</span>
+            ) : (
+              <>
+                <span className="text-white font-mono">{questionResult.answer}</span>{" "}
+                <span className="text-slate-400 text-xs">({questionResult.source} {t("• Güven: %")} {Math.round(questionResult.confidence * 100)})</span>
+              </>
+            )}
           </div>
           <button onClick={() => setQuestionResult(null)} className="text-slate-400 hover:text-white">✕</button>
         </div>
@@ -312,7 +321,7 @@ export default function KanbanPage() {
                         <div className="space-y-1.5 pt-1">
                           <div className="text-xs text-emerald-400 bg-emerald-500/10 px-1.5 py-0.5 rounded flex items-center justify-between">
                             <span>{t("İnsansı Doku:")}</span>
-                            <strong>%{job.human_texture_score || 88}</strong>
+                            <strong>{job.human_texture_score == null ? "—" : `%${job.human_texture_score}`}</strong>
                           </div>
                           <button
                             onClick={() => setSelectedJob(job)}
@@ -543,12 +552,18 @@ export default function KanbanPage() {
                 <button
                   type="button"
                   onClick={async () => {
-                    notify(t("Tarayıcı açıldı. Form alanları dolduruluyor..."));
-                    await fetchFromApi("/scrape/playwright_apply", {
-                      method: "POST",
-                      body: JSON.stringify({ job_id: selectedJob.job_id || selectedJob.id })
-                    });
-                    await handleApprove(selectedJob.job_id || selectedJob.id);
+                    try {
+                      const result = await fetchFromApi("/scrape/playwright_apply", {
+                        method: "POST",
+                        body: JSON.stringify({ job_id: selectedJob.job_id || selectedJob.id })
+                      });
+                      notify(result.message || result.status);
+                      // Only a session that really opened the posting counts as a step forward.
+                      if (!["INSPECTED", "SUBMIT_ATTEMPTED"].includes(result.status)) return;
+                      await handleApprove(selectedJob.job_id || selectedJob.id);
+                    } catch {
+                      notify(t("Tarayıcı oturumu başlatılamadı."));
+                    }
                   }}
                   className="bg-indigo-600 hover:bg-indigo-500 text-white font-semibold text-xs px-4 py-2.5 rounded-xl transition flex items-center gap-1.5"
                 >

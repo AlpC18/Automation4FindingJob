@@ -48,7 +48,7 @@ export default function JobCard({ job, ctx }: { job: any; ctx: any }) {
                 {t("Kaynak ilanda aç")}<ExternalLink className="h-3 w-3" />
               </a>}
               {sourceUrl && <button type="button" onClick={() => void checkJobLink(job)} disabled={linkCheckBusy === job.id} className={`inline-flex items-center gap-1 rounded-full border px-2 py-0.5 text-xs font-semibold transition disabled:opacity-50 ${linkState === "reachable" ? "border-emerald-500/30 text-emerald-300" : ["broken", "unreachable", "invalid"].includes(linkState) ? "border-rose-500/30 text-rose-300" : "border-slate-700 text-slate-400 hover:text-white"}`}>
-                <Link2 className="h-3 w-3" /> {linkCheckBusy === job.id ? t("Kontrol ediliyor…") : linkState === "unchecked" ? t("Linki kontrol et") : linkLabels[linkState]}
+                <Link2 className="h-3 w-3" /> {linkCheckBusy === job.id ? t("Kontrol ediliyor…") : linkState === "unchecked" ? t("Bağlantıyı kontrol et") : linkLabels[linkState]}
               </button>}
               <button type="button" title={t("Favoriye ekle / çıkar")} onClick={() => void toggleJobFlag(job, "favorite")} className={`inline-flex items-center gap-1 rounded-full border px-2 py-0.5 text-xs font-semibold transition ${job.favorite ? "border-rose-500/40 bg-rose-500/10 text-rose-300" : "border-slate-700 text-slate-400 hover:text-rose-300"}`}>
                 <Heart className={`h-3 w-3 ${job.favorite ? "fill-current" : ""}`} /> {job.favorite ? t("Favoride") : t("Favori")}
@@ -78,7 +78,7 @@ export default function JobCard({ job, ctx }: { job: any; ctx: any }) {
             {isGhost && (
               <div className="text-right">
                 <div className="text-xs font-bold text-rose-400 flex items-center gap-1">
-                  <ShieldAlert className="w-3.5 h-3.5" /> %{job.ghost_score} {t("Ghost")}</div>
+                  <ShieldAlert className="w-3.5 h-3.5" /> %{job.ghost_score} {t("hayalet ilan riski")}</div>
                 <div className="text-xs text-rose-400/80">{t("Hayalet İlan Riski")}</div>
               </div>
             )}
@@ -144,7 +144,7 @@ export default function JobCard({ job, ctx }: { job: any; ctx: any }) {
               {/* Skill Gap & GitHub Suggestions */}
               <div className="p-3 rounded-xl bg-slate-900/60 border border-slate-800/80 space-y-1.5">
                 <div className="text-xs font-semibold text-slate-300 flex items-center gap-1.5">
-                  <Layers className="w-3.5 h-3.5 text-indigo-400" /> {t("Yetenek Boşluğu (Skill Gap)")}</div>
+                  <Layers className="w-3.5 h-3.5 text-indigo-400" /> {t("Yetenek boşluğu")}</div>
                 <div className="flex flex-wrap gap-1">
                   {skillGaps.matched_skills?.map((s: string) => (
                     <span
@@ -180,7 +180,7 @@ export default function JobCard({ job, ctx }: { job: any; ctx: any }) {
             <span>
               {t("Maaş Skalası:")}{" "}
               <strong className="text-white">
-                {job.salary_benchmark?.formatted_display || t("Piyasa benchmarkı hesaplanıyor")}
+                {job.salary_benchmark?.formatted_display || t("Piyasa karşılaştırması hesaplanıyor")}
               </strong>
               {job.salary_benchmark?.source_type === "modeled_estimate" && <span className="ml-1 text-xs text-amber-300">{t("Tahmini · işveren tarafından doğrulanmadı")}</span>}
             </span>

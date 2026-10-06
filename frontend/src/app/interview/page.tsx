@@ -380,7 +380,7 @@ function InterviewPage() {
                 {t("PRD 3.4 Standardı")}</span>
             </div>
             <p className="text-xs text-slate-400">
-              {t("Gelen teklifi piyasa benchmark verileriyle analiz eder, işvereni küstürmeden %10-15 artış ve remote esneklik sağlayan diplomatik karşı teklif e-postası üretir.")}</p>
+              {t("Gelen teklifi piyasa karşılaştırma verileriyle analiz eder, işvereni küstürmeden %10-15 artış ve remote esneklik sağlayan diplomatik karşı teklif e-postası üretir.")}</p>
 
             <div className="space-y-2">
               <div>

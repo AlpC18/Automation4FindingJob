@@ -213,7 +213,7 @@ class SemanticSearchEngine:
             q_words = query.lower().split()
             scored = []
             for k, j in all_jobs.items():
-                match = sum(1 for w in q_words if w in j.get("title", "").lower() or w in j.get("company", "").lower())
+                match = sum(1 for w in q_words if w in (j.get("title") or "").lower() or w in (j.get("company") or "").lower())
                 if match > 0:
                     scored.append((match, j))
             scored.sort(key=lambda x: -x[0])
@@ -271,7 +271,8 @@ class SemanticSearchEngine:
         for job in all_jobs.values():
             blob = f"{job.get('title', '')} {job.get('description', '')}".lower()
             for tech in tech_keywords:
-                if tech.lower() in blob:
+                # Whole words only: "Go" must not match "good" or "Google".
+                if re.search(rf"(?<![\w+#]){re.escape(tech.lower())}(?![\w+#])", blob):
                     frequency[tech] += 1
 
         sorted_trends = sorted(frequency.items(), key=lambda x: -x[1])

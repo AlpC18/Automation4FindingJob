@@ -16,6 +16,7 @@ import os
 import tempfile
 from datetime import datetime
 from pathlib import Path
+from backend.app.core.json_store import read_json_store
 from typing import Dict, Any, List, Optional
 
 from backend.app.core.config import settings
@@ -118,10 +119,7 @@ class UpskillEngine:
         scope = self._scope()
         if scope not in self._loaded_scopes:
             path = self._scoped_data_path()
-            try:
-                value = json.loads(path.read_text(encoding="utf-8")) if path.is_file() else {}
-            except (json.JSONDecodeError, OSError):
-                value = {}
+            value = read_json_store(path, {})
             self._progress_by_scope[scope] = value
             self._loaded_scopes.add(scope)
         return self._progress_by_scope[scope]
@@ -134,10 +132,7 @@ class UpskillEngine:
 
     def _load(self):
         if self.data_path.is_file():
-            try:
-                self._progress = json.loads(self.data_path.read_text(encoding="utf-8"))
-            except (json.JSONDecodeError, OSError):
-                self._progress = {}
+            self._progress = read_json_store(self.data_path, {})
 
     def _save(self):
         path = self._scoped_data_path()

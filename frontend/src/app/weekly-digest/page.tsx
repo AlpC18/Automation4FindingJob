@@ -19,6 +19,7 @@ export default function WeeklyDigestPage() {
       setDigest(res);
     } catch (e) {
       console.error(e);
+      notify(t("Veriler yüklenemedi. Sayfayı yenileyip tekrar dene."));
     } finally {
       setLoading(false);
     }

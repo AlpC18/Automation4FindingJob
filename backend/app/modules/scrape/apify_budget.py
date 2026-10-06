@@ -11,6 +11,8 @@ from backend.app.modules.scrape.source_registry import apify_tokens
 
 FREE_PLAN_ALLOWANCE_USD = 5.0
 USAGE_CACHE_SECONDS = 60
+SNAPSHOT_INTERVAL_SECONDS = 600
+_last_snapshot_at = 0.0
 _cache: dict[str, tuple[float, dict[str, Any]]] = {}
 # ponytail: in-memory; the last-scan figure is unknown after a restart until the next scan runs.
 _last_scan: dict[str, Any] = {}
@@ -135,6 +137,12 @@ def invalidate_apify_token_usage(token: str) -> None:
 
 def record_quota_snapshot(summary: dict[str, Any]) -> None:
     """Persist only aggregate spend telemetry; tokens and account IDs never enter history."""
+    # The header badge asks on every page load; one row per interval is enough for the history chart.
+    global _last_snapshot_at
+    now = time.monotonic()
+    if _last_snapshot_at and now - _last_snapshot_at < SNAPSHOT_INTERVAL_SECONDS:
+        return
+    _last_snapshot_at = now
     from backend.app.core.database import get_db_connection
     conn = get_db_connection()
     try:

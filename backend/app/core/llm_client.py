@@ -33,10 +33,17 @@ ANTHROPIC_PRICES_USD_PER_MTOK = {
     "claude-haiku-4-5-20251001": (1.0, 5.0),
 }
 TEMPLATE_ENGINE_LABELS = ("Fallback", "Deterministic Hybrid Engine")
+# Providers billed per token; the daily budget covers their combined use. Gemini's free tier,
+# a self-chosen "custom" endpoint and local Ollama are not counted.
+PAID_PROVIDERS = ("anthropic", "openai", "deepseek")
 
 
 class LLMBudgetExceeded(RuntimeError):
     """Today's paid-token budget is spent; the caller falls back to the template engine."""
+
+
+class LLMUnavailable(RuntimeError):
+    """No AI provider produced a usable answer; raised instead of presenting template text as a result."""
 
 
 def is_template_engine(provider_used: str) -> bool:
@@ -97,9 +104,17 @@ class LLMClient:
         return tuple(self._usage.get("by_provider", {}).get(provider) or (0, 0, 0))
 
     def _tokens_used_today(self) -> int:
-        """Anthropic tokens today: the daily budget only guards the paid Claude key."""
+        """Anthropic tokens today, shown separately because scheduled searches may use Claude."""
         tokens_in, tokens_out, _ = self._usage_today("anthropic")
         return tokens_in + tokens_out
+
+    def _paid_tokens_today(self) -> int:
+        return sum(sum(self._usage_today(provider)[:2]) for provider in PAID_PROVIDERS)
+
+    def _check_budget(self, provider: str) -> None:
+        budget = settings.LLM_DAILY_TOKEN_BUDGET
+        if provider in PAID_PROVIDERS and budget > 0 and self._paid_tokens_today() >= budget:
+            raise LLMBudgetExceeded(f"daily token budget of {budget} is spent")
 
     def _record_tokens(self, provider: str, tokens_in: Any, tokens_out: Any) -> None:
         with self._state_lock:
@@ -125,8 +140,10 @@ class LLMClient:
         prices = ANTHROPIC_PRICES_USD_PER_MTOK.get(model) if provider == "anthropic" else None
         # ponytail: prices every token at the current model; split per model if models get mixed within a day.
         cost = round((tokens_in * prices[0] + tokens_out * prices[1]) / 1_000_000, 4) if prices else None
-        budget = max(0, settings.LLM_DAILY_TOKEN_BUDGET) if provider == "anthropic" else 0
+        paid = provider in PAID_PROVIDERS
+        budget = max(0, settings.LLM_DAILY_TOKEN_BUDGET) if paid else 0
         used = tokens_in + tokens_out
+        spent = self._paid_tokens_today() if paid else used  # the budget is shared by all paid keys
         return {
             "provider": provider,
             "model": model,
@@ -136,8 +153,8 @@ class LLMClient:
             "output_tokens": tokens_out,
             "tokens_used": used,
             "budget_tokens": budget,
-            "remaining_tokens": max(0, budget - used) if budget else None,
-            "percent_used": round(min(100.0, used / budget * 100), 1) if budget else 0,
+            "remaining_tokens": max(0, budget - spent) if budget else None,
+            "percent_used": round(min(100.0, spent / budget * 100), 1) if budget else 0,
             "calls": calls,
             "estimated_cost_usd": cost,
             "average_cost_per_call_usd": round(cost / calls, 4) if cost is not None and calls else None,
@@ -314,6 +331,7 @@ class LLMClient:
         provider_used = provider
 
         try:
+            self._check_budget(provider)
             if provider == "openai" and get_provider_api_key("openai"):
                 raw_output = await self._call_openai(system_prompt, user_prompt, temperature)
                 provider_used = f"OpenAI ({self.custom_model or settings.OPENAI_MODEL})"
@@ -353,6 +371,7 @@ class LLMClient:
                 "text": clean_text,
                 "raw_text": raw_output,
                 "provider_used": provider_used,
+                "is_template_fallback": is_template_engine(provider_used),
                 "human_texture_score": metrics.get("score", 90.0),
                 "burstiness": metrics.get("burstiness", 0.65),
                 "is_human_verified": metrics.get("is_human_verified", True),
@@ -363,6 +382,7 @@ class LLMClient:
                 "text": raw_output,
                 "raw_text": raw_output,
                 "provider_used": provider_used,
+                "is_template_fallback": is_template_engine(provider_used),
                 "human_texture_score": 90.0,
                 "burstiness": 0.65,
                 "is_human_verified": True,
@@ -481,9 +501,6 @@ class LLMClient:
             return data["choices"][0]["message"]["content"]
 
     async def _call_anthropic(self, system_prompt: str, user_prompt: str, temp: float) -> str:
-        budget = settings.LLM_DAILY_TOKEN_BUDGET
-        if budget > 0 and self._tokens_used_today() >= budget:
-            raise LLMBudgetExceeded(f"daily token budget of {budget} is spent")
         model = self.custom_model if self.provider == "anthropic" and self.custom_model else settings.ANTHROPIC_MODEL
         async with httpx.AsyncClient(timeout=ANTHROPIC_TIMEOUT_SECONDS) as client:
             resp = await client.post(

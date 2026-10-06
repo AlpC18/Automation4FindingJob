@@ -8,33 +8,33 @@ import re
 import json
 from typing import Dict, Any, List, Optional
 from backend.app.core.database import get_db_connection
-from backend.app.prompts.form_prompts import DYNAMIC_FORM_ANSWER_GENERATOR_PROMPT
 
 def normalize_question(q: str) -> str:
     cleaned = re.sub(r'[^\w\s]', '', q.lower()).strip()
     return re.sub(r'\s+', ' ', cleaned)
 
+SEEDED_ANSWERS = [
+    ("How many years of work experience do you have with Python?", "4 years"),
+    ("Will you now or in the future require visa sponsorship?", "No"),
+    ("Are you legally authorized to work in this location?", "Yes"),
+    ("What is your current notice period?", "Immediately available / 2 weeks"),
+    ("Are you willing to relocate?", "Open to remote, negotiable for exceptional roles"),
+]
+
+
 class FormAutomator:
     def __init__(self):
-        self._init_starter_memory()
+        self._drop_seeded_answers()
 
-    def _init_starter_memory(self):
+    def _drop_seeded_answers(self):
+        """Earlier versions pre-filled these answers for every user; nobody actually gave them."""
         conn = get_db_connection()
         cursor = conn.cursor()
-        starter_records = [
-            ("How many years of work experience do you have with Python?", "4 years"),
-            ("Will you now or in the future require visa sponsorship?", "No"),
-            ("Are you legally authorized to work in this location?", "Yes"),
-            ("What is your current notice period?", "Immediately available / 2 weeks"),
-            ("Are you willing to relocate?", "Open to remote, negotiable for exceptional roles")
-        ]
-        for orig, ans in starter_records:
-            norm = normalize_question(orig)
-            cursor.execute("""
-                INSERT INTO form_memory (question_normalized, original_question, answer, confidence)
-                VALUES (?, ?, ?, 1.0)
-                ON CONFLICT(question_normalized) DO NOTHING
-            """, (norm, orig, ans))
+        for orig, ans in SEEDED_ANSWERS:
+            cursor.execute(
+                "DELETE FROM form_memory WHERE question_normalized = ? AND answer = ?",
+                (normalize_question(orig), ans),
+            )
         conn.commit()
         conn.close()
 
@@ -68,27 +68,23 @@ class FormAutomator:
 
         conn.close()
 
-        # 2. Infer from profile
-        years_exp = candidate_profile.get("years_of_experience", 4)
-        
-        if "years" in norm_q or "deneyim" in norm_q or "experience" in norm_q:
-            ans = f"{years_exp} years"
-            return {"question": question, "answer": ans, "source": "PROFILE_INFERENCE", "status": "AUTO_FILLED", "confidence": 0.9}
-        elif "sponsorship" in norm_q or "vize" in norm_q:
-            return {"question": question, "answer": "No", "source": "PROFILE_INFERENCE", "status": "AUTO_FILLED", "confidence": 0.95}
-        elif "github" in norm_q or "portfolio" in norm_q:
-            github_url = candidate_profile.get("github_url", "https://github.com/profile")
+        # 2. Read it from the profile. Visa and work-permit questions are never inferred:
+        # the profile has no such field and a wrong answer goes to a real employer.
+        years_exp = candidate_profile.get("years_of_experience")
+        github_url = candidate_profile.get("github_url")
+
+        if ("years" in norm_q or "deneyim" in norm_q or "experience" in norm_q) and years_exp not in (None, ""):
+            return {"question": question, "answer": f"{years_exp} years", "source": "PROFILE_INFERENCE", "status": "AUTO_FILLED", "confidence": 0.9}
+        if ("github" in norm_q or "portfolio" in norm_q) and github_url:
             return {"question": question, "answer": github_url, "source": "PROFILE_INFERENCE", "status": "AUTO_FILLED", "confidence": 0.99}
-            
+
         # 3. Fallback: REQUIRES_HUMAN_INPUT
-        suggested_draft = "Yes, I have relevant hands-on engineering experience in this area."
         return {
             "question": question,
-            "answer": suggested_draft,
-            "source": "LLM_SUGGESTION",
+            "answer": "",
+            "source": "NO_ANSWER",
             "status": "REQUIRES_HUMAN_INPUT",
-            "confidence": 0.5,
-            "prompt_ref": DYNAMIC_FORM_ANSWER_GENERATOR_PROMPT[:120] + "..."
+            "confidence": 0.0,
         }
 
     def save_human_answer_to_memory(self, question: str, answer: str):

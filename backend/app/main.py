@@ -7,7 +7,8 @@ import asyncio
 import logging
 from contextlib import asynccontextmanager
 
-from fastapi import FastAPI
+from fastapi import FastAPI, Request
+from fastapi.responses import JSONResponse
 from fastapi.middleware.cors import CORSMiddleware
 from backend.app.core.config import production_config_issues, settings
 from backend.app.core.database import init_auth_db, init_db, is_postgres_database
@@ -25,6 +26,7 @@ from backend.app.api.routers.trust import router as trust_router
 from backend.app.modules.scrape.unified_scraper import unified_scraper
 from backend.app.modules.rank.scoring_engine import rank_and_save_all_jobs
 from backend.app.tasks.scheduler_daemon import scheduler_daemon
+from backend.app.core.llm_client import LLMUnavailable
 from backend.app.core.security import APIKeyMiddleware
 from backend.app.core.monitoring import RequestMetricsMiddleware, initialize_error_monitoring
 
@@ -95,6 +97,11 @@ app = FastAPI(
 )
 
 # Enable CORS for Next.js frontend
+@app.exception_handler(LLMUnavailable)
+async def llm_unavailable_handler(request: Request, exc: LLMUnavailable) -> JSONResponse:
+    return JSONResponse(status_code=503, content={"detail": str(exc)})
+
+
 app.add_middleware(
     CORSMiddleware,
     allow_origins=[origin.strip() for origin in settings.CORS_ORIGINS.split(",") if origin.strip()],

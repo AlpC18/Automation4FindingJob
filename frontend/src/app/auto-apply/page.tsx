@@ -25,6 +25,7 @@ export default function AutoApplyPage() {
       setTodayCount(res.today_applied_count || 0);
     } catch (e) {
       console.error(e);
+      notify(t("Veriler yüklenemedi. Sayfayı yenileyip tekrar dene."));
     } finally {
       setLoading(false);
     }
@@ -69,6 +70,8 @@ export default function AutoApplyPage() {
         body: JSON.stringify({ min_score: 75, max_daily_limit: 5, auto_request_approval: true })
       });
       await loadQueue();
+    } catch {
+      notify(t("Tarama başlatılamadı. Tekrar dene."));
     } finally {
       setScanning(false);
     }
@@ -109,7 +112,7 @@ export default function AutoApplyPage() {
       if (result.handoff_required && item?.url) window.open(item.url, "_blank", "noopener,noreferrer");
       await loadQueue();
     } catch (e) {
-      notify(t("Tarayıcı başvuru akışı başlatılamadı."));
+      notify(t("Başvuru adımı başlatılamadı. İlan bağlantısını açıp başvuruyu portalda kendin tamamlayabilirsin."));
     }
   }
 

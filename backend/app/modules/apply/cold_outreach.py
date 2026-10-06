@@ -9,16 +9,21 @@ Transforms applications into high-conversion executive conversations:
 
 import re
 import json
-from datetime import datetime, date
+from datetime import datetime, date, timedelta
 from pathlib import Path
+from backend.app.core.json_store import read_json_store
 from typing import Dict, Any, List, Optional
 
 from backend.app.core.config import settings
 from backend.app.core.event_logger import agent_logger
-from backend.app.core.llm_client import llm_client
+from backend.app.core.llm_client import LLMUnavailable, llm_client
+from backend.app.prompts.humanizer_prompts import WRITING_RULES
 from backend.app.core.tenant import get_tenant_id, tenant_data_path
 
 OUTREACH_DATA_PATH = settings.DATA_PATH / "cold_outreach_campaigns.json"
+
+
+OUTREACH_RETENTION_DAYS = 90
 
 
 class ColdOutreachEngine:
@@ -40,11 +45,12 @@ class ColdOutreachEngine:
         scope = self._scope()
         if scope not in self._loaded_scopes:
             path = self._scoped_data_path()
-            try:
-                value = json.loads(path.read_text(encoding="utf-8")) if path.is_file() else {}
-            except (json.JSONDecodeError, OSError):
-                value = {}
-            self._campaigns_by_scope[scope] = {"outreach_list": [], "stats": {"sent_today": 0, "last_date": ""}, **value}
+            value = read_json_store(path, {})
+            campaigns = {"outreach_list": [], "stats": {"sent_today": 0, "last_date": ""}, **value}
+            # Other people's names and titles are not kept forever.
+            cutoff = (datetime.now() - timedelta(days=OUTREACH_RETENTION_DAYS)).isoformat()
+            campaigns["outreach_list"] = [item for item in campaigns["outreach_list"] if str(item.get("created_at") or cutoff) >= cutoff]
+            self._campaigns_by_scope[scope] = campaigns
             self._loaded_scopes.add(scope)
         return self._campaigns_by_scope[scope]
 
@@ -55,13 +61,7 @@ class ColdOutreachEngine:
         self._loaded_scopes.add(scope)
 
     def _load(self):
-        if self.data_path.is_file():
-            try:
-                self._campaigns = json.loads(self.data_path.read_text(encoding="utf-8"))
-            except (json.JSONDecodeError, OSError):
-                self._campaigns = {"outreach_list": [], "stats": {"sent_today": 0, "last_date": ""}}
-        else:
-            self._campaigns = {"outreach_list": [], "stats": {"sent_today": 0, "last_date": ""}}
+        self._campaigns = read_json_store(self.data_path, {"outreach_list": [], "stats": {"sent_today": 0, "last_date": ""}})
 
     def _save(self):
         path = self._scoped_data_path()
@@ -133,28 +133,26 @@ Title: {manager_title}
 Company: {company}
 Context Hook: {hook}
 
-Write an ultra-personalized executive cold email in JSON format with keys:
+Write a personal cold email in JSON format with keys:
 1. "subject_lines": 3 punchy, low-friction subject lines (max 50 chars each, lowercase/conversational style).
 2. "email_body": A crisp 4-sentence email:
    - Sentence 1: Specific non-generic compliment/observation regarding their tech focus.
-   - Sentence 2: Concrete quantifiable achievement from the candidate that directly connects to this challenge.
+   - Sentence 2: How the candidate's listed skills connect to this challenge. Use only the skills above; do not invent achievements, numbers or employers.
    - Sentence 3: Value proposition (how candidate can help them hit their engineering milestone faster).
    - Sentence 4: Zero-pressure call to action (e.g. 'Worth a 5-min intro? If not, no worries at all.').
 3. "follow_up_note": A 2-sentence follow-up message to send 5 days later if no response.
 """
         res = await llm_client.generate_json(
-            system_prompt="You are an elite Tech Founder and Executive Headhunter who writes 60%+ reply rate cold emails.",
+            system_prompt="You write short cold emails from a job seeker to an engineering manager." + WRITING_RULES,
             user_prompt=prompt
         )
 
-        subject = res.get("subject_lines", [f"quick thought on {company}'s tech stack"])[0] if res else f"quick thought on {company}'s tech stack"
-        body = res.get("email_body", "") if res else (
-            f"Hi {manager_name},\n\n"
-            f"Noticed {company}'s recent engineering momentum with {hook}. "
-            f"In my recent work, I architected distributed autonomous agent systems reducing latency by 35% using {skills}. "
-            f"I'd love to contribute similarly to your engineering roadmap as a {target_role}. "
-            f"Worth a quick 5-minute intro this Thursday? Either way, keep up the great work."
-        )
+        if not res.get("email_body"):
+            raise LLMUnavailable("Yapay zekâ sağlayıcısı yanıt vermedi; e-posta taslağı üretilemedi.")
+
+        subject_lines = res.get("subject_lines")
+        subject = subject_lines[0] if isinstance(subject_lines, list) and subject_lines else f"quick thought on {company}'s tech stack"
+        body = res["email_body"]
 
         spam_check = self.calculate_spam_score(subject, body)
 
@@ -166,7 +164,7 @@ Write an ultra-personalized executive cold email in JSON format with keys:
             "target_role": target_role,
             "subject": subject,
             "body": body,
-            "follow_up_note": res.get("follow_up_note", "") if res else "Just bubbling this up in case it got buried.",
+            "follow_up_note": res.get("follow_up_note", ""),
             "spam_check": spam_check,
             "created_at": datetime.now().isoformat(),
             "status": "draft"

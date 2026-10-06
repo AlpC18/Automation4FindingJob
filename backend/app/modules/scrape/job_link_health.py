@@ -10,7 +10,7 @@ from urllib.parse import urljoin, urlsplit
 
 import httpx
 
-from backend.app.core.database import get_db_connection
+from backend.app.core.database import get_db_connection, in_chunks
 
 logger = logging.getLogger(__name__)
 
@@ -99,9 +99,13 @@ def get_job_link_checks(job_ids: list[str]) -> dict[str, dict[str, Any]]:
         return {}
     conn = get_db_connection()
     try:
-        placeholders = ",".join("?" for _ in job_ids)
-        rows = conn.cursor().execute(f"SELECT * FROM job_link_checks WHERE job_id IN ({placeholders})", job_ids).fetchall()
-        return {row["job_id"]: dict(row) for row in rows}
+        cursor = conn.cursor()
+        result = {}
+        for chunk in in_chunks(job_ids):
+            placeholders = ",".join("?" for _ in chunk)
+            rows = cursor.execute(f"SELECT * FROM job_link_checks WHERE job_id IN ({placeholders})", chunk).fetchall()
+            result.update({row["job_id"]: dict(row) for row in rows})
+        return result
     finally:
         conn.close()
 

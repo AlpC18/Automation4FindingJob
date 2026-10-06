@@ -9,10 +9,10 @@ from typing import Dict, Any, List
 
 def detect_red_flags(job_data: Dict[str, Any], candidate_profile: Dict[str, Any]) -> List[str]:
     flags = []
-    desc = job_data.get("description", "").lower()
-    title = job_data.get("title", "").lower()
-    location = job_data.get("location", "").lower()
-    remote_type = job_data.get("remote_type", "").lower()
+    desc = (job_data.get("description") or "").lower()
+    title = (job_data.get("title") or "").lower()
+    location = (job_data.get("location") or "").lower()
+    remote_type = (job_data.get("remote_type") or "").lower()
     cand_pref = candidate_profile.get("work_preference", "remote").lower()
     try:
         cand_exp = float(candidate_profile.get("years_of_experience")) if candidate_profile.get("years_of_experience") not in (None, "") else None

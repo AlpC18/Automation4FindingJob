@@ -23,8 +23,8 @@ class OAuthMailAgent:
         self.google_auth_endpoint = "https://accounts.google.com/o/oauth2/v2/auth"
         self.google_token_endpoint = "https://oauth2.googleapis.com/token"
         self.google_scopes = [
+            # Read-only: replies go out through SMTP, so a stolen token cannot send mail.
             "https://www.googleapis.com/auth/gmail.readonly",
-            "https://www.googleapis.com/auth/gmail.send",
             "https://www.googleapis.com/auth/userinfo.email"
         ]
 
@@ -34,8 +34,7 @@ class OAuthMailAgent:
         self.ms_scopes = [
             "offline_access",
             "User.Read",
-            "Mail.Read",
-            "Mail.Send"
+            "Mail.Read"
         ]
 
     # ==================== Google OAuth2 Flow ====================
@@ -102,7 +101,10 @@ class OAuthMailAgent:
                 "https://www.googleapis.com/oauth2/v2/userinfo",
                 headers={"Authorization": f"Bearer {token_data['access_token']}"}
             )
-            user_email = user_resp.json().get("email", "unknown@gmail.com")
+            user_email = user_resp.json().get("email")
+            if not user_email:
+                # Saving the tokens under a made-up address would show an account the user never connected.
+                return {"status": "ERROR", "message": "Google hesap adresi alınamadı; hesap bağlanmadı."}
 
             self._save_oauth_account(
                 provider="google",

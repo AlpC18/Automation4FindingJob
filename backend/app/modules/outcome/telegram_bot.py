@@ -43,11 +43,11 @@ class TelegramBotManager:
                 self._record_event("OUTGOING_MESSAGE", text, chat_id, f"ERROR: {str(e)[:30]}")
                 return {"status": "ERROR", "message": str(e)}
         else:
-            # Simulated Mobile Push for local/demo runs
-            self._record_event("SIMULATED_DISPATCH", text, chat_id or "local_demo_chat", "DELIVERED")
-            agent_logger.log_event("TELEGRAM_BOT", f"[Simulated Push] {text[:70]}...")
+            # No bot token: nothing leaves this machine, so the event must not read as delivered.
+            self._record_event("SIMULATED_DISPATCH", text, chat_id or "local_demo_chat", "NOT_CONFIGURED")
+            agent_logger.log_event("TELEGRAM_BOT", f"[Not sent, Telegram is not configured] {text[:70]}...")
             return {
-                "status": "SIMULATED_DELIVERED",
+                "status": "NOT_CONFIGURED",
                 "message": "Token not provided; message recorded in local database queue.",
                 "preview": text[:120]
             }

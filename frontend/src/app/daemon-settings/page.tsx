@@ -47,7 +47,9 @@ export default function DaemonSettingsPage() {
   async function handleManualTrigger(sweepType: "nightly" | "morning") {
     try {
       setActionLoading(true);
-      await fetchFromApi(`/daemon/trigger_${sweepType}`, { method: "POST" });
+      const res = await fetchFromApi(`/daemon/trigger_${sweepType}`, { method: "POST" });
+      // A failed sweep still answers HTTP 200, with the failure in the body.
+      if (res?.status === "error") throw new Error(res.error);
       notify(t("{sweep} completed!", { sweep: t(sweepType === "nightly" ? "Gece taraması" : "Sabah başvuru hazırlığı") }));
       await loadStatus();
     } catch (e) {
@@ -207,7 +209,7 @@ export default function DaemonSettingsPage() {
                 onClick={handleTestSlack}
                 className="px-3 py-2 bg-slate-800 hover:bg-slate-700 text-xs font-semibold text-slate-300 rounded-xl"
               >
-                {t("Test Et")}</button>
+                {t("Test mesajı gönder")}</button>
             </div>
           </div>
 
@@ -224,7 +226,7 @@ export default function DaemonSettingsPage() {
                 onClick={handleTestDiscord}
                 className="px-3 py-2 bg-slate-800 hover:bg-slate-700 text-xs font-semibold text-slate-300 rounded-xl"
               >
-                {t("Test Et")}</button>
+                {t("Test mesajı gönder")}</button>
             </div>
           </div>
         </div>

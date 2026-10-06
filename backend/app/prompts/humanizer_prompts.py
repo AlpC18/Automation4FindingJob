@@ -53,3 +53,13 @@ INSTRUCTIONS:
 2. Eliminate all predictable AI phrases and balance paragraph lengths.
 3. Output ONLY the final humanized text without commentary.
 """
+
+# Appended to every prompt whose output is sent to a recruiter or hiring manager.
+WRITING_RULES = """
+WRITING RULES:
+1. Use only facts from the data given. Do not invent achievements, metrics, years, titles or companies.
+2. Write in the language of the job posting or of the message being answered; English when that is unknown.
+3. Write as the candidate, in the first person, in plain words. No sales language, no praise of the reader.
+4. Do not use: "delve", "testament", "compelling", "seamless", "tapestry", "passionate", "thrilled".
+5. End on a concrete fact or a specific request, never on a general good wish.
+"""

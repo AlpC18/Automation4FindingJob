@@ -139,11 +139,11 @@ class WeeklyDigestEngine:
 
         telegram_sent = False
         if telegram_dispatcher.is_configured():
-            try:
-                await telegram_dispatcher.send_notification(msg)
-                telegram_sent = True
-            except Exception as e:
-                agent_logger.log_event("WEEKLY_DIGEST", f"Failed to send telegram digest: {e}")
+            # send_notification reports a failed send in its result; it does not raise.
+            sent = await telegram_dispatcher.send_notification(msg)
+            telegram_sent = sent.get("status") == "DELIVERED"
+            if not telegram_sent:
+                agent_logger.log_event("WEEKLY_DIGEST", f"Telegram digest was not delivered: {sent.get('status')}")
 
         return {
             "success": True,

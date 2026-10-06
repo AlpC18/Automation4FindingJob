@@ -42,12 +42,32 @@ def _cookie_path():
         return settings.DATA_PATH / "tenants" / safe_id / "browser_cookies.json"
     return settings.DATA_PATH / "browser_cookies.json"
 
+# Sandbox flags only: nothing here hides from the site that the browser is automated.
+BROWSER_ARGS = ["--no-sandbox", "--disable-setuid-sandbox"]
+
+
 class StealthBrowserWorker:
     def __init__(self):
         self.user_agents = [
             "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/122.0.0.0 Safari/537.36",
             "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/121.0.0.0 Safari/537.36"
         ]
+
+    @staticmethod
+    def _linkedin_refusal(job_url: str) -> Optional[Dict[str, Any]]:
+        """Why a LinkedIn session must not start right now; None when it may."""
+        from backend.app.modules.scrape.rate_limiter import account_health
+        base = {"url": job_url, "has_easy_apply": None, "applied": False, "submission_confirmed": False}
+        if not settings.LINKEDIN_AUTOMATION_ENABLED:
+            return {**base, "status": "DISABLED", "message": (
+                "LinkedIn tarayıcı otomasyonu kapalı. LinkedIn otomatik erişimi yasaklar ve hesabın kısıtlanabilir; "
+                "riski kabul ediyorsan .env dosyasında LINKEDIN_AUTOMATION_ENABLED=true yap."
+            )}
+        allowed, reason, _ = account_health.can_perform_action("linkedin", "apply")
+        if not allowed:
+            return {**base, "status": "QUOTA_EXHAUSTED", "message": reason}
+        account_health.log_action("linkedin", "apply", "STARTED", job_url)
+        return None
 
     async def execute_easy_apply_flow(
         self,
@@ -58,8 +78,12 @@ class StealthBrowserWorker:
     ) -> Dict[str, Any]:
         """
         Runs autonomous Playwright session to inspect form fields and apply.
-        Falls back to simulation if browser binaries are not installed in the container/host.
+        Reports FAILED when the browser cannot be started.
         """
+        if "linkedin.com" in (urlsplit(job_url).hostname or ""):
+            refusal = self._linkedin_refusal(job_url)
+            if refusal:
+                return refusal
         try:
             from playwright.async_api import async_playwright
             
@@ -68,11 +92,7 @@ class StealthBrowserWorker:
                 browser = await p.chromium.launch(
                     headless=headless,
                     **({"proxy": proxy} if proxy else {}),
-                    args=[
-                        "--disable-blink-features=AutomationControlled",
-                        "--no-sandbox",
-                        "--disable-setuid-sandbox"
-                    ]
+                    args=BROWSER_ARGS
                 )
                 context = await browser.new_context(
                     user_agent=self.user_agents[0],
@@ -126,15 +146,15 @@ class StealthBrowserWorker:
                     "message": "Playwright oturumu açıldı ve ilan incelendi; başvuru gönderilmedi."
                 }
         except Exception as e:
-            # Simulation is explicit and never represents a real submission.
+            # The page was never inspected, so nothing is known about its apply button.
             return {
-                "status": "SIMULATED",
+                "status": "FAILED",
                 "url": job_url,
-                "has_easy_apply": True,
+                "has_easy_apply": None,
                 "applied": False,
                 "submission_confirmed": False,
                 "simulation_reason": str(e)[:120],
-                "message": "Tarayıcı otomasyonu simüle edildi; gerçek başvuru gönderilmedi."
+                "message": "Tarayıcı oturumu açılamadı; ilan incelenmedi ve başvuru gönderilmedi."
             }
 
 stealth_worker = StealthBrowserWorker()

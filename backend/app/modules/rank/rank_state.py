@@ -58,8 +58,8 @@ class RankStateManager:
             # Apply focus filter
             if focus:
                 focus_lower = focus.lower()
-                title = entry.get("title", "").lower()
-                company = entry.get("company", "").lower()
+                title = (entry.get("title") or "").lower()
+                company = (entry.get("company") or "").lower()
                 if focus_lower not in title and focus_lower not in company:
                     skipped["filtered_out"] += 1
                     continue

@@ -16,6 +16,7 @@ Storage: JSON file at data/seen_jobs.json
 import json
 from datetime import datetime, date
 from pathlib import Path
+from backend.app.core.json_store import read_json_store
 from typing import Dict, Any, List, Optional, Set, Tuple
 
 from backend.app.tools.job_key import make_job_key
@@ -85,24 +86,19 @@ class SeenJobsTracker:
             return
 
         path = self._scoped_path()
-        if path.is_file():
-            try:
-                raw = json.loads(path.read_text(encoding="utf-8"))
-                if isinstance(raw, dict):
-                    self._data = raw
-                elif isinstance(raw, list):
-                    # Migration from old list format
-                    for entry in raw:
-                        key = make_job_key(
-                            entry.get("company", ""),
-                            entry.get("title", ""),
-                            entry.get("url", "")
-                        )
-                        self._data[key] = entry
-                    self._save()
-            except (json.JSONDecodeError, OSError) as e:
-                agent_logger.log_event("SEEN_JOBS", f"Error loading seen_jobs.json: {e}")
-                self._data = {}
+        raw = read_json_store(path, {})
+        if isinstance(raw, dict):
+            self._data = raw
+        elif isinstance(raw, list):
+            # Migration from old list format
+            for entry in raw:
+                key = make_job_key(
+                    entry.get("company", ""),
+                    entry.get("title", ""),
+                    entry.get("url", "")
+                )
+                self._data[key] = entry
+            self._save()
 
     def _save(self):
         """Persist to disk."""

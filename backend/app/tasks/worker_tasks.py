@@ -89,7 +89,8 @@ def task_rank_all_jobs(self) -> Dict[str, Any]:
     """Scores and ranks all unranked jobs against candidate profile."""
     from backend.app.modules.rank.scoring_engine import rank_and_save_all_jobs
     agent_logger.log_event("CELERY_WORKER", f"[Task {self.request.id}] Starting ATS evaluation of all jobs...")
-    results = rank_and_save_all_jobs()
+    from backend.app.api.profile import fetch_candidate_profile
+    results = rank_and_save_all_jobs(fetch_candidate_profile())
     agent_logger.log_event("CELERY_WORKER", f"[Task {self.request.id}] Finished ATS ranking ({len(results)} jobs processed).")
     return {
         "status": "SUCCESS",

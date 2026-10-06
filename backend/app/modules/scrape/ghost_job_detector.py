@@ -36,10 +36,10 @@ def evaluate_ghost_job(job_data: Dict[str, Any]) -> Tuple[float, List[str], str]
         reasons.append("İlan 30 gündür açık kalmış.")
 
     # 2. Check for Repetitive Repost indicator
-    description = job_data.get("description", "").lower()
-    title = job_data.get("title", "").lower()
+    description = (job_data.get("description") or "").lower()
+    title = (job_data.get("title") or "").lower()
     
-    if "reposted" in description or "reposted" in job_data.get("posted_date", "").lower():
+    if "reposted" in description or "reposted" in (job_data.get("posted_date") or "").lower():
         score += 25.0
         reasons.append("İlan yakın zamanda yeniden yayınlanmış (Reposted). Pozisyonun doldurulamama veya havuz oluşturma riski var.")
         

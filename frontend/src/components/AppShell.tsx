@@ -166,7 +166,7 @@ export default function AppShell({ children }: { children: React.ReactNode }) {
 
       <aside className={`app-sidebar fixed inset-y-0 left-0 z-50 flex w-[250px] flex-col border-r transition-transform duration-200 lg:translate-x-0 ${mobileOpen ? "translate-x-0" : "-translate-x-full"}`}>
         <div className="sidebar-brand flex h-[66px] shrink-0 items-center justify-between border-b px-4">
-          <Link href="/" className="flex items-center gap-3" aria-label="Career Agent home">
+          <Link href="/" className="flex items-center gap-3" aria-label={t("Ana sayfa")}>
             <span className="brand-mark flex h-9 w-9 items-center justify-center rounded-2xl"><Bot className="h-4 w-4" /></span>
             <span>
               <span className="block text-sm font-bold tracking-[0.12em]">CAREER AGENT</span>

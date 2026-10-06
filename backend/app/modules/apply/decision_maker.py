@@ -99,14 +99,19 @@ class DecisionMakerEngine:
         S2: Direct value proposition based on user's core skillset.
         S3: Low-friction call to action.
         """
-        top_skills = ", ".join(candidate_profile.get("skills", ["fullstack engineering", "distributed systems"])[:2])
-        proj_metric = ""
-        if rag_project:
-            proj_metric = f" (recently delivered {rag_project.get('metrics', 'measurable performance gains')})"
-            
-        s1 = f"I've been following {company_name}'s recent work in modern infrastructure and saw your open {job_title} role."
-        s2 = f"With a strong background in {top_skills}{proj_metric}, I build reliable architectures that minimize operational overhead."
-        s3 = "Open to a brief 5-minute chat this week if you're interested in comparing notes on tech stacks?"
+        # Built only from what is saved: no assumed skills, no claims about the company or about results.
+        skills = [str(skill) for skill in (candidate_profile.get("skills") or [])[:2]]
+        project = (rag_project or {}).get("title")
+        result = (rag_project or {}).get("metrics")
+
+        s1 = f"I saw your open {job_title} role at {company_name}."
+        if skills and project:
+            s2 = f"I work with {' and '.join(skills)}, most recently on {project}" + (f" ({result})." if result else ".")
+        elif skills:
+            s2 = f"I work with {' and '.join(skills)} and would like to hear what the team needs."
+        else:
+            s2 = "I would like to hear what the team needs."
+        s3 = "Would you be open to a brief 5-minute chat this week?"
 
         return f"{s1} {s2} {s3}"
 
@@ -115,12 +120,10 @@ class DecisionMakerEngine:
         PRD 1.4 Micro-Project Synthesizer:
         Generates a 1-page structured micro-case study addressing company's specific needs.
         """
-        proj = rag_projects[0] if rag_projects else {
-            "title": "High-Throughput Autonomous Pipeline",
-            "tech_stack": ["Python", "FastAPI", "React", "PostgreSQL"],
-            "content": "Architected low-latency distributed pipeline with automated error recovery.",
-            "metrics": "Zero data loss, 40% speed improvement"
-        }
+        if not rag_projects:
+            # No saved project means no case study; an invented one would be sent to a real employer.
+            return ""
+        proj = rag_projects[0]
         
         return f"""# MICRO-CASE STUDY: TECHNICAL ARCHITECTURE
 **Target Role:** {job_title} @ {company}

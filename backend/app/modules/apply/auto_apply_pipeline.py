@@ -12,6 +12,7 @@ import logging
 import json
 from datetime import datetime, date
 from pathlib import Path
+from backend.app.core.json_store import read_json_store
 from typing import Dict, Any, List, Optional
 
 from backend.app.core.config import settings
@@ -47,10 +48,7 @@ class AutoApplyPipeline:
         scope = self._scope()
         if scope not in self._loaded_scopes:
             path = self._scoped_queue_path()
-            try:
-                value = json.loads(path.read_text(encoding="utf-8")) if path.is_file() else {}
-            except (json.JSONDecodeError, OSError):
-                value = {}
+            value = read_json_store(path, {})
             self._queues[scope] = {"applications": {}, "daily_stats": {}, **value}
             self._loaded_scopes.add(scope)
         return self._queues[scope]
@@ -62,13 +60,7 @@ class AutoApplyPipeline:
         self._loaded_scopes.add(scope)
 
     def _load(self):
-        if self.queue_path.is_file():
-            try:
-                self._queue = json.loads(self.queue_path.read_text(encoding="utf-8"))
-            except (json.JSONDecodeError, OSError):
-                self._queue = {"applications": {}, "daily_stats": {}}
-        else:
-            self._queue = {"applications": {}, "daily_stats": {}}
+        self._queue = read_json_store(self.queue_path, {"applications": {}, "daily_stats": {}})
 
     def _save(self):
         path = self._scoped_queue_path()

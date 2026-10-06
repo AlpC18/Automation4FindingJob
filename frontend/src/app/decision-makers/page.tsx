@@ -25,6 +25,8 @@ export default function DecisionMakersPage() {
   const [copied, setCopied] = useState(false);
   const [contactName, setContactName] = useState("");
   const [emailGuess, setEmailGuess] = useState("");
+  // True while the address is the app's own pattern guess; typing a real one clears it.
+  const [emailIsGuess, setEmailIsGuess] = useState(false);
   const [emailLookupMessage, setEmailLookupMessage] = useState("");
   const [outreachMessage, setOutreachMessage] = useState("");
   const [emailBusy, setEmailBusy] = useState(false);
@@ -198,6 +200,7 @@ export default function DecisionMakersPage() {
                     body: JSON.stringify({ full_name: contactName, company_name: company })
                   });
                   setEmailGuess(res.primary_email || "");
+                  setEmailIsGuess(res.verification_status === "UNVERIFIED_PATTERN");
                   setEmailLookupMessage(res.verification_status === "UNVERIFIED_PATTERN"
                     ? t("Bu yalnızca bir adres tahminidir; Apollo/Hunter veya posta sunucusu tarafından doğrulanmadı.")
                     : t("Ad ve şirket adı yetersiz; e-posta tahmini oluşturulmadı."));
@@ -213,13 +216,14 @@ export default function DecisionMakersPage() {
           <div className="p-4 rounded-xl bg-slate-900/60 border border-slate-800 space-y-2 text-xs flex flex-col justify-between">
             <div>
               <label htmlFor="targetEmailResult" className="text-xs font-semibold text-slate-400 uppercase">{t("E-posta adresi (kendin doğrula)")}</label>
-              <input id="targetEmailResult" type="email" value={emailGuess} onChange={(event) => setEmailGuess(event.target.value)} placeholder={t("İsteğe bağlı: tahmini kontrol edip düzenle")} className="w-full mt-1 bg-slate-950 border border-slate-800 rounded-xl px-3 py-2 text-xs text-white" />
+              <input id="targetEmailResult" type="email" value={emailGuess} onChange={(event) => { setEmailGuess(event.target.value); setEmailIsGuess(false); }} placeholder={t("İsteğe bağlı: tahmini kontrol edip düzenle")} className="w-full mt-1 bg-slate-950 border border-slate-800 rounded-xl px-3 py-2 text-xs text-white" />
               {emailLookupMessage && <p role="status" className="mt-2 text-xs text-amber-300">{emailLookupMessage}</p>}
             </div>
 
             <button
               disabled={emailBusy || !emailGuess.trim() || !coldDm.trim()}
               onClick={async () => {
+                if (emailIsGuess && !window.confirm(t("Bu adres bir tahmin ve başka birine ait olabilir. Yine de gönderilsin mi?"))) return;
                 setEmailBusy(true);
                 setOutreachMessage("");
                 try {
@@ -228,7 +232,9 @@ export default function DecisionMakersPage() {
                     body: JSON.stringify({
                       to_email: emailGuess,
                       subject: `Quick note regarding ${role} @ ${company}`,
-                      body_text: coldDm
+                      body_text: coldDm,
+                      address_is_guess: emailIsGuess,
+                      guess_confirmed: emailIsGuess
                     })
                   });
                   setOutreachMessage(res.message || t("E-posta gönderim durumu: {status}", { status: res.status || "UNKNOWN" }));
@@ -239,6 +245,20 @@ export default function DecisionMakersPage() {
               className="w-full bg-blue-600 hover:bg-blue-500 text-white font-semibold text-xs py-2 rounded-xl transition flex items-center justify-center gap-1.5 shadow-md shadow-blue-600/20 disabled:cursor-not-allowed disabled:opacity-50"
             >
               <Send className="w-3.5 h-3.5" /> {emailBusy ? t("Gönderiliyor…") : t("E-postayı şimdi gönder")}</button>
+            <button
+              type="button"
+              disabled={emailBusy || !emailGuess.trim()}
+              onClick={async () => {
+                try {
+                  await fetchFromApi("/decision-makers/suppressions", { method: "POST", body: JSON.stringify({ email: emailGuess }) });
+                  setOutreachMessage(t("Bu adrese bir daha e-posta gönderilmeyecek."));
+                } catch (error: any) {
+                  setOutreachMessage(error.message || t("Adres engellenemedi."));
+                }
+              }}
+              className="w-full rounded-xl border border-slate-700 py-2 text-xs font-semibold text-slate-300 transition hover:bg-slate-800 disabled:cursor-not-allowed disabled:opacity-50"
+            >
+              {t("Bu kişi istemiyor: bir daha yazma")}</button>
             {outreachMessage && <p role="status" className="text-xs text-slate-300">{outreachMessage}</p>}
           </div>
         </div>

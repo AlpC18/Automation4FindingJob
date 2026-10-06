@@ -20,7 +20,6 @@ from backend.app.core.smtp_credentials import (
 )
 from backend.app.modules.interview.voice_coach import voice_coach
 from backend.app.modules.outcome.telegram_bot import telegram_bot
-from backend.app.modules.testsprite.test_runner import testsprite_runner
 
 
 router = APIRouter()
@@ -63,14 +62,6 @@ def remove_smtp_settings():
 @router.post("/notifications/smtp/test")
 def test_smtp_settings():
     return test_smtp_connection()
-
-
-@router.post("/testsprite/run")
-def run_testsprite_suite():
-    agent_logger.log_event("TESTSPRITE", "Initiating autonomous E2E test suite...")
-    result = testsprite_runner.run_all_e2e_tests()
-    agent_logger.log_event("TESTSPRITE", f"E2E Suite finished with status {result['suite_status']}.")
-    return result
 
 
 @router.get("/stream/agent_logs")
