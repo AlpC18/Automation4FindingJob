@@ -24,6 +24,7 @@ from backend.app.core.database import get_db_connection, is_postgres_database
 from backend.app.tasks.scheduler_daemon import scheduler_daemon
 from backend.app.core.tenant import get_tenant_id
 from backend.app.core.monitoring import render_request_metrics
+from backend.app.modules.rank.salary_lookup import salary_data_path_for_tenant, salary_lookup
 
 router = APIRouter()
 RESTORE_CONFIRMATION = "RESTORE"
@@ -102,7 +103,9 @@ def export_workspace_data():
     try:
         cursor = conn.cursor()
         tables = {table: _workspace_rows(cursor, table) for table in WORKSPACE_DATA_TABLES if _workspace_table_exists(cursor, table)}
-        payload = {"format": "career-agent-workspace-export-v1", "secrets_redacted": True, "tables": tables}
+        salary_file = salary_data_path_for_tenant(get_tenant_id())
+        salary_records = json.loads(salary_file.read_text(encoding="utf-8")) if salary_file.is_file() else None
+        payload = {"format": "career-agent-workspace-export-v1", "secrets_redacted": True, "tables": tables, "salary_data": salary_records}
         return JSONResponse(
             content=jsonable_encoder(payload),
             headers={"Content-Disposition": 'attachment; filename="career-agent-data.json"', "Cache-Control": "no-store"},
@@ -134,6 +137,11 @@ def delete_workspace_data(req: DeleteWorkspaceDataRequest):
             cursor.execute(f"DELETE FROM {table}")
             deleted[table] = count
         conn.commit()
+        salary_file = salary_data_path_for_tenant(get_tenant_id())
+        if salary_file.is_file():
+            salary_file.unlink()
+            salary_lookup.reload_current()
+            deleted["salary_data_file"] = 1
         return {"deleted_tables": deleted, "message": "Çalışma alanı verileri silindi. Giriş hesabı korunuyor."}
     except Exception:
         conn.rollback()

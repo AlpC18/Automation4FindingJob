@@ -12,6 +12,7 @@ from backend.app.core.provider_credentials import (
     get_provider_credential_status,
     save_provider_api_key,
 )
+from backend.app.modules.interview.voice_coach import voice_coach
 from backend.app.core.smtp_credentials import (
     delete_smtp_configuration,
     save_smtp_configuration,
@@ -162,3 +163,21 @@ class VoiceEvaluateRequest(BaseModel):
     question: str
     transcript: str
     duration_seconds: Optional[float] = 30.0
+
+
+@router.post("/interview/voice_evaluate")
+def evaluate_voice_answer(req: VoiceEvaluateRequest):
+    agent_logger.log_event(
+        "VOICE_COACH",
+        f"Evaluating voice answer ({len(req.transcript.split())} words, {req.duration_seconds}s)...",
+    )
+    result = voice_coach.evaluate_vocal_performance(
+        question=req.question,
+        transcript=req.transcript,
+        duration_seconds=req.duration_seconds or 30.0,
+    )
+    agent_logger.log_event(
+        "VOICE_COACH",
+        f"Vocal score: {result['overall_score']}/100, WPM: {result['wpm']}, Fluency: %{result['fluency_score']}.",
+    )
+    return result

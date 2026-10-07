@@ -45,6 +45,36 @@ test.describe("Connected career workflow", () => {
     await expect(page.getByText("Bugün için bekleyen iş yok. Yeni ilan taraması başlatabilirsin.")).toBeVisible();
   });
 
+  test("an interview-stage card links straight to that job's rehearsal", async ({ page }) => {
+    await mockGet(page.context(), "**/api/outcome/kanban*", {
+      Interview: [{
+        id: "job-9", title: "Platform Engineer", company: "Umbrella", status: "Interview",
+        next_steps: [
+          { kind: "interview_sim", href: "/interview?job=job-9" },
+          { kind: "star_prep", href: "/star-prep" },
+        ],
+      }],
+    });
+    let startedFor: string | null = null;
+    await mockGet(page.context(), "**/api/scrape/jobs*", { jobs: [
+      { id: "job-1", title: "Other Job", company: "Acme" },
+      { id: "job-9", title: "Platform Engineer", company: "Umbrella" },
+    ] });
+    await page.context().route("**/api/interview/start", async (route) => {
+      if (route.request().method() === "OPTIONS") return route.fulfill({ status: 204, headers: corsHeaders });
+      startedFor = route.request().postDataJSON().job_id;
+      return route.fulfill({ status: 200, headers: corsHeaders, contentType: "application/json", body: JSON.stringify({ questions: [] }) });
+    });
+
+    await page.goto("/kanban");
+    await expect(page.getByText("Sıradaki adım")).toBeVisible();
+    await expect(page.getByRole("link", { name: "STAR yanıtlarını hazırla" })).toHaveAttribute("href", "/star-prep");
+    await page.getByRole("link", { name: "Mülakat provası yap" }).click();
+
+    await expect(page).toHaveURL(/\/interview\?job=job-9$/);
+    await expect.poll(() => startedFor).toBe("job-9");
+  });
+
   test("system status explains which features work and where to fix the rest (live backend)", async ({ page }) => {
     await page.goto("/system-status");
     const features = page.getByRole("region", { name: "Hangi özellikler çalışıyor?" });
@@ -58,6 +88,12 @@ test.describe("Connected career workflow", () => {
     }
     await expect(features.getByRole("link", { name: /Gelen kutusu senkronizasyonu/ })).toHaveAttribute("href", "/inbox");
     await expect(features.getByText("Gmail veya Outlook bağlı değil; yanıtlar otomatik işlenmez.")).toBeVisible();
+  });
+
+  test("weekly digest advice reflects recorded activity instead of canned text (live backend)", async ({ page }) => {
+    await page.goto("/weekly-digest");
+    await expect(page.getByText("Bu hafta yeni ilan taranmadı; tarama başlat veya otomasyon servisini aç.")).toBeVisible();
+    await expect(page.getByText(/%24 artış/)).toHaveCount(0);
   });
 
   test("kanban warns when a draft came from the template engine instead of AI", async ({ page }) => {

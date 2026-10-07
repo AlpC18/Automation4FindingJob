@@ -2,6 +2,7 @@
 
 from datetime import date, datetime, timedelta
 from typing import Any, Dict, List, Optional
+from urllib.parse import quote
 
 from backend.app.core.database import get_db_connection
 
@@ -16,6 +17,8 @@ ACTION_KINDS = (
     "confirm_submission",
     "approve_draft",
     "closing_soon",
+    "interview_prep",
+    "offer_review",
     "new_matches",
 )
 
@@ -25,6 +28,15 @@ def next_steps(job: Dict[str, Any]) -> List[Dict[str, str]]:
     status = job.get("status") or "Draft"
     if status == "Applied" and job.get("submission_confirmed"):
         return [{"kind": "follow_up", "href": "/follow-up"}]
+    if status == "Interview":
+        job_id = quote(str(job.get("id") or ""), safe="")
+        return [
+            {"kind": "interview_sim", "href": f"/interview?job={job_id}"},
+            {"kind": "star_prep", "href": "/star-prep"},
+            {"kind": "salary_intel", "href": "/salary-intel"},
+        ]
+    if status == "Offer":
+        return [{"kind": "offer_review", "href": "/offer-negotiator"}]
     return []
 
 
@@ -80,6 +92,12 @@ def build_today_actions(
             ))
     for job in board.get("Human Review", []):
         found["approve_draft"].append(_action("approve_draft", job.get("id"), "/kanban", job.get("title"), job.get("company")))
+    for job in board.get("Interview", []):
+        found["interview_prep"].append(_action(
+            "interview_prep", job.get("id"), next_steps({**job, "status": "Interview"})[0]["href"], job.get("title"), job.get("company"),
+        ))
+    for job in board.get("Offer", []):
+        found["offer_review"].append(_action("offer_review", job.get("id"), "/offer-negotiator", job.get("title"), job.get("company")))
     for job in closing_soon:
         found["closing_soon"].append(_action(
             "closing_soon", job.get("id"), f"/jobs?scope=current&minMatch={HIGH_MATCH_SCORE}", job.get("title"), job.get("company"),

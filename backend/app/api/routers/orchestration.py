@@ -9,6 +9,7 @@ from backend.app.api.profile import fetch_candidate_profile
 from backend.app.core.database import get_db_connection
 from backend.app.core.ws_manager import ws_manager
 from backend.app.modules.outcome.follow_up_cadence import follow_up_cadence_engine
+from backend.app.modules.outcome.weekly_digest import weekly_digest_engine
 
 
 router = APIRouter()
@@ -26,6 +27,11 @@ async def websocket_event_channel(websocket: WebSocket, api_key: Optional[str] =
         await ws_manager.disconnect(websocket)
     except Exception:
         await ws_manager.disconnect(websocket)
+
+
+@router.get("/outcome/digest")
+def get_weekly_digest():
+    return weekly_digest_engine.compile_digest()
 
 
 class OptimizeLinkedInRequest(BaseModel):
