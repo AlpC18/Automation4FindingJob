@@ -95,3 +95,40 @@ def test_a_project_stack_alias_counts():
 
     assert find_unsupported_claims("LeadScout combines Python and JavaScript.", {"skills": ["Python", "JavaScript"]}, projects, {}) == []
 
+
+
+def test_spelling_variants_of_a_cv_term_are_not_flagged():
+    profile = {"skills": ["REST APIs", "LLM"], "raw_cv_text": "Built REST APIs and LLM tool-calling workflows."}
+
+    assert find_unsupported_claims("I design RESTful services and work with LLMs daily.", profile, [], {}) == []
+
+
+def test_a_flagged_draft_is_rewritten_once_and_the_cleaner_version_is_kept(monkeypatch):
+    import asyncio
+
+    from backend.app.core import llm_client as llm_module
+    from backend.app.modules.apply import agentic_workflow as workflow
+
+    replies = iter([
+        "Dear Acme team,\n\nI built billing services in Python and cut costs by 40% using Rust.\n\nBest regards,\nAda Example",
+        "Dear Acme team,\n\nI built billing services in Python.\n\nBest regards,\nAda Example",
+    ])
+    prompts = []
+
+    async def generate_text(system_prompt, user_prompt, **kwargs):
+        prompts.append(user_prompt)
+        return {"text": next(replies), "provider_used": "Custom (test)", "is_template_fallback": False}
+
+    monkeypatch.setattr(llm_module.llm_client, "generate_text", generate_text)
+    monkeypatch.setattr(workflow.application_pipeline.reviewer, "review", lambda **kwargs: {"passed": True, "issues": [], "suggestions": []})
+    monkeypatch.setattr(workflow.rag_memory, "search_relevant_context", lambda query, top_k=2: [])
+
+    result = asyncio.run(workflow.application_pipeline.run_pipeline_async(
+        {"id": 1, "title": "Backend Developer", "company": "Acme", "description": "Python services"},
+        {"full_name": "Ada Example", "skills": ["Python"], "raw_cv_text": "Python developer who built billing services."},
+        {},
+    ))
+
+    assert "40%" not in result["cover_letter"] and "Rust" not in result["cover_letter"]
+    assert result["unsupported_claims"] == [] and result["claims_repaired"] is True
+    assert len(prompts) == 2 and "cut costs by 40% using Rust" in prompts[1]

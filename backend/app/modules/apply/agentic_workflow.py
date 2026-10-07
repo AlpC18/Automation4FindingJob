@@ -393,10 +393,26 @@ class MultiAgentApplicationPipeline:
 
         result["reviewer_report"] = review
         result["company_research_used"] = bool(company_research.get("source") != "no_cache")
-        # Sentences the candidate should re-read before sending: the model sometimes adds details nobody gave it.
-        result["unsupported_claims"] = find_unsupported_claims(
-            result["cover_letter"], candidate_profile, rag_memory.documents, job_data,
-        )
+        # The model sometimes adds details nobody gave it. Check the letter against the CV; if anything
+        # is flagged, ask once for a version without those details and keep it only if it checks out better.
+        def check(letter: str) -> list:
+            return find_unsupported_claims(letter, candidate_profile, rag_memory.documents, job_data)
+
+        claims = check(result["cover_letter"])
+        result["claims_repaired"] = False
+        if claims and not llm_res["is_template_fallback"]:
+            flagged = "\n".join(f"- {claim['sentence']} ({claim['reason']})" for claim in claims)
+            repair = await llm_client.generate_text(
+                system_prompt=COVER_LETTER_SYSTEM_PROMPT,
+                user_prompt=f"{user_prompt}\n\nLETTER\n{result['cover_letter']}\n\n"
+                            "These sentences contain details that are not in the CANDIDATE section:\n"
+                            f"{flagged}\n\nRewrite the letter without those details. Change nothing else.",
+                preferred_provider=preferred_provider,
+                apply_humanizer=False,
+            )
+            if not repair["is_template_fallback"] and len(check(repair["text"])) < len(claims):
+                result["cover_letter"], claims, result["claims_repaired"] = repair["text"], check(repair["text"]), True
+        result["unsupported_claims"] = claims
         return result
 
     def _execute_qa_loop(

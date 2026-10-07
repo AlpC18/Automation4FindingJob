@@ -91,7 +91,10 @@ def find_unsupported_claims(letter: str, profile: Dict[str, Any], projects: List
             common = [tech for tech in _COMMON_TECH if re.search(rf"(?<![A-Za-z0-9.]){tech}(?![A-Za-z0-9])", sentence)]
             for token in dict.fromkeys([*shaped, *common]):
                 key = _norm(token)
-                if token in _ORDINARY or len(key) < 2 or key in own or key in posting_names or any(_norm(tech) == key for tech in known_tech):
+                # "RESTful" for REST and "LLMs" for LLM are the same term on the CV.
+                variants = {key, key.removesuffix("s"), key.removesuffix("ful")}
+                if token in _ORDINARY or len(key) < 2 or key in posting_names or any(len(v) > 1 and v in own for v in variants) \
+                        or any(_norm(tech) in variants for tech in known_tech):
                     continue
                 if key in job_text and not first_person:
                     continue  # naming something from the posting is fine; claiming it as experience is not
