@@ -216,3 +216,28 @@ def test_star_stubs_read_the_bullets_the_saved_profile_uses_and_claim_no_depth()
 
     assert stubs[0]["what_happened"] == "Built the booking flow used by two dental clinics"
     assert not any("Deep experience" in stub["what_happened"] for stub in stubs)
+
+
+def test_interview_questions_follow_the_posting_and_the_cv():
+    from backend.app.modules.interview.interview_simulator import interview_simulator
+
+    def session(have, missing, description):
+        return interview_simulator.generate_interview_session(
+            "Backend Developer", "Acme", description, {"keywords_you_have": have, "keywords_missing": missing},
+        )
+
+    backend = session(["Python", "PostgreSQL"], ["Kubernetes"], "You will lead a team and design systems.")
+    frontend = session(["React"], [], "Build interfaces.")
+    text = lambda questions: " ".join(q["question"] for q in questions)
+
+    assert "Python" in text(backend) and "PostgreSQL" in text(backend) and "Kubernetes" in text(backend)
+    assert "React" in text(frontend) and "Python" not in text(frontend)
+    assert "Acme" in backend[0]["question"]
+    assert [q["id"] for q in backend] == [f"q{n}" for n in range(1, len(backend) + 1)]
+    assert all(q["type"] and q["key_points"] for q in backend + frontend)
+    # A leadership posting gets a leadership question; the plain one does not.
+    assert any(q["type"] == "Liderlik & İnisiyatif" for q in backend)
+    assert not any(q["type"] == "Liderlik & İnisiyatif" for q in frontend)
+    assert "scraping" not in text(backend).lower() and "bypass" not in text(backend).lower()
+    # With nothing to go on it still asks about the role itself, never a canned stack.
+    assert "Backend Developer" in text(session([], [], ""))

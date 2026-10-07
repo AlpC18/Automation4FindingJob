@@ -5,7 +5,10 @@ from typing import Optional
 from fastapi import APIRouter, HTTPException
 from pydantic import BaseModel
 
+from backend.app.api.profile import fetch_candidate_profile
 from backend.app.core.database import get_db_connection
+from backend.app.modules.apply.fit_report import build_fit_report
+from backend.app.modules.setup.rag_engine import rag_memory
 from backend.app.modules.interview.interview_simulator import interview_simulator
 from backend.app.modules.interview.offer_negotiator import offer_negotiator_engine
 
@@ -27,7 +30,8 @@ def start_interview_simulation(req: InterviewStartRequest):
         raise HTTPException(status_code=404, detail="Job not found")
     job = dict(row)
     questions = interview_simulator.generate_interview_session(
-        job["title"], job["company"], job["description"]
+        job["title"], job["company"], job["description"],
+        build_fit_report(fetch_candidate_profile(), rag_memory.documents, job),
     )
     return {"job": job, "questions": questions}
 
