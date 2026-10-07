@@ -125,14 +125,3 @@ def test_empty_or_disconnected_backup_dir_falls_back_to_the_data_folder(monkeypa
         assert backup_manager.backup_directory() == tmp_path / "backups"
     monkeypatch.setattr(backup_manager.settings, "BACKUP_DIR", tmp_path / "external")
     assert backup_manager.backup_directory() == tmp_path / "external"
-
-
-def test_web_research_refuses_local_and_private_addresses(monkeypatch):
-    from backend.app.modules.scrape import web_research
-
-    called = []
-    monkeypatch.setattr(web_research, "_curl_fetch", lambda *args, **kwargs: called.append(args) or ("", 200))
-    for url in ("http://localhost:6379/", "http://127.0.0.1:18000/api/system", "http://192.168.1.1/admin", "file:///etc/passwd"):
-        result = web_research.web_research_engine.fetch_with_escalation(url)
-        assert result["success"] is False and result["method"] == "blocked"
-    assert called == []

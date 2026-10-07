@@ -14,12 +14,6 @@ test.describe("Career Agent critical navigation", () => {
     await expect(page.getByText("Demo ilanı")).toHaveCount(0);
   });
 
-  test("loads analytics and profile version surface", async ({ page }) => {
-    await page.goto("/analytics");
-    await expect(page.getByText("Gerçek başvuru analitiği")).toBeVisible();
-    await expect(page.getByText("Profil sürüm geçmişi")).toBeVisible();
-  });
-
   test("requires a session in multi-tenant mode and opens the app after login", async ({ page }) => {
     const corsHeaders = {
       "access-control-allow-origin": "http://127.0.0.1:3000",

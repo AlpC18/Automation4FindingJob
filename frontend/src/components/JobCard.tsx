@@ -187,11 +187,6 @@ export default function JobCard({ job, ctx }: { job: any; ctx: any }) {
           </div>
 
           <div className="flex items-center gap-2">
-            <Link
-              href="/decision-makers"
-              className="px-3 py-1.5 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-300 transition text-xs"
-            >
-              {t("Karar Verici (X-Ray)")}</Link>
             <button onClick={() => void prepareApplication(job)} disabled={preparingJob === job.id} className="px-4 py-1.5 rounded-lg bg-blue-600 hover:bg-blue-500 text-white font-semibold transition text-xs shadow-md shadow-blue-600/20 disabled:opacity-50">
               {preparingJob === job.id ? t("Taslak hazırlanıyor…") : t("Başvuru taslağı hazırla")}
             </button>

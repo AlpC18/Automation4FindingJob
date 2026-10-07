@@ -7,7 +7,7 @@ from backend.app.main import app
 
 NOTHING = {
     "llm_provider": "local_fallback", "scraper_enabled": True, "ready_portals": [], "smtp_ready": False,
-    "inbox_connected": False, "apollo_ready": False, "proxy_ready": False, "daemon_running": False,
+    "inbox_connected": False, "proxy_ready": False, "daemon_running": False,
 }
 
 
@@ -20,19 +20,19 @@ def test_fresh_install_separates_fallbacks_from_features_that_are_off():
     levels, result = _levels()
     assert levels == {
         "ai_writing": "limited", "job_scan": "limited", "email_send": "off", "inbox_sync": "off",
-        "decision_makers": "limited", "stealth_proxy": "limited", "automation": "off",
+        "stealth_proxy": "limited", "automation": "off",
     }
-    assert result["summary"] == {"on": 0, "limited": 4, "off": 3}
+    assert result["summary"] == {"on": 0, "limited": 3, "off": 3}
     assert all(item["href"].startswith("/") for item in result["capabilities"])
 
 
 def test_configuring_a_dependency_turns_its_feature_on():
     levels, result = _levels(
-        llm_provider="gemini", ready_portals=["linkedin"], smtp_ready=True, inbox_connected=True, apollo_ready=True, proxy_ready=True,
+        llm_provider="gemini", ready_portals=["linkedin"], smtp_ready=True, inbox_connected=True, proxy_ready=True,
         daemon_running=True,
     )
     assert set(levels.values()) == {"on"}
-    assert result["summary"] == {"on": 7, "limited": 0, "off": 0}
+    assert result["summary"] == {"on": 6, "limited": 0, "off": 0}
 
 
 def test_disabled_scraper_is_off_even_with_configured_portals():
@@ -43,7 +43,7 @@ def test_disabled_scraper_is_off_even_with_configured_portals():
 def test_capabilities_endpoint_serves_every_feature():
     response = TestClient(app).get("/api/system/capabilities")
     assert response.status_code == 200
-    assert len(response.json()["capabilities"]) == 7
+    assert len(response.json()["capabilities"]) == 6
 
 
 def test_verify_marks_ai_off_when_the_configured_provider_does_not_answer(monkeypatch):

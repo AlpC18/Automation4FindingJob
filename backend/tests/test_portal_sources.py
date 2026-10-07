@@ -1,7 +1,6 @@
 """Spec section 1.2: every listed portal is a configurable, scannable source."""
 
 from backend.app.modules.scrape import unified_scraper as us
-from backend.app.modules.scrape.portal_health import PORTAL_DOMAINS
 from backend.app.modules.scrape.source_registry import ACTOR_SOURCES
 
 SPEC_PORTALS = {
@@ -13,7 +12,6 @@ SPEC_PORTALS = {
 def test_every_spec_portal_is_registered():
     assert SPEC_PORTALS <= set(ACTOR_SOURCES)
     assert SPEC_PORTALS | {"remote"} <= set(us.UnifiedScraper().scrapers)
-    assert SPEC_PORTALS <= set(PORTAL_DOMAINS)
 
 
 def test_portal_adapter_delegates_to_its_apify_actor(monkeypatch):

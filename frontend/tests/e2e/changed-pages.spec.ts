@@ -26,13 +26,6 @@ test.describe("Pages changed by the review fixes (live backend)", () => {
     expect((await page.goto("/testsprite"))?.status()).toBe(404);
   });
 
-  test("the career map invents nothing for an empty profile", async ({ page }) => {
-    await page.goto("/career-map");
-    await expect(page.getByText("Önce yönünü belirleyelim")).toBeVisible();
-    await expect(page.getByText(/\/100/)).toHaveCount(0);
-    await expect(page.getByText("Autonomous Agent Systems Architect")).toHaveCount(0);
-  });
-
   test("the dashboard shows feed totals from the server", async ({ page }) => {
     const feed = page.waitForResponse((response) => response.url().includes("/api/scrape/jobs?include_history=false&limit=5"));
     await page.goto("/");

@@ -45,79 +45,19 @@ test.describe("Connected career workflow", () => {
     await expect(page.getByText("Bugün için bekleyen iş yok. Yeni ilan taraması başlatabilirsin.")).toBeVisible();
   });
 
-  test("an interview-stage card links straight to that job's rehearsal", async ({ page }) => {
-    await mockGet(page.context(), "**/api/outcome/kanban*", {
-      Interview: [{
-        id: "job-9", title: "Platform Engineer", company: "Umbrella", status: "Interview",
-        next_steps: [
-          { kind: "interview_sim", href: "/interview?job=job-9" },
-          { kind: "star_prep", href: "/star-prep" },
-        ],
-      }],
-    });
-    let startedFor: string | null = null;
-    await mockGet(page.context(), "**/api/scrape/jobs*", { jobs: [
-      { id: "job-1", title: "Other Job", company: "Acme" },
-      { id: "job-9", title: "Platform Engineer", company: "Umbrella" },
-    ] });
-    await page.context().route("**/api/interview/start", async (route) => {
-      if (route.request().method() === "OPTIONS") return route.fulfill({ status: 204, headers: corsHeaders });
-      startedFor = route.request().postDataJSON().job_id;
-      return route.fulfill({ status: 200, headers: corsHeaders, contentType: "application/json", body: JSON.stringify({ questions: [] }) });
-    });
-
-    await page.goto("/kanban");
-    await expect(page.getByText("Sıradaki adım")).toBeVisible();
-    await expect(page.getByRole("link", { name: "STAR yanıtlarını hazırla" })).toHaveAttribute("href", "/star-prep");
-    await page.getByRole("link", { name: "Mülakat provası yap" }).click();
-
-    await expect(page).toHaveURL(/\/interview\?job=job-9$/);
-    await expect.poll(() => startedFor).toBe("job-9");
-  });
-
   test("system status explains which features work and where to fix the rest (live backend)", async ({ page }) => {
     await page.goto("/system-status");
     const features = page.getByRole("region", { name: "Hangi özellikler çalışıyor?" });
-    await expect(features.getByRole("listitem")).toHaveCount(7);
+    await expect(features.getByRole("listitem")).toHaveCount(6);
     for (const title of [
       "CV, niyet mektubu ve mülakat yapay zekâsı", "İlan taraması", "Takip ve tanışma e-postası gönderimi",
-      "Gelen kutusu senkronizasyonu", "Karar verici bulma", "Tarayıcı otomasyonu için proxy",
+      "Gelen kutusu senkronizasyonu", "Tarayıcı otomasyonu için proxy",
       "Gece taraması ve sabah taslakları",
     ]) {
       await expect(features.getByText(title, { exact: true })).toBeVisible();
     }
     await expect(features.getByRole("link", { name: /Gelen kutusu senkronizasyonu/ })).toHaveAttribute("href", "/inbox");
     await expect(features.getByText("Gmail veya Outlook bağlı değil; yanıtlar otomatik işlenmez.")).toBeVisible();
-  });
-
-  test("weekly digest advice reflects recorded activity instead of canned text (live backend)", async ({ page }) => {
-    await page.goto("/weekly-digest");
-    await expect(page.getByText("Bu hafta yeni ilan taranmadı; tarama başlat veya otomasyon servisini aç.")).toBeVisible();
-    await expect(page.getByText(/%24 artış/)).toHaveCount(0);
-  });
-
-  test("decision makers: Apollo search lists people and surfaces a missing key", async ({ page }) => {
-    let reply: { status: number; body: unknown } = { status: 503, body: { detail: "Apollo API anahtarı ayarlı değil (APOLLO_API_KEY)." } };
-    let sent: unknown = null;
-    await page.context().route("**/api/decision-makers/search", async (route) => {
-      if (route.request().method() === "OPTIONS") return route.fulfill({ status: 204, headers: corsHeaders });
-      sent = route.request().postDataJSON();
-      return route.fulfill({ status: reply.status, headers: corsHeaders, contentType: "application/json", body: JSON.stringify(reply.body) });
-    });
-
-    await page.goto("/decision-makers");
-    const search = page.getByRole("region", { name: "Apollo ile karar vericileri ara" });
-    await search.getByLabel("Şirket alan adı").fill("acme.com");
-    await search.getByRole("button", { name: "Karar vericileri ara" }).click();
-    await expect(search.getByRole("alert")).toHaveText("Apollo API anahtarı ayarlı değil (APOLLO_API_KEY).");
-
-    reply = { status: 200, body: { people: [
-      { first_name: "Ada", last_name_obfuscated: "L***e", title: "Engineering Manager", company: "Acme", has_email: true },
-    ] } };
-    await search.getByRole("button", { name: "Karar vericileri ara" }).click();
-    await expect(search.getByRole("listitem")).toHaveText(/Ada L\*\*\*e.*Engineering Manager — Acme/);
-    await expect(search.getByRole("alert")).toHaveCount(0);
-    expect(sent).toEqual({ company_domain: "acme.com", location: null });
   });
 
   test("kanban warns when a draft came from the template engine instead of AI", async ({ page }) => {

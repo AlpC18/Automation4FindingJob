@@ -40,18 +40,9 @@ export default function CommandPalette() {
   const items: ActionItem[] = [
     { id: "dash", name: "Genel Bakış Dashboard", category: "Navigasyon", href: "/", icon: LayoutDashboard },
     { id: "auto", name: "Onay bekleyen başvurular", category: "Navigasyon", href: "/auto-apply", icon: Send },
-    { id: "sem", name: "Anlamsal arama", category: "Navigasyon", href: "/semantic-search", icon: Sparkles },
-    { id: "prof", name: "LinkedIn & GitHub Profil Optimizatörü", category: "Navigasyon", href: "/profile-optimizer", icon: UserCheck },
     { id: "fol", name: "Akıllı Takip & Mülakat Takvimi", category: "Navigasyon", href: "/follow-up", icon: Calendar },
-    { id: "outreach", name: "Yöneticiye Doğrudan Ulaşma (Cold Outreach)", category: "Navigasyon", href: "/cold-outreach", icon: Mail },
-    { id: "negotiator", name: "Maaş & Teklif Pazarlık Koçu", category: "Navigasyon", href: "/offer-negotiator", icon: Award },
     { id: "onb", name: "Hızlı kurulum", category: "Navigasyon", href: "/onboarding", icon: Zap },
-    { id: "star", name: "STAR Mülakat Hazırlık Koçu", category: "Navigasyon", href: "/star-prep", icon: Target },
-    { id: "sal", name: "Maaş İstihbarat Arama Motoru", category: "Navigasyon", href: "/salary-intel", icon: DollarSign },
-    { id: "ups", name: "Upskill & Öğrenme Yol Haritası", category: "Navigasyon", href: "/upskill", icon: GraduationCap },
-    { id: "rep", name: "HTML Rapor Oluşturucu", category: "Navigasyon", href: "/reports", icon: FileText },
     { id: "port", name: "Portal Sağlık ve Scraper Durumu", category: "Navigasyon", href: "/portal-health", icon: Activity },
-    { id: "car", name: "Kariyer Yolu Keşif Haritası", category: "Navigasyon", href: "/career-map", icon: Compass },
   ];
 
   useEffect(() => {

@@ -76,11 +76,6 @@ class Settings(BaseSettings):
     # LLM & AI Keys (Optional, fallback to smart rule-based engine if empty)
     OPENAI_API_KEY: str = os.getenv("OPENAI_API_KEY", "")
     OPENAI_MODEL: str = os.getenv("OPENAI_MODEL", "gpt-4o")
-    VOICE_STT_MODEL: str = os.getenv("VOICE_STT_MODEL", "whisper-1")
-    VOICE_TTS_MODEL: str = os.getenv("VOICE_TTS_MODEL", "tts-1")
-    VOICE_TTS_VOICE: str = os.getenv("VOICE_TTS_VOICE", "alloy")
-    VOICE_TTS_PROVIDER: str = os.getenv("VOICE_TTS_PROVIDER", "openai")
-    VOICE_EDGE_TTS_VOICE: str = os.getenv("VOICE_EDGE_TTS_VOICE", "en-US-AriaNeural")
     ANTHROPIC_API_KEY: str = os.getenv("ANTHROPIC_API_KEY", "")
     ANTHROPIC_MODEL: str = os.getenv("ANTHROPIC_MODEL", "claude-sonnet-5-5")
     # Daily cap on Anthropic tokens (input + output); past it the template engine answers. 0 disables the cap.
@@ -123,7 +118,6 @@ class Settings(BaseSettings):
     ARBEITNOW_API_URL: str = os.getenv("ARBEITNOW_API_URL", "https://www.arbeitnow.com/api/job-board-api")
     # Company career boards to scan, e.g. "greenhouse:stripe,lever:spotify,ashby:ramp".
     COMPANY_BOARDS: str = os.getenv("COMPANY_BOARDS", "")
-    APOLLO_API_KEY: str = os.getenv("APOLLO_API_KEY", "")
     
     # Proxy & Scraping
     RESIDENTIAL_PROXY_URL: str = os.getenv("RESIDENTIAL_PROXY_URL", "")
@@ -147,14 +141,9 @@ class Settings(BaseSettings):
     DAILY_LIMIT_UPWORK: int = 20
     DAILY_LIMIT_KOSOVAJOB: int = 35
     DAILY_LIMIT_GLOBAL_REMOTE: int = 30
-    # Cold emails to people who did not ask for them; replies to recruiters are not counted.
-    DAILY_LIMIT_OUTREACH: int = int(os.getenv("DAILY_LIMIT_OUTREACH", "10"))
     # Driving LinkedIn with the saved login breaks its terms and can get the account restricted, so it is opt-in.
     LINKEDIN_AUTOMATION_ENABLED: bool = _env_bool("LINKEDIN_AUTOMATION_ENABLED", False)
     
-    # Telegram Bot & Mobile Dispatch
-    TELEGRAM_BOT_TOKEN: str = os.getenv("TELEGRAM_BOT_TOKEN", "")
-    TELEGRAM_CHAT_ID: str = os.getenv("TELEGRAM_CHAT_ID", "")
 
     # Inbox & Email Listener
     IMAP_HOST: str = os.getenv("IMAP_HOST", "")
@@ -186,9 +175,6 @@ class Settings(BaseSettings):
     # Company Research Cache
     COMPANY_CACHE_TTL_DAYS: int = _env_int("COMPANY_CACHE_TTL_DAYS", 7)
 
-    # Notion Integration
-    NOTION_API_KEY: str = os.getenv("NOTION_API_KEY", "")
-    NOTION_DATABASE_ID: str = os.getenv("NOTION_DATABASE_ID", "")
 
     # Portal Health Check
     PORTAL_HEALTH_MIN_SCORE: int = 50  # below this, portal is flagged as degraded
@@ -213,7 +199,6 @@ class Settings(BaseSettings):
             },
             "providers": {
                 "llm": self.ACTIVE_LLM_PROVIDER,
-                "tts": self.VOICE_TTS_PROVIDER,
                 "vector": self.VECTOR_BACKEND,
             },
             "scraping": {

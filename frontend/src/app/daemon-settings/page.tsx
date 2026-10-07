@@ -2,7 +2,7 @@
 import { notify } from "@/lib/notify";
 import { useLanguage } from "@/lib/i18n";
 import { useEffect, useState } from "react";
-import { Play, Square, RefreshCw, Radio, Bell } from "lucide-react";
+import { Play, Square, RefreshCw, Radio } from "lucide-react";
 import { fetchFromApi } from "@/lib/api";
 
 export default function DaemonSettingsPage() {
@@ -10,11 +10,6 @@ export default function DaemonSettingsPage() {
   const [status, setStatus] = useState<any>(null);
   const [, setLoading] = useState(true);
   const [actionLoading, setActionLoading] = useState(false);
-
-  // Webhook Test Form State
-  const [slackUrl, setSlackUrl] = useState("");
-  const [discordUrl, setDiscordUrl] = useState("");
-  const [webhookResult, setWebhookResult] = useState<string | null>(null);
 
   async function loadStatus() {
     try {
@@ -59,43 +54,6 @@ export default function DaemonSettingsPage() {
     }
   }
 
-  async function handleTestSlack() {
-    if (!slackUrl) return notify(t("Lütfen Slack Webhook URL girin."));
-    try {
-      const res = await fetchFromApi("/webhook/slack", {
-        method: "POST",
-        body: JSON.stringify({
-          webhook_url: slackUrl,
-          title: "Test Uyarısı: %92 Uyumlu İlan Bulundu",
-          message: "Autonomous Career Agent Engine başarıyla Slack kanalınıza bağlandı.",
-          company: "Stripe",
-          score: 92
-        })
-      });
-      setWebhookResult(res.success ? "Slack testi başarılı!" : `Hata: ${res.error}`);
-    } catch (e) {
-      setWebhookResult("Slack bağlantı hatası.");
-    }
-  }
-
-  async function handleTestDiscord() {
-    if (!discordUrl) return notify(t("Lütfen Discord Webhook URL girin."));
-    try {
-      const res = await fetchFromApi("/webhook/discord", {
-        method: "POST",
-        body: JSON.stringify({
-          webhook_url: discordUrl,
-          title: "Test Uyarısı: Mülakat Daveti Alındı",
-          message: "Discord kariyer kanalınız başarıyla aktive edildi.",
-          company: "Shopify",
-          score: 88
-        })
-      });
-      setWebhookResult(res.success ? "Discord testi başarılı!" : `Hata: ${res.error}`);
-    } catch (e) {
-      setWebhookResult("Discord bağlantı hatası.");
-    }
-  }
 
   return (
     <div className="space-y-6 max-w-5xl mx-auto">
@@ -105,7 +63,7 @@ export default function DaemonSettingsPage() {
           <h1 className="text-2xl font-bold text-white flex items-center gap-3">
             <Radio className="w-7 h-7 text-emerald-400" /> {t("Otomatik çalışma ayarları")}</h1>
           <p className="text-slate-400 mt-1">
-            {t("Kullanıcı arayüzü kapalıyken bile arka planda çalışan zamanlanmış otonom taramaları ve Slack/Discord entegrasyonlarını yönetin.")}</p>
+            {t("Kullanıcı arayüzü kapalıyken bile arka planda çalışan zamanlanmış otonom taramaları yönetin.")}</p>
         </div>
         <button
           onClick={loadStatus}
@@ -186,56 +144,6 @@ export default function DaemonSettingsPage() {
           >
             {t("Sabah Başvuru Hazırlığını Şimdi Çalıştır")}</button>
         </div>
-      </div>
-
-      {/* Webhook Hub Config Card */}
-      <div className="bg-slate-900/60 border border-slate-800 rounded-2xl p-6 space-y-4">
-        <div className="text-sm font-bold text-white flex items-center gap-2">
-          <Bell className="w-4 h-4 text-blue-400" />
-          <span>{t("Slack & Discord Webhook Entegrasyon Kanalı")}</span>
-        </div>
-
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-          <div className="space-y-2">
-            <label className="text-xs text-slate-400 uppercase font-mono">{t("Slack Incoming Webhook URL")}</label>
-            <div className="flex gap-2">
-              <input
-                value={slackUrl}
-                onChange={(e) => setSlackUrl(e.target.value)}
-                placeholder="https://hooks.slack.com/services/..."
-                className="flex-1 bg-slate-950/80 border border-slate-700/80 rounded-xl px-3 py-2 text-xs text-white"
-              />
-              <button
-                onClick={handleTestSlack}
-                className="px-3 py-2 bg-slate-800 hover:bg-slate-700 text-xs font-semibold text-slate-300 rounded-xl"
-              >
-                {t("Test mesajı gönder")}</button>
-            </div>
-          </div>
-
-          <div className="space-y-2">
-            <label className="text-xs text-slate-400 uppercase font-mono">{t("Discord Webhook URL")}</label>
-            <div className="flex gap-2">
-              <input
-                value={discordUrl}
-                onChange={(e) => setDiscordUrl(e.target.value)}
-                placeholder="https://discord.com/api/webhooks/..."
-                className="flex-1 bg-slate-950/80 border border-slate-700/80 rounded-xl px-3 py-2 text-xs text-white"
-              />
-              <button
-                onClick={handleTestDiscord}
-                className="px-3 py-2 bg-slate-800 hover:bg-slate-700 text-xs font-semibold text-slate-300 rounded-xl"
-              >
-                {t("Test mesajı gönder")}</button>
-            </div>
-          </div>
-        </div>
-
-        {webhookResult && (
-          <div className="p-3 bg-slate-950 border border-slate-800 rounded-xl text-xs text-slate-300 font-mono">
-            {webhookResult}
-          </div>
-        )}
       </div>
     </div>
   );

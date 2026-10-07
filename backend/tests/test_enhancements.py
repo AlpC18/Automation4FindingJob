@@ -63,15 +63,6 @@ def test_multilingual_cultural_adaptation():
     assert "Merhaba" in tr_res["cover_letter"]
     assert "Türkçe" in tr_res["culture_label"]
 
-def test_email_finder_patterns():
-    res = email_finder.predict_decision_maker_emails("Bujar Kutleshi", "Kutleshi Tech")
-    assert res["domain"] == "kutleshitech.com"
-    assert res["primary_email"] == "bujar.kutleshi@kutleshitech.com"
-    assert len(res["candidate_permutations"]) >= 3
-    assert res["verification_status"] == "UNVERIFIED_PATTERN"
-    assert all("Unverified" in item["confidence"] for item in res["candidate_permutations"])
-
-
 def test_outreach_never_reports_simulated_success_without_smtp(monkeypatch):
     monkeypatch.setattr(settings, "SMTP_HOST", "")
     monkeypatch.setattr(settings, "SMTP_USER", "")
@@ -197,39 +188,6 @@ def test_ats_pdf_themes_and_xml_safety():
         theme="emerald"
     )
     assert cl_buf.getvalue().startswith(b"%PDF")
-
-@pytest.mark.asyncio
-async def test_telegram_briefing_and_commands():
-    from backend.app.modules.outcome.telegram_bot import telegram_bot
-    res = await telegram_bot.dispatch_daily_briefing()
-    assert "briefing" in res
-    assert "Günlük Brifing" in res["briefing"]
-
-    # Test commands
-    status_cmd = telegram_bot.handle_incoming_command("/status")
-    assert status_cmd["action"] == "STATUS"
-    assert "Kanban" in status_cmd["reply"]
-
-    apply_cmd = telegram_bot.handle_incoming_command("/apply job_999")
-    assert apply_cmd["action"] == "APPROVE_APPLY"
-
-def test_voice_interview_coach_metrics():
-    from backend.app.modules.interview.voice_coach import voice_coach
-    sample_answer = (
-        "When I was at my previous company, we needed to optimize database latency. "
-        "I built a Redis caching layer and optimized query indexes. "
-        "This resulted in a 40% latency reduction and improved throughput significantly, like you know."
-    )
-    metrics = voice_coach.evaluate_vocal_performance(
-        question="Tell me about a technical challenge you solved.",
-        transcript=sample_answer,
-        duration_seconds=20.0
-    )
-    assert metrics["wpm"] > 50
-    assert metrics["total_fillers"] >= 1
-    assert metrics["star_breakdown"]["situation"] is True
-    assert metrics["star_breakdown"]["result"] is True
-    assert metrics["overall_score"] >= 60
 
 @pytest.mark.asyncio
 async def test_inbox_email_classification_and_scheduling():

@@ -1,8 +1,6 @@
 "use client";
 
 import { notify } from "@/lib/notify";
-import dynamic from "next/dynamic";
-import PageTabs from "@/components/PageTabs";
 import { useDeferredValue, useEffect, useMemo, useRef, useState } from "react";
 import Link from "next/link";
 import {
@@ -31,7 +29,7 @@ import { formatTimestamp, jobFreshness, linkStatus } from "@/lib/scan-status.cjs
 import ScanStatusPanel, { type ScanStatus } from "@/components/ScanStatusPanel";
 import EmptyFeedGuide from "@/components/EmptyFeedGuide";
 
-function JobsPage() {
+export default function JobsPage() {
   const { locale, translate: t } = useLanguage();
   const [jobs, setJobs] = useState<any[]>([]);
   const [, setLoading] = useState(true);
@@ -831,19 +829,4 @@ function JobsPage() {
       </div>}
     </div>
   );
-}
-
-// Loaded only when their tab is opened, so this page stays as light as before.
-const SeenJobsPage = dynamic(() => import("../seen-jobs/page"));
-const SemanticSearchPage = dynamic(() => import("../semantic-search/page"));
-
-// Related screens live here as tabs so the menu stays short; each still has its own route.
-const TABS = [
-    { label: "İş ilanları", Component: JobsPage },
-    { label: "Görülen ilanlar", Component: SeenJobsPage },
-    { label: "Anlamsal arama", Component: SemanticSearchPage },
-];
-
-export default function JobsPageWithTabs() {
-  return <PageTabs tabs={TABS} />;
 }

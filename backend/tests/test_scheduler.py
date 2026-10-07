@@ -85,28 +85,6 @@ def test_scan_sources_and_queries_have_sane_defaults(monkeypatch):
     assert module.scan_queries({"target_role": "A", "target_roles": ["A", "B", "C", "D", "E"]}) == ["A", "B", "C", "D"]
 
 
-def test_morning_prep_drafts_and_sends_one_summary(daemon, monkeypatch):
-    from backend.app.modules.outcome import today as today_module
-    sent = []
-
-    async def prepare(min_score, max_daily_limit, auto_request_approval):
-        return {"status": "success", "prepared_count": 2}
-
-    async def notify(message):
-        sent.append(message)
-
-    monkeypatch.setattr(module.auto_apply_pipeline, "scan_and_prepare", prepare)
-    monkeypatch.setattr(today_module, "get_today_actions", lambda: {"counts": {"inbox_reply": 1}, "actions": [{"kind": "new_matches", "count": 4}]})
-    monkeypatch.setattr(module.telegram_dispatcher, "is_configured", lambda: True)
-    monkeypatch.setattr(module.telegram_dispatcher, "send_notification", notify)
-
-    result = asyncio.run(daemon.trigger_morning_prep())
-
-    assert result["prepared_count"] == 2
-    assert len(sent) == 1 and "2 ilan için başvuru taslağı hazırlandı" in sent[0] and "4 yeni yüksek uyumlu ilan" in sent[0]
-    assert module.morning_message(0, {}) is None
-
-
 def test_a_failed_morning_prep_is_reported(daemon, monkeypatch):
     async def prepare(**kwargs):
         raise RuntimeError("queue unreadable")
@@ -180,3 +158,13 @@ def test_the_loop_runs_a_job_once_at_its_minute_and_stops_cleanly(daemon, monkey
 
     assert (started["status"], again["status"], stopped["status"], idle["status"]) == ("started", "already_running", "stopped", "not_running")
     assert ran == ["nightly"] and daemon.total_cycles == 1 and daemon.is_running is False
+
+
+def test_morning_prep_reports_how_many_drafts_it_prepared(daemon, monkeypatch):
+    async def prepare(min_score, max_daily_limit, auto_request_approval):
+        return {"status": "success", "prepared_count": 2}
+
+    monkeypatch.setattr(module.auto_apply_pipeline, "scan_and_prepare", prepare)
+
+    assert asyncio.run(daemon.trigger_morning_prep())["prepared_count"] == 2
+    assert daemon.events[-1] == {"action": "morning_prep_completed", "prepared_count": 2, "timestamp": daemon.last_morning_run}

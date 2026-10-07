@@ -33,7 +33,6 @@ Canlı ilan akışında `remote` kaynağı RemoteOK, Arbeitnow, Remotive, Jobicy
 
 Apify sağlayıcıları `/sources` ekranından tenant bazında ayarlanabilir; çalışma geçmişi ve son hata bu ekranda görünür. Arka plan iş kuyruğu `/inbox` içinden izlenir. SQLite kullanan hesaplar aynı ekrandan tutarlı veritabanı yedeği indirebilir. Yedekten dönmek için uygulamayı durdurun, arşivi ilgili `career_engine.db` (tenant kurulumunda `tenants/<tenant-id>.db`) konumuna geri koyun, sonra uygulamayı başlatın. PostgreSQL compose dağıtımlarında günlük otomatik yedekleme de etkinleşir. Worker heartbeat'i 20 dakika aşan işler kuyruk ekranında başarısız gösterilir ve yeniden denenebilir.
 
-İlan toplayıcı URL izleme parametrelerini atıp ilan URL'si ve normalize rol/şirket adı üzerinden tekrarları birleştirir; 90 günden eski veya temel bilgisi eksik kayıtları yeni akışa almaz. `/jobs` içinden rol aramalarını kaydedebilirsiniz. Scheduler çalışıyorsa kayıtlı aramalar gece taranır ve yüksek eşleşmeler bildirim merkezine yazılır. Başvuru taslağı hazırlanırken kullanılan profil sürümü, doğrulanabilir beceri vurguları ve dikkat edilmesi gereken yetkinlik farkları saklanır; taslak kullanıcı incelemesi olmadan gönderilmez. `/analytics` gerçek başvuru durumlarını kaynak, rol ve profil sürümü bazında gösterir. Ana sayfadaki profil hazırlık yüzdesi onboarding'de eksik kalan alanları belirtir.
 
 ```bash
 # Her sırrı kriptografik olarak üretir, .env dosyasını 0600 izinle oluşturur.
@@ -61,7 +60,6 @@ Servisler açıldığında:
 | **1.2 Kazıma & Güvenlik** | `/scrape` | Anahtarsız kaynaklar (KosovaJob, RemoteOK, Arbeitnow, Remotive, Jobicy, Himalayas, şirket kariyer sayfaları) ve Apify üzerinden portallar; Hayalet İlan (Ghost Job) tespiti ve Günlük Güvenlik Kotaları. Ayrıntı aşağıdaki "İlan kaynakları" bölümünde. |
 | **1.3 Algoritmik Sıralama** | `/rank` | ATS Eşleşme Skoru (%0-100), Kırmızı Çizgi (Red Flag) tespiti, Yetenek Boşluğu (Skill Gap) ve Bölgesel Maaş Skalası. |
 | **1.4 Humanizer & Multi-Agent** | `/apply` | Anti-AI Humanizer Engine, LangGraph sıralı iş akışı, Form Memory Store (Easy Apply), Micro-Case Study ve Karar Verici X-Ray Dorkları. |
-| **1.5 Mülakat & Pazarlık** | `/interview` | Senaryo bazlı teknik/STAR mülakat simülatörü ve PRD 3.4 standardında Karşı Teklif (Counter-Offer) e-posta üreteci. |
 | **1.6 Takip & Analitik** | `/outcome` | Kanban başvuru takip paneli, Dönüşüm Hunisi (Conversion Funnel), A/B üslup testleri ve 7./14. gün kibar takip otomasyonu. |
 
 ---
@@ -104,9 +102,6 @@ Metinler yüksek **Burstiness** (cümle boyu varyasyonu) ve zengin söz dağarc�
    * Google Cloud Console (Gmail REST API) ve Microsoft Azure AD (Graph API) üzerinden tek tıkla resmi OAuth2 yetkilendirmesi.
    * Uygulama şifresi (App Password) ihtiyacını ortadan kaldırır. Gelen e-postaları otonom olarak çekip Inbox AI sınıflayıcısına ve Kanban durum makinesine aktarır.
 
-4. **Sesli Mülakat API'si (Whisper + TTS):**
-   * `/api/interview/voice/transcribe` multipart ses dosyasını OpenAI Whisper'a gönderir.
-   * `/api/interview/voice/synthesize` ve `/stream` soruyu seslendirir. `VOICE_TTS_PROVIDER=openai` OpenAI TTS'i, `edge` anahtarsız Edge TTS'i, `auto` ise OpenAI anahtarı yokken Edge TTS'i seçer. Edge adapter'ı MP3 döndürür.
    * `OPENAI_API_KEY` yoksa arayüz tarayıcı Speech API fallback'ini kullanır; sunucu uçları açıkça `503` döner.
    * Gmail ve Microsoft OAuth senkronizasyonu unread mesajları çekip Inbox Agent'a aktarır; provider message ID deduplication ile aynı e-posta tekrar işlenmez. OAuth access token'ları süresi dolduğunda refresh token ile yenilenir.
 
@@ -114,7 +109,6 @@ Metinler yüksek **Burstiness** (cümle boyu varyasyonu) ve zengin söz dağarc�
    * Geliştirme varsayılanı SQLite'tır. Docker Compose varsayılan olarak PostgreSQL + pgvector ile başlar; `DATABASE_URL=sqlite:///...` ile yerel fallback korunur.
    * Geçiş geriye dönük qmark SQL uyumluluk katmanıyla kademeli yapılabilir; PostgreSQL modunda seen-job kayıtları ve semantic search aynı veritabanında tutulur. SQLite modunda Chroma fallback'i korunur.
    * Compose ayrıca `daemon-worker` servisini çalıştırır. Bu servis web API'den bağımsız olarak 24/7 scheduler'ı yürütür: 03:30 gece taraması, 08:00 taslak hazırlığı ve Telegram bildirimi. Yerel API sürecinde aynı daemon'ı çalıştırmak isterseniz `AUTO_START_DAEMON=true` kullanabilirsiniz; ikisini aynı anda etkinleştirmeyin.
-   * Portfolyo ekranı hem `index.html` hem de `index.html + README.md + vercel.json` içeren `portfolio-site.zip` deploy paketini üretebilir.
    * PDF doğrulama katmanı `pypdf` ile text-layer ve ATS keyword kontrollerini container içinde harici Poppler kurulumu olmadan yapabilir.
 
 6. **Yedekleme ve kurtarma:**
@@ -144,7 +138,6 @@ Bot koruması olan portallar (Indeed, Glassdoor, Kariyer.net) doğrudan taranmaz
 * Eşleşme puanı kural tabanlı bir tahmindir (beceri örtüşmesi 50, ilan başlığının hedef role benzerliği 30, deneyim 20); işveren ATS puanı değildir.
 * Yapay zekâ sağlayıcısı yanıt vermezse niyet mektubu genel bir şablondan üretilir. Bu durum Kanban'da "Şablon metin" uyarısıyla işaretlenir; böyle bir metin gönderilmeden önce yeniden üretilmelidir.
 * "Sistem kontrolü" ekranı bir anahtarın girilmiş olmasına bakar, sağlayıcının gerçekten yanıt verdiğini sınamaz.
-* Apollo karar verici araması e-posta ve tam soyadı döndürmez; residential proxy ve Apollo gerçek anahtarla denenmemiştir.
 * Son başvuru tarihi yalnızca kaynak yayınlıyorsa bilinir (KosovaJob, Himalayas, bazı Greenhouse ilanları).
 
 ## 🧪 Testlerin Çalıştırılması

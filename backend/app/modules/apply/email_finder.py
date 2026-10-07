@@ -16,36 +16,6 @@ class DecisionMakerEmailFinder:
         clean = re.sub(r"[^a-zA-Z0-9]", "", company_name.lower())
         return f"{clean}.com" if clean else ""
 
-    def predict_decision_maker_emails(self, full_name: str, company_name: str) -> Dict[str, Any]:
-        """Suggest common address patterns and explicitly mark them unverified."""
-        parts = [part.lower() for part in full_name.split() if part]
-        domain = self.infer_company_domain(company_name)
-        if not parts or not domain:
-            return {
-                "target_name": full_name,
-                "company": company_name,
-                "domain": domain,
-                "primary_email": "",
-                "candidate_permutations": [],
-                "verification_status": "INSUFFICIENT_INPUT",
-            }
-
-        first = parts[0]
-        last = parts[-1] if len(parts) > 1 else ""
-        addresses = [f"{first}.{last}@{domain}", f"{first[0]}{last}@{domain}", f"{first}@{domain}"] if last else [f"{first}@{domain}"]
-        candidates = [
-            {"email": address, "confidence": "Unverified guess", "format": label}
-            for address, label in zip(addresses, ("first.last", "flast", "first"))
-        ]
-        return {
-            "target_name": full_name,
-            "company": company_name,
-            "domain": domain,
-            "primary_email": candidates[0]["email"],
-            "candidate_permutations": candidates,
-            "verification_status": "UNVERIFIED_PATTERN",
-        }
-
     def send_smtp_outreach(
         self,
         to_email: str,

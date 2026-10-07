@@ -14,18 +14,6 @@ def test_scan_queries_come_from_the_profile_with_a_fallback(monkeypatch):
     assert sd.scan_queries({}) == ["Developer"]
 
 
-def test_morning_message_lists_real_counts_or_stays_silent():
-    assert sd.morning_message(0, {"counts": {}, "actions": []}) is None
-    message = sd.morning_message(2, {
-        "counts": {"approve_draft": 2, "follow_up_due": 1, "new_matches": 1},
-        "actions": [{"kind": "new_matches", "count": 5}],
-    })
-    assert "2 ilan için başvuru taslağı hazırlandı." in message
-    assert "• 1 takip zamanı gelen başvuru" in message and "• 2 onay bekleyen taslak" in message
-    assert "• 5 yeni yüksek uyumlu ilan" in message
-    assert message.index("takip zamanı") < message.index("onay bekleyen")
-
-
 def test_nightly_sweep_scans_target_roles_then_ranks_and_reviews(monkeypatch):
     calls = []
     profile = {"target_roles": ["Junior Developer"]}
@@ -50,17 +38,3 @@ def test_nightly_sweep_scans_target_roles_then_ranks_and_reviews(monkeypatch):
 
     assert result["status"] == "success" and result["scraped_count"] == 7 and result["ai_reviewed"] == 3
     assert calls == [("scan", {"queries": ["Junior Developer"], "target_platforms": ["remote", "kosovajob", "techcareer"]}), ("rank", profile), ("review", profile)]
-
-
-def test_telegram_dispatcher_exposes_the_method_its_callers_use(monkeypatch):
-    from backend.app.modules.outcome.telegram_bot import telegram_dispatcher
-
-    sent = []
-
-    async def send_message(text, target_chat_id=None):
-        sent.append(text)
-        return {"status": "DELIVERED"}
-
-    monkeypatch.setattr(telegram_dispatcher, "send_message", send_message)
-    assert asyncio.run(telegram_dispatcher.send_notification("merhaba")) == {"status": "DELIVERED"}
-    assert sent == ["merhaba"]

@@ -5,7 +5,6 @@ import json
 from datetime import datetime, timedelta
 
 from backend.app.modules.apply import company_cache as cache_module
-from backend.app.modules.outcome import webhook_hub as webhook_module
 from backend.app.modules.setup.cv_cleaner import clean_raw_cv_text, convert_to_ats_standard
 from backend.app.tools.job_key import audit_keys, make_job_key, slugify
 
@@ -95,41 +94,3 @@ def test_plain_text_cv_contains_only_what_the_profile_holds():
     for invented in ("SOFTWARE ENGINEER", "2022 - Present", "Bachelor's Degree", "University", "2023", "CANDIDATE"):
         assert invented not in sparse
     assert "ACME" in sparse and "UP" in sparse
-
-
-def test_chat_webhooks_only_post_to_public_web_addresses(monkeypatch):
-    posted = []
-
-    class Reply:
-        status = 204
-
-        def __enter__(self):
-            return self
-
-        def __exit__(self, *args):
-            return False
-
-    monkeypatch.setattr(webhook_module, "_public_http_url", lambda url: (url.startswith("https://hooks."), "blocked"))
-    monkeypatch.setattr(webhook_module.urllib.request, "urlopen", lambda request, timeout=10: posted.append(request) or Reply())
-    hub = webhook_module.webhook_hub
-
-    slack = asyncio.run(hub.send_slack_alert("https://hooks.slack.test/x", "New match", "Take a look", company="Acme", score=88, action_url="https://app.test/j/1"))
-    discord = asyncio.run(hub.send_discord_alert("https://hooks.discord.test/x", "New match", "Take a look", company="Acme", score=88))
-
-    assert slack == {"success": True, "status_code": 204} and discord["success"] is True
-    assert b"Acme" in posted[0].data and b"%88" in posted[1].data
-    for target in ("file:///etc/passwd", "http://127.0.0.1:8000/api/system/backup", ""):
-        assert asyncio.run(hub.send_slack_alert(target, "t", "m"))["success"] is False
-        assert asyncio.run(hub.send_discord_alert(target, "t", "m"))["success"] is False
-    assert len(posted) == 2
-
-
-def test_a_failed_webhook_post_is_reported(monkeypatch):
-    def refuse(request, timeout=10):
-        raise OSError("connection refused")
-
-    monkeypatch.setattr(webhook_module, "_public_http_url", lambda url: (True, ""))
-    monkeypatch.setattr(webhook_module.urllib.request, "urlopen", refuse)
-
-    assert asyncio.run(webhook_module.webhook_hub.send_slack_alert("https://hooks.slack.test/x", "t", "m"))["success"] is False
-    assert asyncio.run(webhook_module.webhook_hub.send_discord_alert("https://hooks.discord.test/x", "t", "m"))["success"] is False

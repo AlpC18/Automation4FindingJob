@@ -1,4 +1,4 @@
-"""Operational controls: test runner, logs, LLM providers, Telegram, and voice coach."""
+"""Operational controls: SMTP settings, logs and LLM providers."""
 
 from typing import Any, Optional
 
@@ -18,8 +18,6 @@ from backend.app.core.smtp_credentials import (
     smtp_configuration_status,
     test_smtp_connection,
 )
-from backend.app.modules.interview.voice_coach import voice_coach
-from backend.app.modules.outcome.telegram_bot import telegram_bot
 
 
 router = APIRouter()
@@ -160,60 +158,7 @@ async def call_llm_provider(req: LLMGenerateRequest):
     return result
 
 
-@router.post("/telegram/dispatch_briefing")
-async def telegram_dispatch_briefing():
-    agent_logger.log_event("TELEGRAM_BOT", "Dispatching daily briefing...")
-    return await telegram_bot.dispatch_daily_briefing()
-
-
-class TelegramAlertRequest(BaseModel):
-    text: str
-    chat_id: Optional[str] = None
-
-
-@router.post("/telegram/send_notification")
-async def telegram_send_notification(req: TelegramAlertRequest):
-    return await telegram_bot.send_message(req.text, req.chat_id)
-
-
-class TelegramCommandRequest(BaseModel):
-    command: str
-
-
-@router.post("/telegram/command")
-def telegram_handle_command(req: TelegramCommandRequest):
-    return telegram_bot.handle_incoming_command(req.command)
-
-
-@router.get("/telegram/status")
-def telegram_status():
-    return {"is_configured": telegram_bot.is_configured(), "events": telegram_bot.get_recent_events()}
-
-
-@router.get("/interview/personas")
-def get_voice_personas():
-    return {"personas": voice_coach.get_personas()}
-
-
 class VoiceEvaluateRequest(BaseModel):
     question: str
     transcript: str
     duration_seconds: Optional[float] = 30.0
-
-
-@router.post("/interview/voice_evaluate")
-def evaluate_voice_answer(req: VoiceEvaluateRequest):
-    agent_logger.log_event(
-        "VOICE_COACH",
-        f"Evaluating voice answer ({len(req.transcript.split())} words, {req.duration_seconds}s)...",
-    )
-    result = voice_coach.evaluate_vocal_performance(
-        question=req.question,
-        transcript=req.transcript,
-        duration_seconds=req.duration_seconds or 30.0,
-    )
-    agent_logger.log_event(
-        "VOICE_COACH",
-        f"Vocal score: {result['overall_score']}/100, WPM: {result['wpm']}, Fluency: %{result['fluency_score']}.",
-    )
-    return result

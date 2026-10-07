@@ -10,8 +10,6 @@ from pydantic import BaseModel, Field
 
 from backend.app.api.profile import fetch_candidate_profile
 from backend.app.core.database import get_db_connection
-from backend.app.core.json_store import read_json_store
-from backend.app.core.tenant import tenant_data_path
 from backend.app.core.profile_versioning import ensure_profile_version
 from backend.app.core.security import decrypt_secret, encrypt_secret
 from backend.app.core.event_logger import agent_logger
@@ -19,10 +17,8 @@ from backend.app.core.llm_client import is_template_engine
 from backend.app.modules.apply.agentic_workflow import application_pipeline
 from backend.app.modules.apply.cv_tailoring import build_tailored_resume_profile
 from backend.app.modules.apply.cultural_engine import cultural_engine
-from backend.app.modules.apply.decision_maker import ApolloError, decision_maker_engine
-from backend.app.modules.apply.email_finder import email_finder
+from backend.app.modules.apply.decision_maker import decision_maker_engine
 from backend.app.modules.apply.form_automator import form_automator
-from backend.app.modules.scrape.rate_limiter import account_health
 from backend.app.modules.setup.pdf_generator import ats_pdf_generator
 
 
@@ -282,101 +278,8 @@ def adapt_culture_language(req: MultilingualRequest):
         job_title=row["title"],
         company=row["company"],
         candidate_name=profile.get("full_name", "Candidate"),
-        top_skills=profile.get("skills", ["Python", "FastAPI", "Next.js"]),
-        rag_metrics="42% proxy maliyet tasarrufu ve %85 otomasyon",
+        top_skills=profile.get("skills") or [],
+        rag_metrics="",
     )
     agent_logger.log_event("CULTURAL_ENGINE", f"Adapted text to {res['culture_label']}.")
-    return res
-
-
-class EmailFinderRequest(BaseModel):
-    full_name: str
-    company_name: str
-
-
-@router.post("/decision-makers/find_email")
-def find_decision_maker_email(req: EmailFinderRequest):
-    res = email_finder.predict_decision_maker_emails(req.full_name, req.company_name)
-    agent_logger.log_event("EMAIL_FINDER", f"Generated an unverified address pattern ({res['verification_status']}).")
-    return res
-
-
-class ApolloSearchRequest(BaseModel):
-    company_domain: str = Field(min_length=4, max_length=253)
-    location: Optional[str] = Field(default=None, max_length=100)
-
-
-@router.post("/decision-makers/search")
-def search_decision_makers(req: ApolloSearchRequest):
-    try:
-        people = decision_maker_engine.search_apollo_people(req.company_domain, req.location)
-    except ValueError as exc:
-        raise HTTPException(status_code=422, detail=str(exc)) from exc
-    except ApolloError as exc:
-        raise HTTPException(status_code=503, detail=str(exc)) from exc
-    agent_logger.log_event("DECISION_MAKER", f"Apollo people search returned {len(people)} result(s).")
-    return {"people": people, "source": "apollo"}
-
-
-class SmtpOutreachRequest(BaseModel):
-    to_email: str
-    subject: str
-    body_text: str
-    # A pattern-guessed address may belong to someone else; sending to one needs an explicit yes.
-    address_is_guess: bool = False
-    guess_confirmed: bool = False
-
-
-class SuppressRecipientRequest(BaseModel):
-    email: str
-
-
-OPT_OUT_LINE = "If you would rather not hear from me again, reply and say so; I will not write again."
-
-
-def _suppression_path():
-    return tenant_data_path("outreach_suppressions.json")
-
-
-def _suppressed_recipients() -> list:
-    return read_json_store(_suppression_path(), [])
-
-
-@router.get("/decision-makers/suppressions")
-def list_suppressed_recipients():
-    return {"suppressed": _suppressed_recipients()}
-
-
-@router.post("/decision-makers/suppressions")
-def suppress_recipient(req: SuppressRecipientRequest):
-    """Record that this person must not be emailed again."""
-    email = req.email.strip().lower()
-    if "@" not in email:
-        raise HTTPException(status_code=422, detail="Geçerli bir e-posta adresi gerekli.")
-    suppressed = sorted({*_suppressed_recipients(), email})
-    path = _suppression_path()
-    path.parent.mkdir(parents=True, exist_ok=True)
-    path.write_text(json.dumps(suppressed, ensure_ascii=False, indent=2), encoding="utf-8")
-    return {"suppressed": suppressed}
-
-
-@router.post("/decision-makers/send_email")
-def send_outreach_email(req: SmtpOutreachRequest):
-    if req.to_email.strip().lower() in _suppressed_recipients():
-        return {"status": "SUPPRESSED", "message": "Bu kişi bir daha yazılmamasını istedi; e-posta gönderilmedi."}
-    if req.address_is_guess and not req.guess_confirmed:
-        return {
-            "status": "CONFIRMATION_REQUIRED",
-            "message": "Bu adres bir tahmin ve başka birine ait olabilir; göndermeden önce onaylaman gerekiyor.",
-        }
-    allowed, _, quota = account_health.can_perform_action("outreach", "message")
-    if not allowed:
-        return {
-            "status": "DAILY_LIMIT_REACHED",
-            "message": f"Bugünkü soğuk e-posta sınırına ulaşıldı ({quota['usage']}/{quota['limit']}); e-posta gönderilmedi.",
-        }
-    res = email_finder.send_smtp_outreach(req.to_email, req.subject, f"{req.body_text.rstrip()}\n\n{OPT_OUT_LINE}")
-    if res["status"] == "SENT":
-        account_health.log_action("outreach", "message")
-    agent_logger.log_event("SMTP_OUTREACH", f"Dispatch status: {res['status']}.")
     return res

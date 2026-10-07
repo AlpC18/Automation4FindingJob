@@ -18,7 +18,6 @@ class AccountHealthManager:
             "upwork": settings.DAILY_LIMIT_UPWORK,
             "kosovajob": settings.DAILY_LIMIT_KOSOVAJOB,
             "remote": settings.DAILY_LIMIT_GLOBAL_REMOTE,
-            "outreach": settings.DAILY_LIMIT_OUTREACH,
         }
 
     def get_today_usage(self, platform: str) -> int:

@@ -29,65 +29,6 @@ def test_saved_apify_tokens_reveal_only_in_local_nonproduction(monkeypatch):
     assert denied.status_code == 403
 
 
-def test_legacy_counter_offer_contract_is_available():
-    response = client.post(
-        "/api/interview/counter_offer",
-        json={
-            "company_name": "Acme",
-            "role_title": "Backend Engineer",
-            "initial_offer": "$100,000",
-            "market_benchmark": "$110,000",
-            "target_amount": "$115,000",
-        },
-    )
-    assert response.status_code == 200
-    payload = response.json()
-    assert payload["recommendation"]["base_salary"] == 100000
-    assert payload["counter_letter"]["status"] == "use_counter_letter_endpoint"
-
-
-def test_voice_provider_endpoints_fail_explicitly_without_key(monkeypatch):
-    monkeypatch.setattr(settings, "OPENAI_API_KEY", "")
-    transcribe = client.post(
-        "/api/interview/voice/transcribe",
-        files={"audio": ("answer.webm", b"audio", "audio/webm")},
-    )
-    synthesize = client.post("/api/interview/voice/synthesize", json={"text": "Merhaba"})
-    synthesize_stream = client.post("/api/interview/voice/synthesize/stream", json={"text": "Merhaba"})
-    assert transcribe.status_code == 503
-    assert synthesize.status_code == 503
-    assert synthesize_stream.status_code == 503
-
-
-def test_edge_tts_provider_returns_audio_without_openai_key(monkeypatch):
-    class FakeCommunicate:
-        def __init__(self, text, voice):
-            self.text = text
-            self.voice = voice
-
-        async def stream(self):
-            yield {"type": "metadata", "data": b"ignored"}
-            yield {"type": "audio", "data": b"fake-mp3"}
-
-    monkeypatch.setitem(sys.modules, "edge_tts", SimpleNamespace(Communicate=FakeCommunicate))
-    monkeypatch.setattr(settings, "OPENAI_API_KEY", "")
-    monkeypatch.setattr(settings, "VOICE_TTS_PROVIDER", "auto")
-    monkeypatch.setattr(settings, "VOICE_EDGE_TTS_VOICE", "tr-TR-EmelNeural")
-
-    response = client.post("/api/interview/voice/synthesize", json={"text": "Merhaba"})
-    stream_response = client.post(
-        "/api/interview/voice/synthesize/stream", json={"text": "Merhaba"}
-    )
-
-    assert response.status_code == 200
-    assert response.headers["x-voice-provider"] == "edge-tts"
-    assert response.headers["content-type"].startswith("audio/mpeg")
-    assert response.content == b"fake-mp3"
-    assert stream_response.status_code == 200
-    assert stream_response.headers["x-voice-provider"] == "edge-tts"
-    assert stream_response.content == b"fake-mp3"
-
-
 def test_api_key_protects_http_and_websocket(monkeypatch):
     monkeypatch.setattr(settings, "API_AUTH_TOKEN", "contract-secret")
     try:
@@ -371,13 +312,6 @@ async def test_oauth_inbox_sync_deduplicates_external_message(monkeypatch):
         )
         conn.commit()
         conn.close()
-
-
-def test_portfolio_static_package_is_downloadable():
-    response = client.post("/api/setup/portfolio/package", json={"custom_headline": "Contract-safe systems"})
-    assert response.status_code == 200
-    assert response.headers["content-type"].startswith("application/zip")
-    assert response.content[:2] == b"PK"
 
 
 def test_jobs_endpoint_decodes_json_columns_when_rows_exist():

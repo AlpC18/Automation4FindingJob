@@ -44,22 +44,10 @@ test.describe("New UI: tabs, sidebar, jobs controls, toast", () => {
     await mockGet(page.context(), "**/auth/mode", { authentication_required: false });
   });
 
-  test("cv-analysis tabs switch to the selected screen", async ({ page }) => {
-    await page.goto("/cv-analysis");
-    const tabs = page.getByRole("tablist");
-    for (const name of ["CV'yi analiz et", "CV analiz haritası", "Profil optimizasyonu"]) {
-      await expect(tabs.getByRole("tab", { name })).toBeVisible();
-    }
-    await expect(tabs.getByRole("tab", { name: "CV'yi analiz et" })).toHaveAttribute("aria-selected", "true");
-    await tabs.getByRole("tab", { name: "CV analiz haritası" }).click();
-    await expect(tabs.getByRole("tab", { name: "CV analiz haritası" })).toHaveAttribute("aria-selected", "true");
-    await expect(page.getByRole("heading", { name: "CV analiz haritası" })).toBeVisible();
-  });
-
-  test("sidebar: the collapsed 'Daha fazla' section opens and reveals Analitik", async ({ page }) => {
+  test("sidebar: the collapsed 'Daha fazla' section opens and reveals its links", async ({ page }) => {
     await page.goto("/jobs");
     const nav = page.getByRole("navigation", { name: "Ana menü" }).first();
-    const analytics = nav.getByRole("link", { name: "Analitik" });
+    const analytics = nav.getByRole("link", { name: "Yazım stili" });
     await expect(analytics).toBeHidden();
     await nav.getByText("Daha fazla", { exact: true }).click();
     await expect(analytics).toBeVisible();

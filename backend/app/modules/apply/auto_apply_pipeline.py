@@ -4,7 +4,7 @@ Coordinates:
 - Candidate job selection (Scored & ATS Matched >= threshold)
 - Drafter-Reviewer agentic CV/Cover Letter generation
 - Approval queue management (pending, approved, rejected, applied)
-- Multi-channel notification (Telegram dispatch + Real-time WebSocket event)
+- Real-time WebSocket event when a draft is ready
 - Rate limiting and daily safety controls
 """
 
@@ -22,7 +22,6 @@ from backend.app.core.tenant import get_tenant_id, tenant_data_path
 from backend.app.core.database import get_db_connection
 from backend.app.modules.scrape.seen_jobs_tracker import seen_jobs_tracker
 from backend.app.modules.apply.agentic_workflow import drafter_reviewer_pipeline
-from backend.app.modules.outcome.telegram_bot import telegram_dispatcher
 from backend.app.modules.outcome.kanban_manager import kanban_manager
 from backend.app.tasks.job_store import create_job, update_job
 
@@ -170,19 +169,6 @@ class AutoApplyPipeline:
                 "title": job.get("title"),
                 "score": job.get("match_score")
             })
-
-            # Telegram push notification
-            if auto_request_approval and telegram_dispatcher.is_configured():
-                try:
-                    await telegram_dispatcher.send_notification(
-                        f"🎯 *Yeni Otomatik Başvuru Onayı Bekliyor*\n\n"
-                        f"🏢 *Şirket:* {job.get('company')}\n"
-                        f"💼 *Pozisyon:* {job.get('title')}\n"
-                        f"📊 *ATS Skoru:* %{job.get('match_score')}\n\n"
-                        f"Web panelinden onaylayıp iletebilirsiniz."
-                    )
-                except Exception:
-                    logger.warning("Could not send the draft notification.", exc_info=True)
 
         self._save()
 

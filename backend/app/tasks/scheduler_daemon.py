@@ -19,23 +19,11 @@ from backend.app.modules.scrape.unified_scraper import unified_scraper
 from backend.app.modules.scrape.saved_search_service import run_enabled_saved_searches
 from backend.app.modules.scrape.source_registry import list_company_boards
 from backend.app.modules.apply.auto_apply_pipeline import auto_apply_pipeline
-from backend.app.modules.outcome.telegram_bot import telegram_dispatcher
 from backend.app.core.tenant import get_tenant_id
 from backend.app.core.database import use_tenant
 
 
 MAX_SCAN_QUERIES = 4
-_TASK_LINES = (
-    ("inbox_reply", "yanıt bekleyen e-posta"),
-    ("follow_up_due", "takip zamanı gelen başvuru"),
-    ("confirm_submission", "portalda teyit bekleyen başvuru"),
-    ("approve_draft", "onay bekleyen taslak"),
-    ("closing_soon", "son başvuru tarihi yaklaşan ilan"),
-    ("interview_prep", "hazırlanılacak mülakat"),
-    ("offer_review", "değerlendirilecek teklif"),
-)
-
-
 def nightly_platforms() -> Optional[List[str]]:
     """Sources for the unattended sweep: NIGHTLY_SCAN_PLATFORMS plus saved company boards; None means every source."""
     platforms = [name.strip().lower() for name in settings.NIGHTLY_SCAN_PLATFORMS.split(",") if name.strip()]
@@ -51,21 +39,6 @@ def scan_queries(profile: Dict[str, Any]) -> List[str]:
     roles = [profile.get("target_role"), *(profile.get("target_roles") or [])]
     queries = list(dict.fromkeys(str(role).strip() for role in roles if str(role or "").strip()))
     return queries[:MAX_SCAN_QUERIES] or [settings.DEFAULT_SCRAPE_QUERY]
-
-
-def morning_message(prepared_count: int, today: Dict[str, Any]) -> Optional[str]:
-    """The morning Telegram summary; None when there is nothing worth a notification."""
-    counts = today.get("counts") or {}
-    lines = [f"• {counts[kind]} {label}" for kind, label in _TASK_LINES if counts.get(kind)]
-    new_matches = next((action.get("count") for action in today.get("actions") or [] if action.get("kind") == "new_matches"), 0)
-    if new_matches:
-        lines.append(f"• {new_matches} yeni yüksek uyumlu ilan")
-    if not lines and not prepared_count:
-        return None
-    header = "🌅 *Günaydın! Bugünün işleri*"
-    if prepared_count:
-        header += f"\n{prepared_count} ilan için başvuru taslağı hazırlandı."
-    return "\n".join([header, *lines, "Ayrıntılar panelin ana sayfasında."])
 
 
 def _scheduled_tenants():
@@ -204,7 +177,7 @@ class AutonomousSchedulerDaemon:
         return await self._trigger_morning_prep_for_current_tenant()
 
     async def _trigger_morning_prep_for_current_tenant(self) -> Dict[str, Any]:
-        """Prepares high-match auto-apply drafts and notifies via Telegram."""
+        """Prepares application drafts for the best matches."""
         async with self._run_lock:
             self.last_morning_run = self._now().isoformat()
             self.last_error = None
@@ -222,15 +195,6 @@ class AutonomousSchedulerDaemon:
                     "prepared_count": prep_result.get("prepared_count", 0),
                     "timestamp": self.last_morning_run,
                 })
-
-                from backend.app.modules.outcome.today import get_today_actions
-
-                message = morning_message(prep_result.get("prepared_count", 0), await asyncio.to_thread(get_today_actions))
-                if telegram_dispatcher.is_configured() and message:
-                    try:
-                        await telegram_dispatcher.send_notification(message)
-                    except Exception as exc:
-                        agent_logger.log_event("DAEMON_ERROR", f"Telegram morning notification failed: {exc}")
 
                 return prep_result
             except Exception as exc:

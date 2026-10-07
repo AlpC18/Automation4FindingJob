@@ -12,71 +12,7 @@ import httpx
 from backend.app.core.config import settings
 from backend.app.prompts.outreach_prompts import DECISION_MAKER_OUTREACH_PROMPT
 
-APOLLO_PEOPLE_SEARCH_URL = "https://api.apollo.io/api/v1/mixed_people/api_search"
-APOLLO_SENIORITIES = ("owner", "founder", "c_suite", "vp", "head", "director", "manager")
-APOLLO_MAX_RESULTS = 10
-_DOMAIN_PATTERN = re.compile(r"^(?=.{4,253}$)([a-z0-9]([a-z0-9-]{0,61}[a-z0-9])?\.)+[a-z]{2,}$")
-_APOLLO_ERRORS = {
-    401: "Apollo API anahtarı geçersiz.",
-    403: "Apollo hesabının bu aramaya erişimi yok; kişi araması için yetkili (master) bir API anahtarı gerekir.",
-    422: "Apollo arama parametrelerini kabul etmedi.",
-    429: "Apollo saatlik istek sınırına ulaşıldı; daha sonra tekrar dene.",
-}
-
-
-class ApolloError(RuntimeError):
-    """Apollo could not be queried; the message is safe to show to the user."""
-
-
-def normalize_company_domain(value: str) -> str:
-    """Accept "https://www.Acme.com/careers" or "acme.com"; return "acme.com" or raise ValueError."""
-    domain = re.sub(r"^[a-z]+://", "", (value or "").strip().lower()).split("/")[0].split("@")[-1]
-    domain = domain.removeprefix("www.")
-    if not _DOMAIN_PATTERN.match(domain):
-        raise ValueError("Geçerli bir şirket alan adı gir (ör. acme.com).")
-    return domain
-
-
 class DecisionMakerEngine:
-    def search_apollo_people(self, company_domain: str, location: Optional[str] = None, limit: int = 5) -> List[Dict[str, Any]]:
-        """Managers and above at a company, from Apollo's People API Search.
-
-        The search itself costs no credits and returns no emails or full surnames;
-        Apollo only reveals those through its paid enrichment endpoints.
-        """
-        if not settings.APOLLO_API_KEY:
-            raise ApolloError("Apollo API anahtarı ayarlı değil (APOLLO_API_KEY).")
-        params: List[tuple] = [("q_organization_domains_list[]", normalize_company_domain(company_domain))]
-        params += [("person_seniorities[]", seniority) for seniority in APOLLO_SENIORITIES]
-        if location and location.strip():
-            params.append(("person_locations[]", location.strip()[:100]))
-        params += [("page", 1), ("per_page", max(1, min(int(limit), APOLLO_MAX_RESULTS)))]
-        try:
-            response = httpx.post(
-                APOLLO_PEOPLE_SEARCH_URL,
-                params=params,
-                headers={"x-api-key": settings.APOLLO_API_KEY, "Accept": "application/json", "Cache-Control": "no-cache"},
-                timeout=20,
-            )
-        except httpx.HTTPError as exc:
-            raise ApolloError("Apollo API'ye ulaşılamadı; ağ bağlantısını kontrol et.") from exc
-        if response.status_code >= 400:
-            raise ApolloError(_APOLLO_ERRORS.get(response.status_code, f"Apollo HTTP {response.status_code} döndürdü."))
-        try:
-            people = response.json().get("people") or []
-        except (ValueError, AttributeError) as exc:
-            raise ApolloError("Apollo beklenmeyen bir yanıt döndürdü.") from exc
-        return [
-            {
-                "first_name": str(person.get("first_name") or ""),
-                "last_name_obfuscated": str(person.get("last_name_obfuscated") or ""),
-                "title": str(person.get("title") or ""),
-                "company": str((person.get("organization") or {}).get("name") or ""),
-                "has_email": bool(person.get("has_email")),
-            }
-            for person in people if isinstance(person, dict)
-        ]
-
     def generate_xray_dork(self, company_name: str, location: str) -> str:
         """
         Builds Google X-Ray search query:

@@ -14,12 +14,7 @@ from backend.app.core.config import production_config_issues, settings
 from backend.app.core.database import init_auth_db, init_db, is_postgres_database
 from backend.app.core.backup_manager import run_periodic_sqlite_backups
 from backend.app.api.router import router as api_router, fetch_candidate_profile
-from backend.app.api.routers.voice import router as voice_router
-from backend.app.api.routers.interview import router as interview_router
-from backend.app.api.routers.integrations import router as integrations_router
-from backend.app.api.routers.portfolio import router as portfolio_router
 from backend.app.api.routers.daemon import router as daemon_router
-from backend.app.api.routers.search import router as search_router
 from backend.app.api.routers.tracking import router as tracking_router
 from backend.app.api.routers.auth import router as auth_router
 from backend.app.api.routers.trust import router as trust_router
@@ -115,12 +110,7 @@ app.add_middleware(RequestMetricsMiddleware)
 # Mount API routes
 app.include_router(api_router, prefix=settings.API_V1_PREFIX)
 app.include_router(auth_router, prefix=settings.API_V1_PREFIX)
-app.include_router(voice_router, prefix=settings.API_V1_PREFIX)
-app.include_router(interview_router, prefix=settings.API_V1_PREFIX)
-app.include_router(integrations_router, prefix=settings.API_V1_PREFIX)
-app.include_router(portfolio_router, prefix=settings.API_V1_PREFIX)
 app.include_router(daemon_router, prefix=settings.API_V1_PREFIX)
-app.include_router(search_router, prefix=settings.API_V1_PREFIX)
 app.include_router(tracking_router, prefix=settings.API_V1_PREFIX)
 app.include_router(trust_router, prefix=settings.API_V1_PREFIX)
 

@@ -26,7 +26,6 @@ export default function FeatureReadiness() {
       case "job_scan": return t("İlan taraması");
       case "email_send": return t("Takip ve tanışma e-postası gönderimi");
       case "inbox_sync": return t("Gelen kutusu senkronizasyonu");
-      case "decision_makers": return t("Karar verici bulma");
       case "stealth_proxy": return t("Tarayıcı otomasyonu için proxy");
       case "automation": return t("Gece taraması ve sabah taslakları");
       default: return id;
@@ -47,7 +46,6 @@ export default function FeatureReadiness() {
         : t("Yalnızca anahtarsız kaynaklar taranıyor; portal bağlamak için Apify ayarla.");
     }
     if (item.level === "on") return t("Hazır.");
-    if (item.id === "decision_makers") return t("Apollo anahtarı yok; yalnızca Google X-Ray sorgusu üretilir.");
     if (item.id === "stealth_proxy") return t("Proxy ayarlı değil; tarayıcı otomasyonu kendi IP adresinden çıkar.");
     if (item.id === "email_send") return t("SMTP ayarlı değil; e-postalar gönderilemez.");
     if (item.id === "inbox_sync") return t("Gmail veya Outlook bağlı değil; yanıtlar otomatik işlenmez.");

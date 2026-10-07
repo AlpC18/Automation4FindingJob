@@ -163,13 +163,6 @@ class InboxAutomationAgent:
             if analysis["classification"] == "INTERVIEW_INVITE":
                 kanban_manager.update_job_status(matched_job_id, "Interview")
                 agent_logger.log_event("INBOX_AGENT", f"Autonomous transition: Job {matched_job_id} moved to 'Interview'.")
-                # Trigger Telegram Alert
-                from backend.app.modules.outcome.telegram_bot import telegram_bot
-                await telegram_bot.send_interview_alert(
-                    company=sender_name or sender_email,
-                    role=subject,
-                    meet_url=analysis["meet_link"]
-                )
             elif analysis["classification"] == "REJECTION":
                 kanban_manager.update_job_status(matched_job_id, "Rejected")
                 agent_logger.log_event("INBOX_AGENT", f"Autonomous transition: Job {matched_job_id} moved to 'Rejected'.")

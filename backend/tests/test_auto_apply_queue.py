@@ -28,7 +28,6 @@ def queue(monkeypatch, tmp_path):
     monkeypatch.setattr(module.seen_jobs_tracker, "mark_status", lambda key, status, notes=None: marked.append((key, status)))
     monkeypatch.setattr(module.seen_jobs_tracker, "mark_applied", lambda key, notes=None, confirmed=False: marked.append((key, "applied")))
     monkeypatch.setattr(module.drafter_reviewer_pipeline, "run_pipeline", draft)
-    monkeypatch.setattr(module.telegram_dispatcher, "is_configured", lambda: False)
     monkeypatch.setattr(module.ws_manager, "broadcast", broadcast)
     monkeypatch.setattr(module.ws_manager, "broadcast_sync", lambda *args, **kwargs: None)
     monkeypatch.setattr(

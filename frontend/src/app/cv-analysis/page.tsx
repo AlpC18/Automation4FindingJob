@@ -1,7 +1,5 @@
 "use client";
 
-import dynamic from "next/dynamic";
-import PageTabs from "@/components/PageTabs";
 import { useCallback, useEffect, useState } from "react";
 import { CheckCircle2, Clock3, FileSearch, ShieldCheck, Sparkles, WandSparkles } from "lucide-react";
 import { requestFromApi, fetchFromApi } from "@/lib/api";
@@ -30,7 +28,7 @@ type CvAnalysisHistory = {
   created_at?: string;
 };
 
-function CvAnalysisPage() {
+export default function CvAnalysisPage() {
   const { translate: t } = useLanguage();
   const [result, setResult] = useState<CvAnalysisResult | null>(null);
   const [sourceFile, setSourceFile] = useState<File | null>(null);
@@ -232,19 +230,4 @@ function CvAnalysisPage() {
       </section>
     </div>
   );
-}
-
-// Loaded only when their tab is opened, so this page stays as light as before.
-const CVHeatmapPage = dynamic(() => import("../cv-heatmap/page"));
-const ProfileOptimizerPage = dynamic(() => import("../profile-optimizer/page"));
-
-// Related screens live here as tabs so the menu stays short; each still has its own route.
-const TABS = [
-    { label: "CV'yi analiz et", Component: CvAnalysisPage },
-    { label: "CV analiz haritası", Component: CVHeatmapPage },
-    { label: "Profil optimizasyonu", Component: ProfileOptimizerPage },
-];
-
-export default function CvAnalysisPageWithTabs() {
-  return <PageTabs tabs={TABS} />;
 }

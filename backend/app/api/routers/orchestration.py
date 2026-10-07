@@ -8,10 +8,7 @@ from pydantic import BaseModel
 from backend.app.api.profile import fetch_candidate_profile
 from backend.app.core.database import get_db_connection
 from backend.app.core.ws_manager import ws_manager
-from backend.app.modules.apply.cold_outreach import cold_outreach_engine
 from backend.app.modules.outcome.follow_up_cadence import follow_up_cadence_engine
-from backend.app.modules.outcome.weekly_digest import weekly_digest_engine
-from backend.app.modules.setup.profile_optimizer import profile_optimizer_agent
 
 
 router = APIRouter()
@@ -31,41 +28,13 @@ async def websocket_event_channel(websocket: WebSocket, api_key: Optional[str] =
         await ws_manager.disconnect(websocket)
 
 
-@router.get("/outcome/digest")
-@router.get("/api/outcome/digest")
-def get_weekly_digest():
-    return weekly_digest_engine.compile_digest()
-
-
-@router.post("/outcome/digest/dispatch")
-@router.post("/api/outcome/digest/dispatch")
-async def dispatch_weekly_digest():
-    return await weekly_digest_engine.send_digest()
-
-
 class OptimizeLinkedInRequest(BaseModel):
     target_role: Optional[str] = None
-
-
-@router.post("/setup/optimize/linkedin")
-@router.post("/api/setup/optimize/linkedin")
-async def optimize_linkedin_profile(req: OptimizeLinkedInRequest):
-    return await profile_optimizer_agent.optimize_linkedin_profile(
-        fetch_candidate_profile(), req.target_role
-    )
 
 
 class AuditGitHubRequest(BaseModel):
     github_username: str
     sample_projects: Optional[List[Dict[str, Any]]] = None
-
-
-@router.post("/setup/optimize/github")
-@router.post("/api/setup/optimize/github")
-async def audit_github_presence(req: AuditGitHubRequest):
-    return await profile_optimizer_agent.audit_github_profile(
-        req.github_username, req.sample_projects
-    )
 
 
 class GenerateCadenceRequest(BaseModel):
@@ -139,31 +108,7 @@ class GenerateOutreachRequest(BaseModel):
     recent_news_or_stack: Optional[str] = None
 
 
-@router.post("/apply/outreach/generate")
-@router.post("/api/apply/outreach/generate")
-async def generate_cold_outreach(req: GenerateOutreachRequest):
-    return await cold_outreach_engine.generate_executive_outreach(
-        manager_name=req.manager_name,
-        manager_title=req.manager_title,
-        company=req.company,
-        target_role=req.target_role,
-        candidate_profile=fetch_candidate_profile(),
-        recent_company_news_or_stack=req.recent_news_or_stack,
-    )
-
-
-@router.get("/apply/outreach/list")
-@router.get("/api/apply/outreach/list")
-def list_cold_outreach():
-    return {"outreach_list": cold_outreach_engine.list_outreach_campaigns()}
-
-
 class OutreachStatusRequest(BaseModel):
     outreach_id: str
     status: str
 
-
-@router.post("/apply/outreach/status")
-@router.post("/api/apply/outreach/status")
-def update_outreach_status(req: OutreachStatusRequest):
-    return {"success": cold_outreach_engine.mark_outreach_status(req.outreach_id, req.status)}

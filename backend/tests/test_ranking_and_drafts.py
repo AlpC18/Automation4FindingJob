@@ -5,7 +5,6 @@ from datetime import date, datetime, timedelta
 
 from backend.app.core.llm_client import is_template_engine, llm_client
 from backend.app.modules.outcome import today as today_module
-from backend.app.modules.outcome import weekly_digest
 from backend.app.modules.rank import scoring_engine
 from backend.app.modules.scrape.live_sources import normalize_job
 
@@ -87,22 +86,6 @@ class _Unclosable:
 
     def close(self):
         pass
-
-
-def test_weekly_applications_count_only_confirmed_ones_from_this_week(monkeypatch):
-    now = datetime.now()
-    recent, old = (now - timedelta(days=2)).isoformat(), (now - timedelta(days=30)).isoformat()
-    jobs = {
-        "confirmed-this-week": {"status": "applied", "applied_at": recent, "first_seen": old},
-        "confirmed-last-month": {"status": "applied", "applied_at": old, "first_seen": old},
-        "moved-but-unconfirmed": {"status": "applied", "first_seen": old},
-    }
-    monkeypatch.setattr(weekly_digest.seen_jobs_tracker, "get_all", lambda: jobs)
-    monkeypatch.setattr(weekly_digest.seen_jobs_tracker, "get_closing_soon", lambda days=5: [])
-    monkeypatch.setattr(weekly_digest, "calculate_funnel_metrics", lambda: {})
-    monkeypatch.setattr(weekly_digest, "get_today_actions", lambda: {"counts": {}})
-
-    assert weekly_digest.WeeklyDigestEngine().compile_digest()["metrics"]["applications_submitted"] == 1
 
 
 def test_cover_letter_prompt_is_grounded_in_the_cv_and_never_invents_a_background():

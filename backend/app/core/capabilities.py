@@ -16,7 +16,6 @@ def build_capabilities(
     ready_portals: List[str],
     smtp_ready: bool,
     inbox_connected: bool,
-    apollo_ready: bool,
     proxy_ready: bool,
     daemon_running: bool,
 ) -> Dict[str, Any]:
@@ -31,7 +30,6 @@ def build_capabilities(
         ),
         _capability("email_send", "on" if smtp_ready else "off", "/preferences"),
         _capability("inbox_sync", "on" if inbox_connected else "off", "/inbox"),
-        _capability("decision_makers", "on" if apollo_ready else "limited", "/decision-makers"),
         _capability("stealth_proxy", "on" if proxy_ready else "limited", "/safety"),
         _capability("automation", "on" if daemon_running else "off", "/daemon-settings"),
     ]
@@ -58,7 +56,6 @@ async def get_capabilities(verify: bool = False) -> Dict[str, Any]:
         ready_portals=[source for source in ACTOR_SOURCES if source_health.get(source, {}).get("configured")],
         smtp_ready=bool(smtp_configuration_status()["configured"]),
         inbox_connected=any(account["connected"] for account in oauth_mail_agent.get_accounts_status().values()),
-        apollo_ready=bool(settings.APOLLO_API_KEY),
         proxy_ready=bool(settings.RESIDENTIAL_PROXY_URL),
         daemon_running=bool(scheduler_daemon.get_status()["is_running"]),
     )

@@ -49,14 +49,12 @@ def test_actions_are_ordered_by_urgency_and_link_to_the_right_screen():
         ("approve_draft", "/auto-apply"),
         ("approve_draft", "/kanban"),
         ("closing_soon", "/jobs?scope=current&minMatch=70"),
-        ("interview_prep", "/interview?job=j4"),
-        ("offer_review", "/offer-negotiator"),
         ("new_matches", "/jobs?scope=current&minMatch=70"),
     ]
-    assert result["total"] == 10
+    assert result["total"] == 8
     assert next(a for a in result["actions"] if a["kind"] == "closing_soon")["days"] == 2
     assert result["actions"][-1]["count"] == 4
-    assert len({a["id"] for a in result["actions"]}) == 10
+    assert len({a["id"] for a in result["actions"]}) == 8
 
 
 def test_long_queues_are_capped_but_still_counted():
@@ -76,8 +74,5 @@ def test_each_stage_unlocks_its_next_steps():
     kinds = lambda job: [step["kind"] for step in next_steps(job)]
     assert kinds({"id": "j", "status": "Draft"}) == []
     assert kinds({"id": "j", "status": "Applied", "submission_confirmed": 0}) == []
-    assert kinds({"id": "j", "status": "Applied", "submission_confirmed": 1}) == ["follow_up", "decision_maker"]
-    assert kinds({"id": "j", "status": "Interview"}) == ["interview_sim", "star_prep", "salary_intel"]
-    assert kinds({"id": "j", "status": "Offer"}) == ["offer_review"]
-    assert kinds({"id": "j", "status": "Rejected"}) == ["upskill"]
-    assert next_steps({"id": "a b/c", "status": "Interview"})[0]["href"] == "/interview?job=a%20b%2Fc"
+    assert kinds({"id": "j", "status": "Applied", "submission_confirmed": 1}) == ["follow_up"]
+    assert kinds({"id": "j", "status": "Interview"}) == []

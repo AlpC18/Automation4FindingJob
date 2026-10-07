@@ -2,66 +2,9 @@ import sqlite3
 
 from backend.app.api.routers import trust
 from backend.app.api.routers.trust import FeedbackRequest
-from backend.app.api.routers.intelligence import SalaryAddRequest
 from backend.app.core.tenant import get_tenant_id, reset_tenant_id, set_tenant_id
-from backend.app.modules.rank.salary_lookup import SalaryLookup, assess_salary_evidence
 from backend.app.modules.rank.salary_benchmark import calculate_salary_benchmark
 
-
-def test_salary_evidence_score_is_metadata_completeness_not_verification():
-    empty = assess_salary_evidence({})
-    assert empty["score"] == 0
-    assert empty["level"] == "limited_evidence"
-    assert empty["independently_verified"] is False
-
-    documented = assess_salary_evidence({
-        "source_name": "Company compensation page",
-        "source_url": "https://example.test/salary",
-        "as_of": "2026-01-15",
-        "sample_size": 12,
-        "source_count": 2,
-    })
-    assert documented["score"] == 100
-    assert documented["level"] == "well_documented"
-    assert documented["independently_verified"] is False
-
-
-def test_salary_lookup_is_isolated_per_tenant(tmp_path):
-    lookup = SalaryLookup(tmp_path / "salary_data.json")
-    tenant_token = set_tenant_id("salary-user-a")
-    try:
-        lookup.add_company("Example Co", salary_median=100000, source_name="User report")
-        lookup.data_path.unlink()
-        lookup.reload_current()
-        assert lookup.stats()["total_companies"] == 0
-    finally:
-        reset_tenant_id(tenant_token)
-
-    tenant_token = set_tenant_id("salary-user-b")
-    try:
-        assert lookup.search("Example Co") == []
-    finally:
-        reset_tenant_id(tenant_token)
-
-
-def test_salary_api_validates_provenance_fields_and_benchmarks_are_labeled_estimates():
-    request = SalaryAddRequest(
-        company="Example Co", source_type="company_disclosed",
-        source_name="Careers page", source_url="https://example.test/pay",
-        as_of="2026-01-01", sample_size=8,
-    )
-    assert request.source_type == "company_disclosed"
-
-    try:
-        SalaryAddRequest(company="Example Co", source_url="javascript:alert(1)")
-        assert False, "Unsafe source URLs must be rejected"
-    except ValueError:
-        pass
-
-    estimate = calculate_salary_benchmark("Senior Developer", "Remote", 6)
-    assert estimate["source_type"] == "modeled_estimate"
-    assert estimate["is_company_reported"] is False
-    assert estimate["evidence_level"] == "estimate_only"
 
 def test_company_feedback_upserts_and_is_tenant_scoped(tmp_path, monkeypatch):
     original_get_tenant_id = get_tenant_id
