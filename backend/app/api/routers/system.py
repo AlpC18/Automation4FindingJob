@@ -7,6 +7,7 @@ import os
 import shutil
 import subprocess
 import tempfile
+from datetime import datetime, timedelta, timezone
 from pathlib import Path
 from typing import Any, Dict
 from urllib.parse import parse_qs, unquote, urlsplit
@@ -42,7 +43,7 @@ def system_metrics():
 # Shared identity/authentication tables are kept in a separate control DB and
 # are never included in export or workspace-data deletion.
 WORKSPACE_DATA_TABLES = (
-    "cv_documents",
+    "cv_documents", "page_visits",
     "career_job_vectors", "application_attribution", "application_packages", "follow_up_queue",
     "inbox_messages", "telegram_events", "oauth_accounts", "linkedin_sessions",
     "seen_jobs", "account_activity_log", "cv_interview_questions", "form_memory",
@@ -283,3 +284,44 @@ async def restore_database_backup(
     except RuntimeError as exc:
         raise HTTPException(status_code=503, detail=str(exc)) from exc
     return {"status": "restored", "safety_backup": safety_backup}
+
+
+class PageVisitRequest(BaseModel):
+    path: str
+
+
+_PAGE_PATH = re.compile(r"^/[a-z0-9-]*$")
+
+
+@router.post("/system/page-visit")
+def record_page_visit(req: PageVisitRequest):
+    """Count one opening of a screen. Only the first path segment is kept: no ids, no query strings."""
+    page = "/" + req.path.split("?")[0].strip("/").split("/")[0].lower()
+    if not _PAGE_PATH.match(page) or len(page) > 60:
+        raise HTTPException(status_code=422, detail="Unknown page.")
+    conn = get_db_connection()
+    try:
+        conn.cursor().execute(
+            "INSERT INTO page_visits (path, day, visits) VALUES (?, ?, 1) ON CONFLICT(path, day) DO UPDATE SET visits = page_visits.visits + 1",
+            (page, datetime.now(timezone.utc).date().isoformat()),
+        )
+        conn.commit()
+    finally:
+        conn.close()
+    return {"recorded": page}
+
+
+@router.get("/system/page-usage")
+def get_page_usage(days: int = 14):
+    """Visits per screen over the last `days` days, most used first."""
+    since = (datetime.now(timezone.utc).date() - timedelta(days=max(1, min(days, 365)))).isoformat()
+    conn = get_db_connection()
+    try:
+        rows = conn.cursor().execute(
+            "SELECT path, SUM(visits) AS visits, MAX(day) AS last_day FROM page_visits WHERE day >= ? GROUP BY path ORDER BY visits DESC, path",
+            (since,),
+        ).fetchall()
+    finally:
+        conn.close()
+    return {"days": days, "pages": [dict(row) for row in rows]}
+

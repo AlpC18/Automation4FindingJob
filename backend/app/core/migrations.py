@@ -87,6 +87,7 @@ def apply_migrations(connection, cursor=None):
             ("saved_searches", "remote_type", "TEXT NOT NULL DEFAULT ''"),
         ],
         "0023_saved_cv_document": [],
+        "0024_page_visits": [],
     }
     for revision, columns in migrations.items():
         if revision in applied:
@@ -284,6 +285,9 @@ def apply_migrations(connection, cursor=None):
             cursor.execute("CREATE INDEX IF NOT EXISTS idx_scraped_jobs_feed ON scraped_jobs(stale_at, match_score DESC, created_at DESC)")
             cursor.execute("CREATE INDEX IF NOT EXISTS idx_scraped_jobs_platform ON scraped_jobs(platform)")
             cursor.execute("CREATE INDEX IF NOT EXISTS idx_scraped_jobs_status ON scraped_jobs(status)")
+        if revision == "0024_page_visits":
+            # Which screens are actually opened; kept on this machine to decide what to remove.
+            cursor.execute("CREATE TABLE IF NOT EXISTS page_visits (path TEXT NOT NULL, day TEXT NOT NULL, visits INTEGER NOT NULL DEFAULT 0, PRIMARY KEY (path, day))")
         if revision == "0023_saved_cv_document":
             # The candidate's own CV file, encrypted; one row per workspace.
             cursor.execute("""

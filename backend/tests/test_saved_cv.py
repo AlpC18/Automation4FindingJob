@@ -126,3 +126,44 @@ def test_turkish_and_varied_cv_headings_are_understood():
     assert fields["skills"] == ["Python", "React", "SQL"] and fields["languages"] == ["Türkçe", "İngilizce"]
     assert fields["summary"] == "Yazılım öğrencisi." and fields["education"]
     assert english["skills"] == ["Go", "Docker"]  # the certifications heading ends the skills section
+
+
+TWO_COLUMN_CV = """Ada Example
+Software Engineer
+Languages: PHP, JavaScript, TypeScript, Python
+Frontend: React, Angular, Tailwind CSS
+Backend: Node.js,Spring Boot, REST APIs
+Tools: Git, Docker, Linux,Postman
+AI & Data: Python (Data Engineering), ML workflows
+ada@example.test | +383 44 000 000 | github.com/ada | Prishtina, Kosovo
+Projects
+Education
+Technical Skills
+Certifications & Courses
+University for Business and Technology — UBT
+2024 – 2027
+• Languages: English (C1 — Fluent), Turkish (C2 — Native), Italian (A2–B1)
+• Google AI Professional Certificate — Google (2026)
+• Billing API (Python, FastAPI) — Invoicing service handling forty thousand invoices a day for regional clients.
+Work Experience
+Software Engineer (Freelance) | Independent
+2025 – Present
+• Delivered custom full-stack web applications for regional clients.
+"""
+
+
+def test_a_two_column_cv_yields_real_skills_not_scrambled_sections():
+    from backend.app.modules.setup.cv_parser import extract_profile_fields
+
+    fields = extract_profile_fields(TWO_COLUMN_CV)
+
+    assert fields["skills"][:6] == ["PHP", "JavaScript", "TypeScript", "Python", "React", "Angular"]
+    assert {"Spring Boot", "Postman", "ML workflows", "Python (Data Engineering)"} <= set(fields["skills"])
+    assert fields["skills"].count("Python") == 1
+    assert not any("Certificate" in skill or "University" in skill or "2024" in skill or "Fluent" in skill for skill in fields["skills"])
+    assert fields["languages"] == ["English (C1 — Fluent)", "Turkish (C2 — Native)", "Italian (A2–B1)"]
+    assert fields["location"] == "Prishtina, Kosovo"
+    assert fields["experience"] == [{
+        "title": "Software Engineer (Freelance)", "company": "Independent", "period": "2025 – Present",
+        "bullets": ["Delivered custom full-stack web applications for regional clients."],
+    }]

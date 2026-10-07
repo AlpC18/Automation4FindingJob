@@ -95,8 +95,28 @@ SECTION_ALIASES = {
 }
 # Headings that end the section before them without starting one this parser reads.
 OTHER_HEADINGS = {"projects", "key projects", "certifications", "certificates", "references", "interests", "hobbies", "awards",
-                  "publications", "volunteering", "courses", "projeler", "sertifikalar", "referanslar", "ilgi alanlari",
+                  "publications", "volunteering", "courses", "certifications and courses", "other", "projeler", "sertifikalar", "referanslar", "ilgi alanlari",
                   "hobiler", "oduller", "kurslar", "gonullu calismalar"}
+
+
+# "Frontend: React, Angular" style lines. Multi-column CVs lose their section order when the text is
+# extracted, but these labelled lines stay intact, so they are the reliable source of skills.
+SKILL_LINE_LABELS = {"languages", "programming languages", "frontend", "front-end", "backend", "back-end", "databases", "database",
+                     "tools", "devops", "cloud", "frameworks", "libraries", "mobile", "testing", "ai and data", "ai", "data",
+                     "technologies", "platforms", "diller", "programlama dilleri", "araclar", "veritabanlari", "teknolojiler"}
+SPOKEN_LANGUAGES = {"english", "turkish", "albanian", "german", "italian", "french", "spanish", "serbian", "arabic", "russian",
+                    "turkce", "ingilizce", "arnavutca", "almanca", "italyanca", "fransizca", "ispanyolca", "sirpca", "arapca", "rusca"}
+_LABELLED_LINE = re.compile(r"^([A-Za-zÀ-ž&/ .+-]{2,30}):\s*(.+)$")
+_LOCATION = re.compile(r"^[A-Za-zÀ-ž .'-]{2,40}, [A-Za-zÀ-ž .'-]{2,40}$")
+
+
+def _split_list(text: str) -> list[str]:
+    """Split on separators that are not inside parentheses: "Python (ETL, ML), SQL" is two items."""
+    return [part.strip(" •●▪-") for part in re.split(r"[,;|•](?![^(]*\))", text) if part.strip(" •●▪-")]
+
+
+def _looks_like_a_skill(item: str) -> bool:
+    return 1 < len(item) < 45 and len(item.split()) <= 4 and not re.search(r"(19|20)\d{2}|—|@", item)
 
 
 def _heading_key(line: str) -> str:
@@ -161,26 +181,50 @@ def extract_profile_fields(text: str) -> dict[str, Any]:
         result["summary"] = " ".join(summary_lines)[:1200]
         confidence["summary"] = 0.62
 
-    skill_lines = section_lines["skills"]
-    if skill_lines:
-        skills = [part.strip(" •●▪-") for line in skill_lines for part in re.split(r"[,;|•]", line)]
-        result["skills"] = list(dict.fromkeys(skill for skill in skills if 1 < len(skill) < 60))[:40]
-        if result["skills"]:
-            confidence["skills"] = 0.62
+    labelled_skills: list[str] = []
+    spoken: list[str] = []
+    for line in lines:
+        labelled = _LABELLED_LINE.match(line)
+        if not labelled:
+            continue
+        label, items = _heading_key(labelled.group(1)), _split_list(labelled.group(2))
+        first_words = {_heading_key(item).split(" ")[0] for item in items if item}
+        if label in {"languages", "diller", "language skills"} and first_words & SPOKEN_LANGUAGES:
+            spoken.extend(items)
+        elif label in SKILL_LINE_LABELS:
+            labelled_skills.extend(items)
 
-    language_lines = section_lines["languages"]
-    if language_lines:
-        result["languages"] = list(dict.fromkeys(part.strip(" •●▪-") for line in language_lines for part in re.split(r"[,;|•]", line) if part.strip(" •●▪-")))[:20]
-        if result["languages"]:
-            confidence["languages"] = 0.58
+    section_skills = [item for line in section_lines["skills"] if not _LABELLED_LINE.match(line) for item in _split_list(line)]
+    skills = [skill for skill in [*labelled_skills, *section_skills] if _looks_like_a_skill(skill)]
+    if skills:
+        result["skills"] = list(dict.fromkeys(skills))[:60]
+        confidence["skills"] = 0.8 if labelled_skills else 0.62
+
+    languages = spoken or [item for line in section_lines["languages"] for item in _split_list(line)]
+    if languages:
+        result["languages"] = list(dict.fromkeys(languages))[:20]
+        confidence["languages"] = 0.75 if spoken else 0.58
+
+    contact_line = next((line for line in lines if _EMAIL.search(line) and "|" in line), "")
+    location = next((part.strip() for part in contact_line.split("|") if _LOCATION.match(part.strip())), "")
+    if location:
+        result["location"] = location
+        confidence["location"] = 0.7
 
     experience: list[dict[str, Any]] = []
+    # `lines` has the bullet marks stripped, so remember which lines carried one.
+    bulleted = {
+        re.sub(r"\s+", " ", raw).strip(" \t•●▪-") for raw in text.splitlines() if raw.strip()[:1] in {"•", "●", "▪", "-"}
+    }
     for line in section_lines["experience"]:
-        bullet = line.lstrip(" •●▪-").strip()
-        if (line[:1] in {"•", "●", "▪", "-"}) and experience:
-            experience[-1]["bullets"].append(bullet[:500])
+        if line in bulleted and experience:
+            experience[-1]["bullets"].append(line[:500])
             continue
         date_match = _DATE.search(line)
+        if date_match and experience and not _DATE.sub("", line).strip(" -–—|,"):
+            # A line that is only a date range belongs to the job above it.
+            experience[-1]["period"] = experience[-1]["period"] or line
+            continue
         parts = [part.strip() for part in re.split(r"\s*(?:\||•|—|–)\s*", line) if part.strip()]
         if len(parts) >= 2:
             record: dict[str, Any] = {"title": parts[0], "company": parts[1], "period": "", "bullets": []}

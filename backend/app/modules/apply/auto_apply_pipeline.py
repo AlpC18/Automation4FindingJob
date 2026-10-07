@@ -19,6 +19,7 @@ from backend.app.core.config import settings
 from backend.app.core.event_logger import agent_logger
 from backend.app.core.ws_manager import ws_manager
 from backend.app.core.tenant import get_tenant_id, tenant_data_path
+from backend.app.core.database import get_db_connection
 from backend.app.modules.scrape.seen_jobs_tracker import seen_jobs_tracker
 from backend.app.modules.apply.agentic_workflow import drafter_reviewer_pipeline
 from backend.app.modules.outcome.telegram_bot import telegram_dispatcher
@@ -28,6 +29,23 @@ from backend.app.tasks.job_store import create_job, update_job
 logger = logging.getLogger(__name__)
 
 QUEUE_FILE = settings.DATA_PATH / "auto_apply_queue.json"
+
+def load_ranked_jobs() -> Dict[str, Dict[str, Any]]:
+    """The current feed as ranking left it, keyed by job id.
+
+    Drafts are chosen from the same table the jobs page shows. The seen-jobs file is never
+    scored by the ranker, so reading candidates from it prepared nothing.
+    """
+    conn = get_db_connection()
+    try:
+        rows = conn.cursor().execute(
+            """SELECT id, title, company, location, url, description, match_score, status FROM scraped_jobs
+               WHERE stale_at IS NULL AND COALESCE(status, 'Draft') IN ('Draft', 'New', '')"""
+        ).fetchall()
+    finally:
+        conn.close()
+    return {row["id"]: dict(row) for row in rows}
+
 
 class AutoApplyPipeline:
     """Orchestrates human-in-the-loop autonomous job submissions."""
@@ -91,7 +109,7 @@ class AutoApplyPipeline:
         Scans for high-matching ranked jobs and prepares application drafts.
         Pushes them to the pending approval queue.
         """
-        all_jobs = seen_jobs_tracker.get_all()
+        all_jobs = load_ranked_jobs()
         candidates = []
         today_applied = self.get_today_count()
 

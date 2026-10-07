@@ -79,3 +79,15 @@ def test_deleting_workspace_data_needs_the_typed_confirmation():
     response = client.request("DELETE", "/api/system/data", json={"confirmation": "yes"})
 
     assert response.status_code == 400
+
+
+def test_page_usage_counts_screens_without_ids_or_queries():
+    for path in ("/jobs", "/jobs?scope=current", "/jobs/123/details", "/kanban"):
+        assert client.post("/api/system/page-visit", json={"path": path}).status_code == 200
+    assert client.post("/api/system/page-visit", json={"path": "/../etc/passwd"}).status_code == 422
+    assert client.post("/api/system/page-visit", json={"path": "/<script>"}).status_code == 422
+
+    usage = {page["path"]: page["visits"] for page in client.get("/api/system/page-usage").json()["pages"]}
+
+    assert usage["/jobs"] >= 3 and usage["/kanban"] >= 1
+    assert all("?" not in path and path.count("/") == 1 for path in usage)

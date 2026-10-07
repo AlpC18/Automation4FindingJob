@@ -24,7 +24,7 @@ def queue(monkeypatch, tmp_path):
     async def broadcast(*args, **kwargs):
         return None
 
-    monkeypatch.setattr(module.seen_jobs_tracker, "get_all", lambda: JOBS)
+    monkeypatch.setattr(module, "load_ranked_jobs", lambda: JOBS)
     monkeypatch.setattr(module.seen_jobs_tracker, "mark_status", lambda key, status, notes=None: marked.append((key, status)))
     monkeypatch.setattr(module.seen_jobs_tracker, "mark_applied", lambda key, notes=None, confirmed=False: marked.append((key, "applied")))
     monkeypatch.setattr(module.drafter_reviewer_pipeline, "run_pipeline", draft)
@@ -86,3 +86,26 @@ def test_the_queue_survives_a_restart(queue, tmp_path):
     reopened = module.AutoApplyPipeline(queue_path=tmp_path / "queue.json")
 
     assert [app["job_key"] for app in reopened.list_queue()] == ["strong"]
+
+
+def test_draft_candidates_come_from_the_ranked_feed():
+    from backend.app.core.database import get_db_connection
+
+    conn = get_db_connection()
+    cursor = conn.cursor()
+    cursor.execute("DELETE FROM scraped_jobs WHERE id LIKE 'queueprobe-%'")
+    for job_id, status, stale in (("queueprobe-open", "Draft", None), ("queueprobe-applied", "Applied", None), ("queueprobe-stale", "Draft", "2026-01-01")):
+        cursor.execute(
+            "INSERT INTO scraped_jobs (id, title, company, platform, description, match_score, status, stale_at) VALUES (?, 'Dev', 'Acme', 'test', 'x', 90, ?, ?)",
+            (job_id, status, stale),
+        )
+    conn.commit()
+    try:
+        jobs = module.load_ranked_jobs()
+        assert "queueprobe-open" in jobs and jobs["queueprobe-open"]["match_score"] == 90
+        assert "queueprobe-applied" not in jobs and "queueprobe-stale" not in jobs
+    finally:
+        cursor.execute("DELETE FROM scraped_jobs WHERE id LIKE 'queueprobe-%'")
+        conn.commit()
+        conn.close()
+

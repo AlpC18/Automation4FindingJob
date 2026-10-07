@@ -17,6 +17,7 @@ import Toaster from "@/components/Toaster";
 import CommandPalette from "@/components/CommandPalette";
 import NotificationDrawer from "@/components/NotificationDrawer";
 import { useLanguage } from "@/lib/i18n";
+import { fetchFromApi } from "@/lib/api";
 
 // The daily flow stays visible; everything else lives under "Daha fazla" so the menu is short.
 const groups = [
@@ -90,6 +91,12 @@ function isActive(pathname: string, href: string) {
 
 export default function AppShell({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
+
+  // Local usage count per screen, used to decide which features are worth keeping.
+  useEffect(() => {
+    fetchFromApi("/system/page-visit", { method: "POST", body: JSON.stringify({ path: pathname }) })
+      .catch(() => { /* counting is best-effort; the page itself must not depend on it */ });
+  }, [pathname]);
   const { locale, setLocale, translate: t } = useLanguage();
   const [theme, setTheme] = useState<"dark" | "light">("dark");
   const [mobileOpen, setMobileOpen] = useState(false);

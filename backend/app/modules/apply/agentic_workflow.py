@@ -374,6 +374,8 @@ class MultiAgentApplicationPipeline:
                 raw_draft = self._apply_review_feedback(raw_draft, review)
             else:
                 raw_draft = revision_res["text"]
+                # The letter now comes from the model, whatever produced the first draft.
+                llm_res = revision_res
 
         # 6. Humanizer & QA Loop
         result = self._execute_qa_loop(

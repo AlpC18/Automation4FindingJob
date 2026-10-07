@@ -25,6 +25,8 @@ logger = logging.getLogger(__name__)
 # Room for the model's own reasoning plus the longest reply the app asks for (a CV analysis with a full rewrite).
 ANTHROPIC_MAX_TOKENS = 12000
 ANTHROPIC_TIMEOUT_SECONDS = 240.0
+# Free and self-hosted endpoints are often slow; a full cover letter took longer than a minute on one.
+CUSTOM_TIMEOUT_SECONDS = 180.0
 # USD per million tokens (input, output), Anthropic list prices as of 2026-09; update when the price list changes.
 ANTHROPIC_PRICES_USD_PER_MTOK = {
     "claude-opus-5-5": (4.0, 20.0),
@@ -482,7 +484,7 @@ class LLMClient:
     async def _call_custom(self, system_prompt: str, user_prompt: str, temp: float) -> str:
         """Chat completion against any OpenAI-compatible endpoint (CUSTOM_LLM_BASE_URL)."""
         model = self.custom_model if self.provider == "custom" and self.custom_model else settings.CUSTOM_LLM_MODEL
-        async with httpx.AsyncClient(timeout=60.0) as client:
+        async with httpx.AsyncClient(timeout=CUSTOM_TIMEOUT_SECONDS) as client:
             resp = await client.post(
                 f"{settings.CUSTOM_LLM_BASE_URL.rstrip('/')}/chat/completions",
                 headers={"Authorization": f"Bearer {get_provider_api_key('custom')}"},
