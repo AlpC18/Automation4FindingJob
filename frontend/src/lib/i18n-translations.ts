@@ -1037,6 +1037,12 @@ export const sharedTranslations: Record<string, string> = {
 };
 
 export const laterTranslations: Record<string, string> = {
+  "CV uyum raporu": "Resume fit report", "Uyum raporu alınamadı.": "Could not load the fit report.", "Genel uyum": "Overall match",
+  "İlandaki beceriler": "Skills in the posting", "Rol uyumu": "Role match", "Bu başvuru için yapılacaklar": "What to change for this application",
+  "CV'nde olan anahtar kelimeler": "Keywords your CV has", "İlanda olup CV'nde olmayanlar": "In the posting but not in your CV",
+  "Bu ilana göre uyarlanmış CV": "Resume tailored to this posting", "Özet satırı": "Summary line", "Beceri sırası": "Skill order",
+  "Öne çıkarılacak projeler": "Projects to show first",
+  "The percentage measures how closely your CV matches this posting. It is not a chance of being hired.": "The percentage measures how closely your CV matches this posting. It is not a chance of being hired.",
   "En yüksek ücret (belirtilmişse)": "Highest pay (when stated)",
   "Kullanıcı arayüzü kapalıyken bile arka planda çalışan zamanlanmış otonom taramaları yönetin.": "Manage the scheduled scans that run in the background even when the app is closed.",
   "Göndermeden önce kontrol et: CV'nde karşılığı bulunamayan {count} cümle var.": "Check before sending: {count} sentence(s) are not backed by your CV.",

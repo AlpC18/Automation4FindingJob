@@ -1,5 +1,6 @@
 "use client";
 
+import FitReportButton from "@/components/FitReportButton";
 import Link from "next/link";
 import { AlertTriangle, CheckSquare, DollarSign, ExternalLink, EyeOff, Heart, Layers, Link2, ShieldAlert, Square } from "lucide-react";
 import { getExternalJobUrl } from "@/lib/job-links";
@@ -187,6 +188,7 @@ export default function JobCard({ job, ctx }: { job: any; ctx: any }) {
           </div>
 
           <div className="flex items-center gap-2">
+            <FitReportButton jobId={job.id} />
             <button onClick={() => void prepareApplication(job)} disabled={preparingJob === job.id} className="px-4 py-1.5 rounded-lg bg-blue-600 hover:bg-blue-500 text-white font-semibold transition text-xs shadow-md shadow-blue-600/20 disabled:opacity-50">
               {preparingJob === job.id ? t("Taslak hazırlanıyor…") : t("Başvuru taslağı hazırla")}
             </button>

@@ -18,7 +18,9 @@ from backend.app.modules.apply.agentic_workflow import application_pipeline
 from backend.app.modules.apply.cv_tailoring import build_tailored_resume_profile
 from backend.app.modules.apply.cultural_engine import cultural_engine
 from backend.app.modules.apply.decision_maker import decision_maker_engine
+from backend.app.modules.apply.fit_report import build_fit_report
 from backend.app.modules.apply.form_automator import form_automator
+from backend.app.modules.setup.rag_engine import rag_memory
 from backend.app.modules.setup.pdf_generator import ats_pdf_generator
 
 
@@ -283,3 +285,17 @@ def adapt_culture_language(req: MultilingualRequest):
     )
     agent_logger.log_event("CULTURAL_ENGINE", f"Adapted text to {res['culture_label']}.")
     return res
+
+
+@router.get("/apply/fit_report/{job_id}")
+def get_fit_report(job_id: str):
+    """How this posting and the saved CV line up, and what to change for this one application."""
+    conn = get_db_connection()
+    try:
+        row = conn.cursor().execute("SELECT * FROM scraped_jobs WHERE id = ?", (job_id,)).fetchone()
+    finally:
+        conn.close()
+    if not row:
+        raise HTTPException(status_code=404, detail="Job not found.")
+    return build_fit_report(fetch_candidate_profile(), rag_memory.documents, dict(row))
+
