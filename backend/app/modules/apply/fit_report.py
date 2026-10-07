@@ -69,3 +69,25 @@ def build_fit_report(profile: Dict[str, Any], projects: List[Dict[str, Any]], jo
         },
         "note": "The percentage measures how closely your CV matches this posting. It is not a chance of being hired.",
     }
+
+
+def tailored_cv_profile(profile: Dict[str, Any], projects: List[Dict[str, Any]], job: Dict[str, Any]) -> Dict[str, Any]:
+    """The profile as it should be printed for this one posting: same facts, ordered and selected for it.
+
+    The candidate's own summary is kept when there is one; otherwise the fact-only line from the report is used.
+    """
+    report = build_fit_report(profile, projects, job)
+    chosen = {project["title"] for project in report["tailored"]["projects_to_show"]}
+    skills = [str(skill) for skill in profile.get("skills") or []]
+    ordered = report["tailored"]["skills_order"]
+    return {
+        **profile,
+        "summary": str(profile.get("summary") or "").strip() or report["tailored"]["summary_line"],
+        "skills": [*ordered, *[skill for skill in skills if skill not in ordered]],
+        "projects": [
+            {"title": project.get("title"), "tech_stack": project.get("tech_stack") or [], "metric": project.get("metrics") or "",
+             "description": project.get("content") or ""}
+            for project in projects if project.get("title") in chosen
+        ],
+    }
+

@@ -40,3 +40,43 @@ def test_an_empty_posting_or_profile_does_not_break():
     report = build_fit_report({}, [], {"id": "x", "title": "", "description": ""})
 
     assert report["keywords_you_have"] == [] and report["breakdown"]["skill_coverage_percent"] is None
+
+
+def test_the_tailored_cv_carries_the_summary_skill_order_and_chosen_projects():
+    from backend.app.modules.apply.fit_report import tailored_cv_profile
+
+    tailored = tailored_cv_profile(PROFILE, PROJECTS, JOB)
+
+    assert tailored["summary"].startswith("Senior Backend Developer candidate") and tailored["skills"][:2] == ["Python", "FastAPI"]
+    assert sorted(tailored["skills"]) == sorted(PROFILE["skills"])  # reordered, nothing added or dropped
+    assert [project["title"] for project in tailored["projects"]] == ["ClearMark / Watermark Engine"]
+    assert tailored_cv_profile({**PROFILE, "summary": "My own summary."}, PROJECTS, JOB)["summary"] == "My own summary."
+
+
+def test_the_tailored_pdf_downloads_and_reads_back_with_the_job_specific_content():
+    import io
+
+    from fastapi.testclient import TestClient
+    from pypdf import PdfReader
+
+    from backend.app.core.database import get_db_connection
+    from backend.app.main import app
+
+    conn = get_db_connection()
+    conn.cursor().execute(
+        "INSERT INTO scraped_jobs (id, title, company, platform, description) VALUES ('fit-pdf', 'Python Developer', 'Acme', 'test', 'Python and FastAPI') "
+        "ON CONFLICT(id) DO NOTHING")
+    conn.commit()
+    try:
+        client = TestClient(app)
+        response = client.get("/api/apply/fit_report/fit-pdf/cv.pdf")
+        text = " ".join(page.extract_text() or "" for page in PdfReader(io.BytesIO(response.content)).pages)
+
+        assert response.status_code == 200 and response.headers["content-type"] == "application/pdf"
+        assert "Acme" in response.headers["content-disposition"]
+        assert "Add a professional summary" not in text
+        assert client.get("/api/apply/fit_report/missing/cv.pdf").status_code == 404
+    finally:
+        conn.cursor().execute("DELETE FROM scraped_jobs WHERE id = 'fit-pdf'")
+        conn.commit()
+        conn.close()

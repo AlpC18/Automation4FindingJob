@@ -18,7 +18,7 @@ from backend.app.modules.apply.agentic_workflow import application_pipeline
 from backend.app.modules.apply.cv_tailoring import build_tailored_resume_profile
 from backend.app.modules.apply.cultural_engine import cultural_engine
 from backend.app.modules.apply.decision_maker import decision_maker_engine
-from backend.app.modules.apply.fit_report import build_fit_report
+from backend.app.modules.apply.fit_report import build_fit_report, tailored_cv_profile
 from backend.app.modules.apply.form_automator import form_automator
 from backend.app.modules.setup.rag_engine import rag_memory
 from backend.app.modules.setup.pdf_generator import ats_pdf_generator
@@ -46,7 +46,8 @@ async def generate_application_package(req: ApplyPackageRequest):
         profile = fetch_candidate_profile()
         profile_version = ensure_profile_version(profile)
         tailored_result = build_tailored_resume_profile(profile, job_data)
-        tailored_profile = tailored_result["profile"]
+        # Bullets come ranked for the posting; the summary line, skill order and projects come from the fit report.
+        tailored_profile = tailored_cv_profile(tailored_result["profile"], rag_memory.documents, job_data)
         style_profile = {
             **profile.get("style_profile", {}),
             "writing_tone": profile.get("writing_tone", ""),
@@ -298,4 +299,23 @@ def get_fit_report(job_id: str):
     if not row:
         raise HTTPException(status_code=404, detail="Job not found.")
     return build_fit_report(fetch_candidate_profile(), rag_memory.documents, dict(row))
+
+
+@router.get("/apply/fit_report/{job_id}/cv.pdf")
+def download_fit_tailored_cv(job_id: str, theme: str = "navy"):
+    """The CV as a PDF arranged for this posting: its summary line, skill order and most relevant projects."""
+    conn = get_db_connection()
+    try:
+        row = conn.cursor().execute("SELECT * FROM scraped_jobs WHERE id = ?", (job_id,)).fetchone()
+    finally:
+        conn.close()
+    if not row:
+        raise HTTPException(status_code=404, detail="Job not found.")
+    job = dict(row)
+    tailored = tailored_cv_profile(build_tailored_resume_profile(fetch_candidate_profile(), job)["profile"], rag_memory.documents, job)
+    company = "".join(char for char in str(job.get("company") or "job") if char.isalnum() or char in "-_ ").strip().replace(" ", "_") or "job"
+    return Response(
+        content=ats_pdf_generator.generate_cv_pdf(tailored, theme=theme).getvalue(), media_type="application/pdf",
+        headers={"Content-Disposition": f'attachment; filename="CV_{company}.pdf"', "Cache-Control": "no-store"},
+    )
 

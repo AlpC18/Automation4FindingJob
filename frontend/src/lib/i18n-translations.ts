@@ -1037,6 +1037,7 @@ export const sharedTranslations: Record<string, string> = {
 };
 
 export const laterTranslations: Record<string, string> = {
+  "Bu ilana göre CV'yi indir (PDF)": "Download the CV for this posting (PDF)",
   "CV uyum raporu": "Resume fit report", "Uyum raporu alınamadı.": "Could not load the fit report.", "Genel uyum": "Overall match",
   "İlandaki beceriler": "Skills in the posting", "Rol uyumu": "Role match", "Bu başvuru için yapılacaklar": "What to change for this application",
   "CV'nde olan anahtar kelimeler": "Keywords your CV has", "İlanda olup CV'nde olmayanlar": "In the posting but not in your CV",

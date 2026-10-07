@@ -1,8 +1,8 @@
 "use client";
 
 import { useState } from "react";
-import { ClipboardCheck, X } from "lucide-react";
-import { fetchFromApi } from "@/lib/api";
+import { ClipboardCheck, Download, X } from "lucide-react";
+import { buildApiUrl, fetchFromApi } from "@/lib/api";
 import { useLanguage } from "@/lib/i18n";
 
 type FitReport = {
@@ -65,7 +65,9 @@ export default function FitReportButton({ jobId }: { jobId: string }) {
                 <section className="rounded-xl border border-slate-800 p-4"><h3 className="text-xs font-semibold uppercase text-slate-400">{t("Bu ilana göre uyarlanmış CV")}</h3>
                   <p className="mt-2"><span className="text-slate-400">{t("Özet satırı")}:</span> {report.tailored.summary_line}</p>
                   <p className="mt-2"><span className="text-slate-400">{t("Beceri sırası")}:</span> {report.tailored.skills_order.join(", ")}</p>
-                  <p className="mt-2"><span className="text-slate-400">{t("Öne çıkarılacak projeler")}:</span> {report.tailored.projects_to_show.map((project) => project.title).join(" · ") || "—"}</p></section>
+                  <p className="mt-2"><span className="text-slate-400">{t("Öne çıkarılacak projeler")}:</span> {report.tailored.projects_to_show.map((project) => project.title).join(" · ") || "—"}</p>
+                  <a href={buildApiUrl(`/apply/fit_report/${encodeURIComponent(jobId)}/cv.pdf`)} className="primary-button mt-4 inline-flex items-center gap-2 rounded-xl px-4 py-2 text-xs font-semibold">
+                    <Download className="h-4 w-4" />{t("Bu ilana göre CV'yi indir (PDF)")}</a></section>
               </>
             )}
           </div>

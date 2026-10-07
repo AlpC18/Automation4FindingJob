@@ -136,10 +136,12 @@ class ATSPdfGenerator:
         story.append(HRFlowable(width="100%", thickness=1, color=line_color, spaceBefore=2, spaceAfter=8))
 
         # 2. Professional Summary
-        story.append(Paragraph("PROFESSIONAL SUMMARY", self.styles['SectionHeading']))
-        summary = profile.get("summary") or profile.get("raw_cv_text") or "Add a professional summary in the profile setup screen."
-        story.append(Paragraph(clean_xml(summary), self.styles['BodyClean']))
-        story.append(Spacer(1, 6))
+        # Printed only when there is one: a placeholder or the raw CV text pasted here would go to an employer.
+        summary = str(profile.get("summary") or "").strip()
+        if summary:
+            story.append(Paragraph("PROFESSIONAL SUMMARY", self.styles['SectionHeading']))
+            story.append(Paragraph(clean_xml(summary), self.styles['BodyClean']))
+            story.append(Spacer(1, 6))
 
         # 3. Core Technical Skills
         story.append(Paragraph("CORE SKILLS & TECHNOLOGIES", self.styles['SectionHeading']))
