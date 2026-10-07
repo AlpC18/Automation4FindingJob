@@ -5,7 +5,10 @@ from typing import Optional
 from fastapi import APIRouter
 from pydantic import BaseModel
 
+from backend.app.api.profile import fetch_candidate_profile
 from backend.app.modules.apply.auto_apply_pipeline import auto_apply_pipeline
+from backend.app.modules.apply.claim_check import find_unsupported_claims
+from backend.app.modules.setup.rag_engine import rag_memory
 
 router = APIRouter()
 
@@ -29,10 +32,15 @@ async def scan_and_prepare_auto_apply(req: AutoApplyScanRequest):
 @router.get("/apply/auto/queue")
 @router.get("/api/apply/auto/queue")
 def list_auto_apply_queue(status: Optional[str] = None):
-    return {
-        "queue": auto_apply_pipeline.list_queue(status_filter=status),
-        "today_applied_count": auto_apply_pipeline.get_today_count(),
-    }
+    # Flags are worked out on every read, so they follow the current CV and saved projects
+    # (a project added after the draft was written can clear a flag).
+    profile = fetch_candidate_profile()
+    queue = []
+    for item in auto_apply_pipeline.list_queue(status_filter=status):
+        draft = item.get("draft_result") or {}
+        claims = find_unsupported_claims(draft.get("cover_letter") or "", profile, rag_memory.documents, item)
+        queue.append({**item, "draft_result": {**draft, "unsupported_claims": claims}})
+    return {"queue": queue, "today_applied_count": auto_apply_pipeline.get_today_count()}
 
 
 class AutoApplyActionRequest(BaseModel):

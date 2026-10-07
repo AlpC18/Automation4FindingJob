@@ -318,6 +318,16 @@ export default function AutoApplyPage() {
                       <div className="text-xs text-slate-300 whitespace-pre-wrap font-sans leading-relaxed max-h-64 overflow-y-auto">
                         {cl || t("Niyet mektubu hazırlandı.")}
                       </div>
+                      {Array.isArray(draft.unsupported_claims) && draft.unsupported_claims.length > 0 && (
+                        <div role="alert" className="rounded-lg border border-amber-500/30 bg-amber-500/10 p-3 text-xs text-amber-200">
+                          <p className="font-semibold">{t("Göndermeden önce kontrol et: CV'nde karşılığı bulunamayan {count} cümle var.", { count: draft.unsupported_claims.length })}</p>
+                          <ul className="mt-2 list-disc space-y-2 pl-4">
+                            {draft.unsupported_claims.map((claim: { sentence: string; reason: string }, index: number) => (
+                              <li key={index}><span className="text-slate-200">“{claim.sentence}”</span><br /><span className="text-amber-300">{claim.reason}</span></li>
+                            ))}
+                          </ul>
+                        </div>
+                      )}
                     </div>
                     <div className="bg-slate-950/80 rounded-xl p-4 border border-slate-800/80 space-y-2">
                       <div className="text-xs font-semibold text-blue-400">{t("Uyarlanan CV Özeti")}</div>

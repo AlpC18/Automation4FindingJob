@@ -152,6 +152,8 @@ class AutoApplyPipeline:
                 "title": job.get("title"),
                 "location": job.get("location"),
                 "url": job.get("url"),
+                # Kept so the letter can be checked against the posting later, after the feed has moved on.
+                "description": str(job.get("description") or "")[:6000],
                 "match_score": job.get("match_score"),
                 "prepared_at": datetime.now().isoformat(),
                 "status": "pending_approval",

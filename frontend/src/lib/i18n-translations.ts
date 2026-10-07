@@ -1517,6 +1517,7 @@ export const sharedTranslations: Record<string, string> = {
 };
 
 export const laterTranslations: Record<string, string> = {
+  "Göndermeden önce kontrol et: CV'nde karşılığı bulunamayan {count} cümle var.": "Check before sending: {count} sentence(s) are not backed by your CV.",
   "Özet": "Summary",
   "GitHub": "GitHub",
   "Kayıtlı CV": "Saved CV",

@@ -16,6 +16,7 @@ import re
 from typing import Dict, Any, Tuple, List, Optional
 
 from backend.app.modules.setup.rag_engine import rag_memory
+from backend.app.modules.apply.claim_check import find_unsupported_claims
 from backend.app.modules.apply.humanizer_engine import humanizer_engine
 from backend.app.modules.apply.company_cache import company_cache
 from backend.app.prompts.humanizer_prompts import ANTI_AI_HUMANIZER_SYSTEM_PROMPT
@@ -72,6 +73,7 @@ Write a cover letter of 3-4 short paragraphs for this job, signed with the candi
 - If the job needs something the candidate lacks, either leave it out or acknowledge it in one honest sentence.
 - Write in the language of the job description (Turkish description -> Turkish letter, otherwise English).
 - Never use the words 'delve', 'testament', 'tapestry', 'spearheaded', 'seamless', 'delighted to apply'.
+- Do not write any phone number, email address, link or postal address; the application form already carries them.
 - Vary sentence length; no bullet lists; no placeholders like [Company]."""
 
 
@@ -364,9 +366,12 @@ class MultiAgentApplicationPipeline:
 
         # 5. Apply feedback if needed
         if not review["passed"]:
+            # The editor gets the same facts and rules as the drafter. Without them it "improved"
+            # letters by inventing metrics, tools and contact details.
             revision_res = await llm_client.generate_text(
-                system_prompt="You are an expert cover letter editor. Revise the draft based on the reviewer's feedback.",
-                user_prompt=self._build_revision_prompt(raw_draft, review),
+                system_prompt=COVER_LETTER_SYSTEM_PROMPT,
+                user_prompt=f"{user_prompt}\n\nREVISION\n{self._build_revision_prompt(raw_draft, review)}\n"
+                            "Every fact in the revised letter must come from the CANDIDATE section above.",
                 preferred_provider=preferred_provider,
                 apply_humanizer=False
             )
@@ -388,6 +393,10 @@ class MultiAgentApplicationPipeline:
 
         result["reviewer_report"] = review
         result["company_research_used"] = bool(company_research.get("source") != "no_cache")
+        # Sentences the candidate should re-read before sending: the model sometimes adds details nobody gave it.
+        result["unsupported_claims"] = find_unsupported_claims(
+            result["cover_letter"], candidate_profile, rag_memory.documents, job_data,
+        )
         return result
 
     def _execute_qa_loop(

@@ -109,3 +109,19 @@ def test_draft_candidates_come_from_the_ranked_feed():
         conn.commit()
         conn.close()
 
+
+def test_the_queue_endpoint_flags_unsupported_sentences_on_every_read(monkeypatch):
+    from fastapi.testclient import TestClient
+
+    from backend.app.api.routers import auto_apply as routes
+    from backend.app.main import app
+
+    queued = [{"job_key": "k", "title": "Backend Developer", "company": "Acme", "description": "Python",
+               "draft_result": {"cover_letter": "I cut costs by 40% with Rust.", "unsupported_claims": []}}]
+    monkeypatch.setattr(routes.auto_apply_pipeline, "list_queue", lambda status_filter=None: queued)
+    monkeypatch.setattr(routes, "fetch_candidate_profile", lambda: {"skills": ["Python"], "raw_cv_text": "Python developer"})
+
+    claims = TestClient(app).get("/api/apply/auto/queue").json()["queue"][0]["draft_result"]["unsupported_claims"]
+
+    assert len(claims) == 1 and "40%" in claims[0]["reason"] and "Rust" in claims[0]["reason"]
+
