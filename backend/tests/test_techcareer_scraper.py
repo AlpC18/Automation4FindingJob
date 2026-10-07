@@ -80,6 +80,7 @@ def site(monkeypatch):
     real_client = httpx.Client
     monkeypatch.setattr(tc.httpx, "Client", lambda **kwargs: real_client(transport=httpx.MockTransport(handler), **kwargs))
     monkeypatch.setattr(tc.time, "sleep", lambda seconds: None)
+    monkeypatch.setattr(tc, "robots_allows", lambda url: True)
     return requested, state
 
 

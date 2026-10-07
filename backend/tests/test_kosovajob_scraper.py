@@ -54,6 +54,7 @@ def site(monkeypatch):
     real_client = httpx.Client
     monkeypatch.setattr(kj.httpx, "Client", lambda **kwargs: real_client(transport=httpx.MockTransport(handler), **kwargs))
     monkeypatch.setattr(kj.time, "sleep", lambda seconds: None)
+    monkeypatch.setattr(kj, "robots_allows", lambda url: True)
     monkeypatch.setattr(kj, "get_source_config", lambda source: {"has_custom_config": False, "actor_id": ""})
     return requested
 

@@ -13,6 +13,7 @@ import httpx
 
 from backend.app.core.config import settings
 from backend.app.modules.scrape.live_sources import normalize_job
+from backend.app.modules.scrape.robots import robots_allows
 
 JOBS_URL = "https://www.techcareer.net/jobs"
 MAX_LIST_PAGES = 10
@@ -92,6 +93,8 @@ class TechcareerScraper:
     def fetch_jobs(self, query: str = "Software Engineer", location: str = None) -> List[Dict[str, Any]]:
         headers = {"User-Agent": settings.JOB_SOURCE_USER_AGENT, "Accept": "text/html"}
         location_key = (location or "").strip().casefold()
+        if not robots_allows(JOBS_URL):
+            raise RuntimeError("techcareer: the site's robots.txt does not allow reading the job list")
         with httpx.Client(timeout=settings.JOB_SOURCE_TIMEOUT_SECONDS, headers=headers, follow_redirects=True) as client:
             if time.monotonic() - self._cards_read_at > LISTING_CACHE_SECONDS:
                 self._cards, self._details = [], {}
@@ -119,7 +122,7 @@ class TechcareerScraper:
             for index, card in enumerate(matched):
                 if card["url"] in self._details:
                     card = {**card, **self._details[card["url"]]}
-                elif index < MAX_DETAIL_PAGES:
+                elif index < MAX_DETAIL_PAGES and robots_allows(card["url"]):
                     time.sleep(REQUEST_DELAY_SECONDS)
                     try:
                         detail = client.get(card["url"])

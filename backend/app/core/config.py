@@ -143,6 +143,8 @@ class Settings(BaseSettings):
     DAILY_LIMIT_GLOBAL_REMOTE: int = 30
     # Driving LinkedIn with the saved login breaks its terms and can get the account restricted, so it is opt-in.
     LINKEDIN_AUTOMATION_ENABLED: bool = _env_bool("LINKEDIN_AUTOMATION_ENABLED", False)
+    # Countries besides the profile's own where the candidate can work, e.g. "Germany,Austria". Jobs limited to other places are flagged.
+    EXTRA_WORK_LOCATIONS: str = os.getenv("EXTRA_WORK_LOCATIONS", "")
     
 
     # Inbox & Email Listener

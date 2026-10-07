@@ -13,6 +13,7 @@ from bs4 import BeautifulSoup
 
 from backend.app.core.config import settings
 from backend.app.modules.scrape.live_sources import apify_job_source, normalize_job
+from backend.app.modules.scrape.robots import robots_allows
 from backend.app.modules.scrape.source_registry import get_source_config
 
 BASE_URL = "https://kosovajob.com/"
@@ -74,13 +75,15 @@ class KosovaJobScraper:
     def _scrape(self, query: str, location: Optional[str]) -> List[Dict[str, Any]]:
         headers = {"User-Agent": settings.JOB_SOURCE_USER_AGENT, "Accept": "text/html"}
         location_key = (location or "").strip().casefold()
+        if not robots_allows(BASE_URL):
+            raise RuntimeError("kosovajob: the site's robots.txt does not allow reading the job list")
         with httpx.Client(timeout=settings.JOB_SOURCE_TIMEOUT_SECONDS, headers=headers, follow_redirects=True) as client:
             response = client.get(BASE_URL, params={"q": query})
             response.raise_for_status()
             cards = [card for card in parse_listing(response.text) if not location_key or location_key in card["location"].casefold()]
             jobs = []
             for index, card in enumerate(cards):
-                if index < MAX_DETAIL_PAGES:
+                if index < MAX_DETAIL_PAGES and robots_allows(card["url"]):
                     if index:
                         time.sleep(DETAIL_DELAY_SECONDS)
                     try:
