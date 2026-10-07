@@ -241,3 +241,53 @@ def test_interview_questions_follow_the_posting_and_the_cv():
     assert "scraping" not in text(backend).lower() and "bypass" not in text(backend).lower()
     # With nothing to go on it still asks about the role itself, never a canned stack.
     assert "Backend Developer" in text(session([], [], ""))
+
+
+TECH_QUESTION = "This role asks for Python. Walk me through a piece of work where you used Python: the problem, what you did, and how it turned out."
+STRONG_ANSWER = (
+    "When I worked as a freelance engineer, a client's booking system was double-booking appointments during busy hours. "
+    "My task was to stop the collisions without taking the system offline. I wrote a Python service that takes a row lock "
+    "before confirming a slot, added a retry for the losing request, and covered both paths with tests. "
+    "As a result double bookings dropped from about 12 a week to 0, and support tickets about scheduling fell by 80%."
+)
+
+
+def _evaluate(question, answer):
+    from backend.app.modules.interview.interview_simulator import interview_simulator
+    return interview_simulator.evaluate_candidate_answer(question, answer)
+
+
+def test_a_complete_answer_scores_high_and_every_check_is_explained():
+    result = _evaluate(TECH_QUESTION, STRONG_ANSWER)
+
+    assert result["score"] >= 85 and result["grade"] == "EXCELLENT"
+    assert len(result["feedback"]) == len(result["checks"]) == 6
+    assert all(check["passed"] for check in result["checks"])
+
+
+def test_long_text_without_substance_no_longer_scores_well():
+    padding = "I think this is a very interesting question and there are many things to consider about it in general. " * 4
+
+    result = _evaluate(TECH_QUESTION, padding)
+
+    assert result["score"] <= 30 and result["grade"] == "NEEDS_IMPROVEMENT"
+    missed = {check["id"] for check in result["checks"] if not check["passed"]}
+    assert {"on_topic", "own_action", "result", "measurable"} <= missed
+
+
+def test_each_missing_part_costs_points_and_the_tip_names_the_biggest_gap():
+    without_numbers = STRONG_ANSWER.replace("about 12 a week to 0", "sharply").replace("by 80%", "a lot")
+    off_topic = STRONG_ANSWER.replace("Python", "Ruby")
+
+    assert _evaluate(TECH_QUESTION, without_numbers)["score"] < _evaluate(TECH_QUESTION, STRONG_ANSWER)["score"]
+    off = _evaluate(TECH_QUESTION, off_topic)
+    assert not next(check for check in off["checks"] if check["id"] == "on_topic")["passed"]
+    assert "Python" in off["coaching_tip"]
+
+
+def test_behavioural_questions_are_not_marked_down_for_naming_no_technology_and_empty_answers_score_zero():
+    behavioural = _evaluate("Describe a time you had to work with a difficult team member.", STRONG_ANSWER)
+
+    assert [check["id"] for check in behavioural["checks"]].count("on_topic") == 0
+    assert behavioural["score"] >= 85
+    assert _evaluate(TECH_QUESTION, "   ")["score"] == 0

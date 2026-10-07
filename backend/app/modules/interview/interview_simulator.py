@@ -4,11 +4,23 @@ Generates scenario-based technical, behavioral (STAR method), and cross-examinat
 based on the job description and evaluates candidate answers.
 """
 
+import re
 from typing import Dict, Any, List, Optional
 
 from backend.app.modules.interview.star_framework import star_framework
 
 STAR_POINTS = ["Situation", "Task", "Action", "Result"]
+MIN_ANSWER_WORDS, MAX_ANSWER_WORDS = 50, 250
+# The technical and gap questions built below name their technology this way.
+_ASKS_FOR = re.compile(r"asks for ([^.,]+)[.,]")
+_OWN_ACTION = re.compile(
+    r"\bI (?:\w+ly )?(?:built|wrote|designed|implemented|created|developed|fixed|led|set up|added|migrated|refactored|tested|"
+    r"deployed|automated|reduced|improved|\w+ed)\b|\b\w+(?:dim|dım|dum|düm|tim|tım|tum|tüm)\b"
+)
+_CONTEXT_CUES = ("when ", "while ", "during ", "project", "client", "team", "company", "freelance", "task was",
+                 "projede", "müşteri", "ekip", "şirket", "sırasında", "görevim")
+_RESULT_CUES = ("as a result", "result", "which meant", "led to", "so that", "dropped", "fell", "reduced", "increased", "improved",
+                "now ", "sonuç", "sayesinde", "azal", "arttı", "düştü")
 TECH_QUESTIONS_FROM_CV = 2
 
 
@@ -43,35 +55,46 @@ class InterviewSimulator:
         return [{"id": f"q{number}", **draft} for number, draft in enumerate(drafts, start=1)]
 
     def evaluate_candidate_answer(self, question: str, answer: str) -> Dict[str, Any]:
-        """
-        Grades candidate response, detects strengths, and offers constructive improvement advice.
-        """
-        word_count = len(answer.split())
-        score = 70
-        feedback = []
-        
-        if word_count < 25:
-            score -= 20
-            feedback.append("Yanıtınız çok kısa. Somut adımlar, teknik araçlar ve metrikler ekleyerek zenginleştirin.")
-        elif word_count > 180:
-            score -= 10
-            feedback.append("Yanıtınız biraz uzun ve dağılmış. Mülakatçının dikkatini canlı tutmak için STAR formatında daha öz (concise) ifade edin.")
-        else:
-            score += 15
-            feedback.append("Cümle uzunluğu ve odak dengeli.")
+        """Check the answer's structure against the question; each check is listed with what it found.
 
-        # Check for technical specifics
-        if any(tech in answer.lower() for tech in ["log", "metric", "cache", "redis", "test", "docker", "veri", "hata"]):
-            score += 15
-            feedback.append("Teknik terimler ve pratik problem çözme adımları başarılı bir şekilde aktarılmış.")
-            
-        final_score = max(30, min(98, score))
-        
+        This reads how the answer is built, not whether its content is technically right.
+        """
+        text = (answer or "").strip()
+        lowered = text.lower()
+        words = len(text.split())
+        asked_for = [tech.strip() for tech in _ASKS_FOR.findall(question or "")]
+        checks: List[Dict[str, Any]] = []
+
+        def check(check_id: str, points: int, passed: bool, found: str, missing: str) -> None:
+            checks.append({"id": check_id, "points": points, "passed": passed, "note": found if passed else missing})
+
+        if asked_for:
+            named = [tech for tech in asked_for if tech.lower() in lowered]
+            check("on_topic", 20, bool(named), f"Sorulan teknolojiden söz ediyorsun: {', '.join(named)}.",
+                  f"Soru {', '.join(asked_for)} hakkında; cevabında adı geçmiyor.")
+        check("own_action", 20, bool(_OWN_ACTION.search(text)), "Kendi yaptığın işi birinci tekil şahısla anlatıyorsun.",
+              "Senin ne yaptığın belli değil. 'I built / I wrote / geliştirdim' gibi kendi eylemini söyle.")
+        check("context", 15, any(cue in lowered for cue in _CONTEXT_CUES), "Durumu ve bağlamı veriyorsun.",
+              "Bağlam yok: hangi proje, hangi müşteri ya da ekip, sorun neydi?")
+        check("result", 15, any(cue in lowered for cue in _RESULT_CUES), "Sonucu söylüyorsun.",
+              "Sonuç yok: yaptığın iş neyi değiştirdi?")
+        check("measurable", 15, bool(re.search(r"\d", text)), "Sonucu sayıyla destekliyorsun.",
+              "Sayı yok. Gerçek bir ölçün varsa ekle (süre, adet, yüzde); yoksa uydurma.")
+        length_ok = MIN_ANSWER_WORDS <= words <= MAX_ANSWER_WORDS
+        check("length", 15, length_ok, f"Uzunluk uygun ({words} kelime).",
+              f"{words} kelime; {MIN_ANSWER_WORDS}-{MAX_ANSWER_WORDS} kelime arası hedefle.")
+
+        possible = sum(item["points"] for item in checks)
+        earned = sum(item["points"] for item in checks if item["passed"])
+        score = round(100 * earned / possible) if words else 0
+        gaps = sorted((item for item in checks if not item["passed"]), key=lambda item: -item["points"])
         return {
-            "score": final_score,
-            "grade": "EXCELLENT" if final_score >= 85 else ("GOOD" if final_score >= 70 else "NEEDS_IMPROVEMENT"),
-            "feedback": feedback,
-            "coaching_tip": "Bir sonraki soruda sonucu (Result) sayısal bir veriyle (% artış, ms düşüş) bağlamaya özen gösterin."
+            "score": score,
+            "grade": "EXCELLENT" if score >= 85 else ("GOOD" if score >= 70 else "NEEDS_IMPROVEMENT"),
+            "feedback": [("✓ " if item["passed"] else "✗ ") + item["note"] for item in checks],
+            "checks": checks,
+            "coaching_tip": gaps[0]["note"] if gaps else "Yapı tam. İçeriğin doğruluğunu bu kontrol ölçmez; cevabı bir de sesli prova et.",
         }
+
 
 interview_simulator = InterviewSimulator()
