@@ -1,3 +1,5 @@
+from typing import Optional, Tuple
+import re
 """
 Salary Benchmark & Market Compensation Engine
 Calculates market compensation percentiles (25th, 50th median, 75th, 90th)
@@ -85,3 +87,33 @@ def calculate_salary_benchmark(title: str, location: str, years_exp: int | None)
         "formatted_display": f"{data['min']:,} - {data['max']:,} {data['currency']} / {data['period']}",
         "counter_offer_target": f"{int(data['median'] * 1.12):,} {data['currency']}"
     }
+
+
+_AMOUNT = re.compile(r"(\d[\d,.]*)\s*(k)?", re.IGNORECASE)
+_OTHER_CURRENCY = re.compile(r"€|£|₺|\b(EUR|GBP|MXN|INR|TRY|CAD|AUD|PLN|BRL|CHF|SEK|JPY)\b", re.IGNORECASE)
+HOURS_PER_YEAR = 2080
+# Below this a yearly figure is implausible for the roles scanned, so the listing means per month.
+MONTHLY_BELOW = 15000
+
+
+def yearly_usd(salary_text: Any) -> Optional[Tuple[int, int]]:
+    """The pay a listing states, as (low, high) US dollars per year; None when it is absent,
+    in another currency, or not a number. Used only to sort and filter; the original text is what is shown."""
+    text = str(salary_text or "")
+    if not text.strip() or _OTHER_CURRENCY.search(text):
+        return None
+    amounts = []
+    for number, thousand in _AMOUNT.findall(text):
+        try:
+            value = float(number.replace(",", ""))
+        except ValueError:
+            continue
+        amounts.append(value * 1000 if thousand else value)
+    amounts = [value for value in amounts if value >= 10][:2]
+    if not amounts or ("$" not in text and "usd" not in text.lower() and max(amounts) < 10000):
+        return None
+    if re.search(r"/\s*(hour|hr|saat)|per hour|hourly", text, re.IGNORECASE):
+        amounts = [value * HOURS_PER_YEAR for value in amounts]
+    elif max(amounts) < MONTHLY_BELOW:
+        amounts = [value * 12 for value in amounts]
+    return int(min(amounts)), int(max(amounts))

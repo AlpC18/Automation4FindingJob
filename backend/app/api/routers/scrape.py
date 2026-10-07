@@ -13,6 +13,7 @@ from backend.app.core.config import settings
 from backend.app.core.database import get_db_connection
 from backend.app.core.event_logger import agent_logger
 from backend.app.core.tenant import get_tenant_id
+from backend.app.modules.rank.salary_benchmark import yearly_usd
 from backend.app.modules.rank.scoring_engine import rank_and_save_all_jobs, score_job_against_profile
 from backend.app.modules.rank.llm_reranker import review_top_jobs
 from backend.app.modules.scrape.rate_limiter import account_health
@@ -286,6 +287,8 @@ def _serialize_job(row) -> dict:
     job["salary_benchmark"] = json.loads(job.get("salary_benchmark_json") or "{}")
     job["source_aliases"] = json.loads(job.get("source_aliases_json") or "[]")
     job["ai_review"] = json.loads(job.pop("ai_review_json", None) or "null")
+    stated = yearly_usd(job.get("salary_range"))
+    job["salary_yearly_usd"] = {"min": stated[0], "max": stated[1]} if stated else None
     return job
 
 

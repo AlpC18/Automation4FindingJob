@@ -358,7 +358,10 @@ export default function JobsPage() {
     if (remoteFilter !== "all" && !(j.remote_type || "").toLowerCase().includes(remoteFilter.toLowerCase())) return false;
     if ((j.match_score || 0) < Number(minimumMatch)) return false;
     return true;
-  }).sort((a, b) => sortOrder === "recent"
+  }).sort((a, b) => sortOrder === "salary"
+    // Listings that state their pay first, highest first; the rest keep their match order below them.
+    ? (b.salary_yearly_usd?.max ?? -1) - (a.salary_yearly_usd?.max ?? -1) || (b.match_score || 0) - (a.match_score || 0)
+    : sortOrder === "recent"
     ? String(b.created_at || "").localeCompare(String(a.created_at || ""))
     : sortOrder === "company"
       ? String(a.company || "").localeCompare(String(b.company || ""))
@@ -688,7 +691,7 @@ export default function JobsPage() {
             <option value="0">{t("Tahmini uyum: tümü")}</option><option value="50">{t("Tahmini uyum: 50+")}</option><option value="70">{t("Tahmini uyum: 70+")}</option><option value="85">{t("Tahmini uyum: 85+")}</option>
           </select>
           <select value={sortOrder} onChange={(e) => setSortOrder(e.target.value)} className="rounded-lg border border-slate-800 bg-slate-950 px-3 py-2 text-xs text-slate-200 focus:border-blue-500 focus:outline-none">
-            <option value="match">{t("En yüksek eşleşme")}</option><option value="recent">{t("En yeni")}</option><option value="company">{t("Şirkete göre")}</option>
+            <option value="match">{t("En yüksek eşleşme")}</option><option value="recent">{t("En yeni")}</option><option value="company">{t("Şirkete göre")}</option><option value="salary">{t("En yüksek ücret (belirtilmişse)")}</option>
           </select>
         </div>
         <div className="flex items-center gap-4">

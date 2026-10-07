@@ -1037,6 +1037,7 @@ export const sharedTranslations: Record<string, string> = {
 };
 
 export const laterTranslations: Record<string, string> = {
+  "En yüksek ücret (belirtilmişse)": "Highest pay (when stated)",
   "Kullanıcı arayüzü kapalıyken bile arka planda çalışan zamanlanmış otonom taramaları yönetin.": "Manage the scheduled scans that run in the background even when the app is closed.",
   "Göndermeden önce kontrol et: CV'nde karşılığı bulunamayan {count} cümle var.": "Check before sending: {count} sentence(s) are not backed by your CV.",
   "Özet": "Summary",
