@@ -42,7 +42,17 @@ export default function JobCard({ job, ctx }: { job: any; ctx: any }) {
               <span className="text-xs bg-slate-800 text-slate-300 px-2.5 py-0.5 rounded-full border border-slate-700 font-medium">
                 {job.company}
               </span>
-              <span className="text-xs bg-blue-500/10 text-blue-400 border border-blue-500/20 px-2 py-0.5 rounded uppercase font-mono">
+              <span className={`text-xs px-2.5 py-0.5 rounded font-mono uppercase font-semibold border ${
+                String(job.platform || "").toLowerCase() === "linkedin"
+                  ? "bg-[#0a66c2]/20 text-[#4ca2ff] border-[#0a66c2]/50 font-bold shadow-sm"
+                  : String(job.platform || "").toLowerCase() === "upwork"
+                  ? "bg-emerald-500/15 text-emerald-300 border-emerald-500/30"
+                  : String(job.platform || "").toLowerCase() === "arbeitnow"
+                  ? "bg-amber-500/15 text-amber-300 border-amber-500/30"
+                  : String(job.platform || "").toLowerCase() === "himalayas"
+                  ? "bg-purple-500/15 text-purple-300 border-purple-500/30"
+                  : "bg-blue-500/10 text-blue-400 border-blue-500/20"
+              }`}>
                 {job.platform}
               </span>
               {sourceUrl && <a href={sourceUrl} target="_self" onClick={(event) => event.stopPropagation()} className="inline-flex items-center gap-1 rounded-full border border-emerald-500/25 bg-emerald-500/10 px-2 py-0.5 text-xs font-semibold text-emerald-300 transition hover:bg-emerald-500/20">

@@ -14,6 +14,11 @@ import {
   ExternalLink,
   Mail,
   Layers,
+  Trash2,
+  CheckCheck,
+  MailCheck,
+  MessageSquare,
+  Filter,
 } from "lucide-react";
 import { fetchFromApi } from "@/lib/api";
 
@@ -36,6 +41,8 @@ export default function InboxPage() {
   const [selectedMessage, setSelectedMessage] = useState<any>(null);
   const [customReply, setCustomReply] = useState("");
   const [sendingReply, setSendingReply] = useState(false);
+  const [highlightedMessageId, setHighlightedMessageId] = useState<number | null>(null);
+  const [messageFilter, setMessageFilter] = useState<string>("all");
 
   // Official OAuth2 & Celery Queue State
   const [oauthStatus, setOauthStatus] = useState<any>(null);
@@ -54,12 +61,59 @@ export default function InboxPage() {
         fetchFromApi("/tasks/status").catch(() => null),
         fetchFromApi("/tasks/jobs?limit=30").catch(() => ({ jobs: [] }))
       ]);
-      setMessages(inboxRes.messages || []);
+      const fetchedMessages = inboxRes.messages || [];
+      setMessages(fetchedMessages);
       setOauthStatus(oauthRes);
       setQueueStatus(qRes);
       setBackgroundJobs(jobsRes.jobs || []);
+
+      // Check URL for direct deep-link (e.g. /inbox?id=356 from Today's Actions)
+      if (typeof window !== "undefined") {
+        const params = new URLSearchParams(window.location.search);
+        const targetId = params.get("id");
+        if (targetId) {
+          const numId = Number(targetId);
+          setHighlightedMessageId(numId);
+          const matched = fetchedMessages.find((m: any) => String(m.id) === String(targetId));
+          if (matched) {
+            setSelectedMessage(matched);
+            setCustomReply(matched.proposed_reply || "");
+            setTimeout(() => {
+              const el = document.getElementById(`msg-${matched.id}`);
+              if (el) el.scrollIntoView({ behavior: "smooth", block: "center" });
+            }, 300);
+          }
+        }
+      }
     } finally {
       setLoading(false);
+    }
+  }
+
+  async function handleToggleStatus(msg: any) {
+    const nextStatus = msg.status === "UNREAD" ? "READ" : "UNREAD";
+    try {
+      await fetchFromApi(`/inbox/messages/${msg.id}`, {
+        method: "PATCH",
+        body: JSON.stringify({ status: nextStatus })
+      });
+      setMessages((prev) => prev.map((m) => m.id === msg.id ? { ...m, status: nextStatus } : m));
+    } catch {
+      setOauthFeedback(t("Mesaj durumu güncellenemedi."));
+    }
+  }
+
+  async function handleDeleteMessage(msgId: number) {
+    if (!window.confirm(t("Bu e-postayı gelen kutusundan silmek istediğinize emin misiniz?"))) return;
+    try {
+      await fetchFromApi(`/inbox/messages/${msgId}`, { method: "DELETE" });
+      setMessages((prev) => prev.filter((m) => m.id !== msgId));
+      if (selectedMessage?.id === msgId) {
+        setSelectedMessage(null);
+      }
+      setOauthFeedback(t("E-posta silindi."));
+    } catch {
+      setOauthFeedback(t("E-posta silinemedi."));
     }
   }
 
@@ -420,10 +474,35 @@ export default function InboxPage() {
         {/* Incoming Employer Inbox List (2 cols) */}
         <div className="space-y-4">
           <div className="p-6 rounded-2xl bg-[#0e1524] border border-slate-800/80 space-y-4">
-            <div className="flex items-center justify-between">
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-slate-800/80 pb-3">
               <div className="flex items-center gap-2">
                 <Inbox className="w-5 h-5 text-indigo-400" />
-                <h2 className="text-sm font-semibold text-white">{t("Gelen İşveren E-postaları (")}{messages.length})</h2>
+                <h2 className="text-sm font-semibold text-white">{t("Gelen İşveren E-postaları")} ({messages.length})</h2>
+              </div>
+
+              {/* Message Filter Tabs */}
+              <div className="flex flex-wrap items-center gap-1.5 text-xs">
+                {[
+                  { id: "all", label: t("Tümü"), count: messages.length },
+                  { id: "UNREAD", label: t("Okunmamış"), count: messages.filter((m) => m.status === "UNREAD").length },
+                  { id: "INTERVIEW_INVITE", label: t("Mülakat Davetleri"), count: messages.filter((m) => m.classification === "INTERVIEW_INVITE").length },
+                  { id: "REPLIED", label: t("Yanıtlananlar"), count: messages.filter((m) => m.status === "REPLIED").length },
+                ].map((tab) => (
+                  <button
+                    key={tab.id}
+                    onClick={() => setMessageFilter(tab.id)}
+                    className={`px-2.5 py-1 rounded-lg transition font-medium flex items-center gap-1.5 ${
+                      messageFilter === tab.id
+                        ? "bg-blue-600 text-white font-semibold"
+                        : "bg-slate-900 text-slate-400 hover:text-white"
+                    }`}
+                  >
+                    <span>{tab.label}</span>
+                    <span className="text-[10px] px-1.5 py-0.2 rounded-full bg-slate-950/60 font-mono">
+                      {tab.count}
+                    </span>
+                  </button>
+                ))}
               </div>
             </div>
 
@@ -432,21 +511,42 @@ export default function InboxPage() {
                 {t("Gelen kutusu boş. \"Gelen E-posta Simüle Et\" butonuna basarak bir mülakat daveti veya ret e-postası simüle edebilirsiniz.")}</div>
             ) : (
               <div className="space-y-3">
-                {messages.map((m: any) => {
+                {messages
+                  .filter((m: any) => {
+                    if (messageFilter === "UNREAD") return m.status === "UNREAD";
+                    if (messageFilter === "INTERVIEW_INVITE") return m.classification === "INTERVIEW_INVITE";
+                    if (messageFilter === "REPLIED") return m.status === "REPLIED";
+                    return true;
+                  })
+                  .map((m: any) => {
                   const isInvite = m.classification === "INTERVIEW_INVITE";
                   const isRejection = m.classification === "REJECTION";
+                  const isHighlighted = highlightedMessageId === m.id;
 
                   return (
                     <div
                       key={m.id}
+                      id={`msg-${m.id}`}
                       className={`p-4 rounded-xl border transition space-y-3 ${
-                        isInvite
+                        isHighlighted
+                          ? "bg-blue-950/30 border-blue-500/70 ring-2 ring-blue-500/40 shadow-lg shadow-blue-500/10"
+                          : isInvite
                           ? "bg-emerald-950/20 border-emerald-500/30"
                           : isRejection
                           ? "bg-rose-950/20 border-rose-500/20"
                           : "bg-slate-900/60 border-slate-800"
                       }`}
                     >
+                      {isHighlighted && (
+                        <div className="flex items-center justify-between text-xs font-semibold text-blue-300 bg-blue-500/10 border border-blue-500/20 px-3 py-1.5 rounded-lg">
+                          <span className="flex items-center gap-1.5">
+                            <Sparkles className="w-3.5 h-3.5 text-blue-400" />
+                            {t("Bugünün İşleri üzerinden seçilen e-posta")}
+                          </span>
+                          <span className="text-[11px] text-blue-300/80">{t("Öncelikli Eylem")}</span>
+                        </div>
+                      )}
+
                       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
                         <div>
                           <div className="flex items-center gap-2">
@@ -468,9 +568,33 @@ export default function InboxPage() {
                           >
                             {m.classification}
                           </span>
-                          <span className="text-xs bg-slate-800 text-slate-400 px-2 py-0.5 rounded font-mono">
+                          <span className={`text-xs px-2 py-0.5 rounded font-mono ${
+                            m.status === "UNREAD"
+                              ? "bg-amber-500/20 text-amber-300 border border-amber-500/30"
+                              : m.status === "REPLIED"
+                              ? "bg-emerald-500/20 text-emerald-300 border border-emerald-500/30"
+                              : "bg-slate-800 text-slate-400"
+                          }`}>
                             {m.status}
                           </span>
+
+                          {/* Action Buttons: Mark Read/Unread & Delete */}
+                          <div className="flex items-center gap-1 border-l border-slate-800 pl-2 ml-1">
+                            <button
+                              onClick={() => handleToggleStatus(m)}
+                              title={m.status === "UNREAD" ? t("Okundu olarak işaretle") : t("Okunmadı olarak işaretle")}
+                              className="p-1 rounded-lg text-slate-400 hover:text-white hover:bg-slate-800 transition text-xs"
+                            >
+                              <MailCheck className="w-3.5 h-3.5" />
+                            </button>
+                            <button
+                              onClick={() => handleDeleteMessage(m.id)}
+                              title={t("Mesajı sil")}
+                              className="p-1 rounded-lg text-slate-400 hover:text-rose-400 hover:bg-rose-950/30 transition text-xs"
+                            >
+                              <Trash2 className="w-3.5 h-3.5" />
+                            </button>
+                          </div>
                         </div>
                       </div>
 
@@ -506,9 +630,11 @@ export default function InboxPage() {
                                 setSelectedMessage(m);
                                 setCustomReply(m.proposed_reply);
                               }}
-                              className="text-blue-400 hover:text-blue-300 font-medium text-xs"
+                              className="inline-flex items-center gap-1 text-blue-400 hover:text-blue-300 font-semibold text-xs bg-blue-500/10 hover:bg-blue-500/20 px-2.5 py-1 rounded-lg transition border border-blue-500/20"
                             >
-                              {t("Düzenle & Gönder →")}</button>
+                              <MessageSquare className="w-3 h-3" />
+                              {t("Yanıtla & Gönder →")}
+                            </button>
                           </div>
                           <pre className="text-xs font-sans text-slate-400 whitespace-pre-wrap leading-relaxed">
                             {m.proposed_reply}

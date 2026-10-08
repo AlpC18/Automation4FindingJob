@@ -59,7 +59,7 @@ def build_today_actions(
     for message in inbox_messages:
         if message.get("status") == "UNREAD" and message.get("classification") != "REJECTION":
             found["inbox_reply"].append(_action(
-                "inbox_reply", message.get("id"), "/inbox", message.get("subject"),
+                "inbox_reply", message.get("id"), f"/inbox?id={message.get('id')}", message.get("subject"),
                 message.get("sender_name") or message.get("sender_email"),
                 classification=message.get("classification"),
             ))

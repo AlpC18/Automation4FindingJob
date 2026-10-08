@@ -208,11 +208,28 @@ class InboxAutomationAgent:
         if res.get("status") == "SENT":
             cursor.execute("UPDATE inbox_messages SET status = 'REPLIED' WHERE id = ?", (message_id,))
             conn.commit()
-        conn.close()
         if res.get("status") == "SENT":
             agent_logger.log_event("INBOX_AGENT", "Reply sent through configured SMTP.")
             return {"status": "SUCCESS", "smtp_dispatch": res}
         agent_logger.log_event("INBOX_AGENT", f"Reply not sent ({res.get('status', 'FAILED')}).")
         return {"status": "FAILED", "smtp_dispatch": res}
+
+    def update_message_status(self, message_id: int, status: str) -> bool:
+        conn = get_db_connection()
+        cursor = conn.cursor()
+        cursor.execute("UPDATE inbox_messages SET status = ? WHERE id = ?", (status, message_id))
+        conn.commit()
+        updated = cursor.rowcount > 0
+        conn.close()
+        return updated
+
+    def delete_message(self, message_id: int) -> bool:
+        conn = get_db_connection()
+        cursor = conn.cursor()
+        cursor.execute("DELETE FROM inbox_messages WHERE id = ?", (message_id,))
+        conn.commit()
+        deleted = cursor.rowcount > 0
+        conn.close()
+        return deleted
 
 inbox_agent = InboxAutomationAgent()

@@ -54,6 +54,28 @@ def send_inbox_reply(req: ApproveReplyRequest):
     return inbox_agent.approve_and_send_reply(req.message_id, req.final_reply)
 
 
+class UpdateMessageStatusRequest(BaseModel):
+    status: str
+
+
+@router.patch("/inbox/messages/{message_id}")
+@router.patch("/api/inbox/messages/{message_id}")
+def update_inbox_message(message_id: int, req: UpdateMessageStatusRequest):
+    ok = inbox_agent.update_message_status(message_id, req.status)
+    if not ok:
+        raise HTTPException(status_code=404, detail="Message not found.")
+    return {"updated": True, "message_id": message_id, "status": req.status}
+
+
+@router.delete("/inbox/messages/{message_id}")
+@router.delete("/api/inbox/messages/{message_id}")
+def delete_inbox_message(message_id: int):
+    ok = inbox_agent.delete_message(message_id)
+    if not ok:
+        raise HTTPException(status_code=404, detail="Message not found.")
+    return {"deleted": True, "message_id": message_id}
+
+
 @router.get("/tasks/status")
 @router.get("/api/tasks/status")
 def get_task_queue_status():

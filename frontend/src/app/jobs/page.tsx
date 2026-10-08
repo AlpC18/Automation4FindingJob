@@ -54,6 +54,8 @@ export default function JobsPage() {
   const [selectedRoleIds, setSelectedRoleIds] = useState<string[]>([]);
   const [customRoleInput, setCustomRoleInput] = useState("");
   const [customRoles, setCustomRoles] = useState<string[]>([]);
+  const [wizardWorkMode, setWizardWorkMode] = useState<string>("Remote");
+  const [wizardLocationPreset, setWizardLocationPreset] = useState<string>("all");
 
   const [locationPresets, setLocationPresets] = useState<any[]>([]);
   const [selectedLocationId, setSelectedLocationId] = useState<string>("");
@@ -220,9 +222,23 @@ export default function JobsPage() {
       : discoveredRoles.filter((role) => selectedRoleIds.includes(role.id)).map((role) => role.title).concat(customRoles);
     if (!terms.length) { setScrapeFeedback(t("Zamanlamak için önce en az bir rol seç.")); return; }
     const savedPreset = locationPresets.find((item) => item.id === selectedLocationId);
-    const location = customLocationInput.trim() || (savedPreset ? savedPreset.location_filter : "Remote");
+    const location = customLocationInput.trim()
+      || (wizardLocationPreset !== "all" ? wizardLocationPreset : "")
+      || (savedPreset ? savedPreset.location_filter : "");
+    const effectiveRemote = wizardWorkMode === "all" ? "" : wizardWorkMode;
     try {
-      await fetchFromApi("/scrape/saved-searches", { method: "POST", body: JSON.stringify({ name: internshipOnly ? t("Staj ilanları") : terms.slice(0, 2).join(" + "), queries: terms, location, min_match_score: 65, enabled: true, llm_provider: searchAi === "local_fallback" ? "" : searchAi, remote_type: customLocationInput.trim() ? "Remote" : (savedPreset ? savedPreset.remote_filter : "Remote") }) });
+      await fetchFromApi("/scrape/saved-searches", {
+        method: "POST",
+        body: JSON.stringify({
+          name: internshipOnly ? t("Staj ilanları") : terms.slice(0, 2).join(" + "),
+          queries: terms,
+          location,
+          min_match_score: 65,
+          enabled: true,
+          llm_provider: searchAi === "local_fallback" ? "" : searchAi,
+          remote_type: effectiveRemote || "Remote"
+        })
+      });
       await loadSavedSearches();
       await loadScanStatus();
       setScrapeFeedback(t("Arama otomatik zamanlamaya eklendi; şimdi tarama başlatılmadı. Durumu aşağıdaki Otomatik zamanlama bölümünden yönetebilirsin."));
@@ -274,6 +290,14 @@ export default function JobsPage() {
     }
   }
 
+  function togglePopularRole(roleName: string) {
+    if (customRoles.includes(roleName)) {
+      setCustomRoles(customRoles.filter((r) => r !== roleName));
+    } else {
+      setCustomRoles([...customRoles, roleName]);
+    }
+  }
+
   function handleAddCustomRole() {
     if (!customRoleInput.trim()) return;
     if (!customRoles.includes(customRoleInput.trim())) {
@@ -302,9 +326,10 @@ export default function JobsPage() {
     }
 
     const locPreset = locationPresets.find((p) => p.id === selectedLocationId);
-    // A preset may deliberately leave either filter empty (anywhere / any work mode).
-    const locFilter = customLocationInput.trim() || (locPreset ? locPreset.location_filter : "Remote");
-    const remoteFilter = locPreset ? locPreset.remote_filter : "Remote";
+    const locFilter = customLocationInput.trim()
+      || (wizardLocationPreset !== "all" ? wizardLocationPreset : "")
+      || (locPreset ? locPreset.location_filter : "");
+    const remoteFilter = wizardWorkMode === "all" ? "" : wizardWorkMode;
 
     try {
       setScraping(true);
@@ -367,6 +392,47 @@ export default function JobsPage() {
       ? String(a.company || "").localeCompare(String(b.company || ""))
       : (b.match_score || 0) - (a.match_score || 0)),
   [jobs, currentOnly, ghostOnly, deferredText, internshipOnly, selectedPlatform, selectedTier, locationFilter, remoteFilter, minimumMatch, sortOrder]);
+
+  const platformOptions = useMemo(() => {
+    const knownPlatforms = [
+      { id: "all", label: t("Tümü"), activeClass: "bg-blue-600 text-white border-blue-500 font-semibold shadow-sm" },
+      { id: "linkedin", label: "LinkedIn", activeClass: "bg-[#0a66c2] text-white border-[#0a66c2] font-semibold shadow-md shadow-[#0a66c2]/30" },
+      { id: "arbeitnow", label: "Arbeitnow", activeClass: "bg-amber-600 text-white border-amber-500 font-semibold shadow-sm" },
+      { id: "himalayas", label: "Himalayas", activeClass: "bg-purple-600 text-white border-purple-500 font-semibold shadow-sm" },
+      { id: "techcareer", label: "Techcareer", activeClass: "bg-indigo-600 text-white border-indigo-500 font-semibold shadow-sm" },
+      { id: "jobicy", label: "Jobicy", activeClass: "bg-cyan-600 text-white border-cyan-500 font-semibold shadow-sm" },
+      { id: "remoteok", label: "RemoteOK", activeClass: "bg-rose-600 text-white border-rose-500 font-semibold shadow-sm" },
+      { id: "remotive", label: "Remotive", activeClass: "bg-orange-600 text-white border-orange-500 font-semibold shadow-sm" },
+      { id: "upwork", label: "Upwork", activeClass: "bg-emerald-600 text-white border-emerald-500 font-semibold shadow-sm" },
+      { id: "kosovajob", label: "Kosovajob", activeClass: "bg-teal-600 text-white border-teal-500 font-semibold shadow-sm" },
+    ];
+
+    const counts: Record<string, number> = { all: jobs.length };
+    jobs.forEach((j) => {
+      const p = String(j.platform || "").toLowerCase();
+      if (p) counts[p] = (counts[p] || 0) + 1;
+    });
+
+    const activeList = knownPlatforms
+      .filter((kp) => kp.id === "all" || counts[kp.id] !== undefined || ["linkedin", "upwork"].includes(kp.id))
+      .map((kp) => ({
+        ...kp,
+        count: counts[kp.id] || 0,
+      }));
+
+    Object.keys(counts).forEach((p) => {
+      if (p !== "all" && !activeList.some((o) => o.id === p)) {
+        activeList.push({
+          id: p,
+          label: p.charAt(0).toUpperCase() + p.slice(1),
+          activeClass: "bg-blue-600 text-white border-blue-500 font-semibold shadow-sm",
+          count: counts[p],
+        });
+      }
+    });
+
+    return activeList;
+  }, [jobs, t]);
 
   function toggleJobSelection(id: string) {
     setSelectedJobIds((current) => current.includes(id) ? current.filter((item) => item !== id) : [...current, id]);
@@ -518,6 +584,39 @@ export default function JobsPage() {
                   );
                 })}
 
+                {/* Popular Role Quick Suggestion Chips */}
+                <div className="pt-2">
+                  <span className="text-[11px] font-semibold text-slate-400 block mb-1.5">{t("Popüler Roller (Hızlı Ekle):")}</span>
+                  <div className="flex flex-wrap gap-1.5">
+                    {[
+                      "Software Engineer",
+                      "Frontend Developer",
+                      "Backend Developer",
+                      "Full Stack Developer",
+                      "AI / ML Engineer",
+                      "DevOps Engineer",
+                      "Data Scientist",
+                      "Mobile Developer",
+                    ].map((pr) => {
+                      const isAdded = customRoles.includes(pr);
+                      return (
+                        <button
+                          key={pr}
+                          type="button"
+                          onClick={() => togglePopularRole(pr)}
+                          className={`text-[11px] px-2.5 py-1 rounded-lg border transition ${
+                            isAdded
+                              ? "bg-blue-600/30 text-blue-300 border-blue-500/60 font-semibold"
+                              : "bg-slate-950/60 text-slate-400 border-slate-800 hover:text-slate-200 hover:border-slate-700"
+                          }`}
+                        >
+                          {isAdded ? `✓ ${pr}` : `+ ${pr}`}
+                        </button>
+                      );
+                    })}
+                  </div>
+                </div>
+
                 {/* Custom Added Roles */}
                 {customRoles.map((cr) => (
                   <div
@@ -560,23 +659,64 @@ export default function JobsPage() {
             </div>
 
             {/* 2. WORK STYLE & LOCATION PREFERENCE */}
-            <div className="space-y-3">
-              <span className="text-xs font-bold text-slate-200 flex items-center gap-1.5">
-                <MapPin className="w-4 h-4 text-emerald-400" />
-                {t("Çalışma şekli ve konum tercihin?")}
-              </span>
-
+            <div className="space-y-4">
+              {/* 2A. Independent Work Mode */}
               <div className="space-y-2">
+                <span className="text-xs font-bold text-slate-200 flex items-center gap-1.5">
+                  <Compass className="w-4 h-4 text-sky-400" />
+                  {t("Çalışma Şekli")}
+                </span>
+                <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
+                  {[
+                    { id: "all", label: t("Tümü") },
+                    { id: "Remote", label: t("Uzaktan (Remote)") },
+                    { id: "Hybrid", label: t("Hibrit (Hybrid)") },
+                    { id: "On-site", label: t("Ofiste (On-site)") },
+                  ].map((mode) => {
+                    const isSelected = wizardWorkMode === mode.id;
+                    return (
+                      <button
+                        key={mode.id}
+                        type="button"
+                        aria-pressed={isSelected}
+                        onClick={() => setWizardWorkMode(mode.id)}
+                        className={`rounded-xl border px-3 py-2 text-xs font-semibold text-center transition ${
+                          isSelected
+                            ? "border-sky-500/60 bg-sky-950/40 text-sky-200 shadow-sm"
+                            : "border-slate-800 bg-slate-900/40 text-slate-400 hover:border-slate-700 hover:text-slate-200"
+                        }`}
+                      >
+                        {mode.label}
+                      </button>
+                    );
+                  })}
+                </div>
+              </div>
+
+              {/* 2B. Location Preference */}
+              <div className="space-y-2">
+                <span className="text-xs font-bold text-slate-200 flex items-center gap-1.5">
+                  <MapPin className="w-4 h-4 text-emerald-400" />
+                  {t("Konum Tercihi")}
+                </span>
+
                 <div className="flex flex-wrap gap-2">
-                  {locationPresets.map((loc) => {
-                    const isSelected = selectedLocationId === loc.id;
+                  {[
+                    { id: "all", label: t("Dünya Geneli (Global)") },
+                    { id: "Turkey", label: t("Türkiye") },
+                    { id: "Germany", label: t("Almanya") },
+                    { id: "United Kingdom", label: t("Birleşik Krallık") },
+                    { id: "United States", label: t("ABD") },
+                    { id: "Europe", label: t("Avrupa") },
+                  ].map((loc) => {
+                    const isSelected = wizardLocationPreset === loc.id && !customLocationInput;
                     return (
                       <button
                         key={loc.id}
                         type="button"
                         aria-pressed={isSelected}
                         onClick={() => {
-                          setSelectedLocationId(loc.id);
+                          setWizardLocationPreset(loc.id);
                           setCustomLocationInput("");
                         }}
                         className={`rounded-full border px-3 py-1.5 text-xs font-semibold transition ${
@@ -585,7 +725,7 @@ export default function JobsPage() {
                             : "border-slate-800 bg-slate-900/40 text-slate-300 hover:border-slate-600"
                         }`}
                       >
-                        {loc.title}
+                        {loc.label}
                       </button>
                     );
                   })}
@@ -598,9 +738,9 @@ export default function JobsPage() {
                     value={customLocationInput}
                     onChange={(e) => {
                       setCustomLocationInput(e.target.value);
-                      setSelectedLocationId("custom");
+                      setWizardLocationPreset("custom");
                     }}
-                    placeholder={t("Örn: Berlin, Remote US, İzmir hibrit")}
+                    placeholder={t("Veya özel şehir / ülke gir (Örn: Berlin, Remote US, İzmir hibrit)")}
                     className="w-full bg-slate-950 border border-slate-800 rounded-xl px-3 py-2 text-xs text-white placeholder:text-slate-500 focus:outline-none focus:border-blue-500"
                   />
                 </div>
@@ -611,9 +751,9 @@ export default function JobsPage() {
           {/* Action Footer */}
           <div className="pt-4 border-t border-slate-800/80 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
             <div className="text-xs text-slate-300">
-              {t("Arama Kapsamı")}{t(":")}<strong className="text-sky-400">{activeSearchCount} {t(internshipOnly ? "Staj araması" : "Ünvan")}</strong> {t("•")}{t("Konum")}{t(":")}{" "}
+              {t("Arama Kapsamı")}{t(":")} <strong className="text-sky-400">{activeSearchCount} {t(internshipOnly ? "Staj araması" : "Ünvan")}</strong> {t("•")} {t("Çalışma")}{t(":")} <strong className="text-blue-300">{wizardWorkMode === "all" ? t("Tümü") : wizardWorkMode}</strong> {t("•")} {t("Konum")}{t(":")}{" "}
               <strong className="text-emerald-400">
-                {customLocationInput.trim() || currentLoc?.title || "Uzaktan"}
+                {customLocationInput.trim() || (wizardLocationPreset === "all" ? t("Global") : wizardLocationPreset)}
               </strong>
             </div>
 
@@ -694,23 +834,44 @@ export default function JobsPage() {
             <option value="match">{t("En yüksek eşleşme")}</option><option value="recent">{t("En yeni")}</option><option value="company">{t("Şirkete göre")}</option><option value="salary">{t("En yüksek ücret (belirtilmişse)")}</option>
           </select>
         </div>
-        <div className="flex items-center gap-4">
-          <div className="flex items-center gap-2 text-slate-400 font-medium">
-            <Filter className="w-3.5 h-3.5" /> {t("Platform:")}
+        <div className="flex w-full flex-wrap items-center gap-2 pt-2 border-t border-slate-800/80">
+          <div className="flex items-center gap-1.5 text-slate-400 font-semibold text-xs mr-1">
+            <Filter className="w-3.5 h-3.5 text-blue-400" />
+            <span>{t("Platform:")}</span>
           </div>
-          {["all", ...new Set(["linkedin", "upwork", "kosovajob", "remoteok", ...jobs.map((j) => String(j.platform || "").toLowerCase()).filter(Boolean)])].map((p) => (
-            <button
-              key={p}
-              onClick={() => setSelectedPlatform(p)}
-              className={`px-2.5 py-1 rounded-lg capitalize transition ${
-                selectedPlatform === p
-                  ? "bg-blue-600 text-white font-semibold"
-                  : "bg-slate-900 text-slate-400 hover:text-white"
-              }`}
-            >
-              {p === "all" ? t("Tümü") : p}
-            </button>
-          ))}
+          <div className="flex flex-wrap items-center gap-1.5">
+            {platformOptions.map(({ id, label, count, activeClass }) => {
+              const isSelected = selectedPlatform === id;
+              const isLinkedIn = id === "linkedin";
+              return (
+                <button
+                  key={id}
+                  type="button"
+                  onClick={() => setSelectedPlatform(id)}
+                  className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs transition border ${
+                    isSelected
+                      ? activeClass
+                      : isLinkedIn
+                      ? "border-[#0a66c2]/40 bg-[#0a66c2]/10 text-[#4ca2ff] hover:bg-[#0a66c2]/20 font-medium"
+                      : "border-slate-800 bg-slate-950/70 text-slate-300 hover:border-slate-700 hover:text-white"
+                  }`}
+                >
+                  <span className="capitalize">{label}</span>
+                  <span
+                    className={`text-[10px] px-1.5 py-0.2 rounded-full font-mono ${
+                      isSelected
+                        ? "bg-white/20 text-white font-bold"
+                        : isLinkedIn
+                        ? "bg-[#0a66c2]/30 text-[#4ca2ff]"
+                        : "bg-slate-800 text-slate-400"
+                    }`}
+                  >
+                    {count}
+                  </span>
+                </button>
+              );
+            })}
+          </div>
         </div>
 
         <div className="flex items-center gap-2">
