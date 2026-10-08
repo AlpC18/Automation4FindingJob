@@ -206,7 +206,7 @@ export default function AppShell({ children }: { children: React.ReactNode }) {
       </aside>
 
       <div className="min-h-screen lg:pl-[250px]">
-        <header className="app-header sticky top-0 z-30 flex h-[56px] items-center justify-between border-b px-3 sm:px-4 lg:px-5">
+        <header className="app-header sticky top-0 z-40 flex h-[56px] items-center justify-between border-b px-3 sm:px-4 lg:px-5">
           <div className="flex min-w-0 items-center">
             <button onClick={() => setMobileOpen(true)} className="icon-button rounded-lg p-1.5 lg:hidden" aria-label={t("Menüyü aç")}><Menu className="h-[18px] w-[18px]" /></button>
           </div>

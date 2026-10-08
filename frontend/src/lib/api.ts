@@ -53,7 +53,16 @@ export async function requestFromApi(endpoint: string, options?: RequestInit): P
 export async function fetchFromApi<T = any>(endpoint: string, options?: RequestInit): Promise<T> {
   try {
     const res = await requestFromApi(endpoint, options);
-    return res.json();
+    const contentType = res.headers.get("content-type") || "";
+    if (contentType.includes("application/json")) {
+      return res.json();
+    }
+    const text = await res.text();
+    try {
+      return JSON.parse(text);
+    } catch {
+      throw new Error(`API yanıtı JSON formatında değil (HTML/metin döndü). Lütfen backend servisinin (port 18000) erişilebilir olduğunu kontrol edin.`);
+    }
   } catch (error: any) {
     console.error(`API Error on ${endpoint}:`, error);
     throw error;

@@ -1,5 +1,6 @@
 "use client";
 import { useEffect, useRef, useState } from "react";
+import { createPortal } from "react-dom";
 import { Bell, X, CheckCircle2, Clock, Sparkles, Trash2 } from "lucide-react";
 import { getApiAuthToken, getWebSocketUrl, isMultiTenantEnabled } from "@/lib/runtime-config";
 import { fetchFromApi } from "@/lib/api";
@@ -16,11 +17,16 @@ export interface NotificationItem {
 
 export default function NotificationDrawer() {
   const { locale, translate: t } = useLanguage();
+  const [mounted, setMounted] = useState(false);
   const [isOpen, setIsOpen] = useState(false);
   const [notifications, setNotifications] = useState<NotificationItem[]>([]);
   const [unreadCount, setUnreadCount] = useState(0);
   const [toast, setToast] = useState<NotificationItem | null>(null);
   const audioContextRef = useRef<AudioContext | null>(null);
+
+  useEffect(() => {
+    setMounted(true);
+  }, []);
 
   function playDing() {
     try {
@@ -189,9 +195,15 @@ export default function NotificationDrawer() {
       </button>
 
       {/* Slide-over Drawer */}
-      {isOpen && (
-        <div className="fixed inset-0 z-50 overflow-hidden bg-slate-950/60 backdrop-blur-sm animate-in fade-in duration-150">
-          <div className="absolute inset-y-0 right-0 max-w-sm w-full bg-slate-900 border-l border-slate-800 shadow-2xl p-5 flex flex-col space-y-4">
+      {isOpen && mounted && createPortal(
+        <div
+          className="fixed inset-0 z-[999] overflow-hidden bg-slate-950/60 backdrop-blur-sm animate-in fade-in duration-150"
+          onClick={(e) => { if (e.target === e.currentTarget) setIsOpen(false); }}
+        >
+          <div
+            className="absolute inset-y-0 right-0 max-w-sm w-full bg-slate-900 border-l border-slate-800 shadow-2xl p-5 flex flex-col space-y-4"
+            onClick={(e) => e.stopPropagation()}
+          >
             {/* Drawer Header */}
             <div className="flex items-center justify-between border-b border-slate-800 pb-3">
               <div className="flex items-center gap-2 text-sm font-bold text-white">
@@ -240,14 +252,16 @@ export default function NotificationDrawer() {
               )}
             </div>
           </div>
-        </div>
+        </div>,
+        document.body
       )}
 
-      {toast && !isOpen && (
-        <div className="fixed bottom-5 right-5 z-40 w-80 rounded-xl border border-blue-500/30 bg-slate-900/95 p-3 shadow-2xl shadow-blue-950/40 backdrop-blur animate-in slide-in-from-right-4 duration-200">
+      {toast && !isOpen && mounted && createPortal(
+        <div className="fixed bottom-5 right-5 z-[999] w-80 rounded-xl border border-blue-500/30 bg-slate-900/95 p-3 shadow-2xl shadow-blue-950/40 backdrop-blur animate-in slide-in-from-right-4 duration-200">
           <div className="text-xs font-semibold text-white">{t(toast.title)}</div>
           <div className="mt-1 text-xs leading-relaxed text-slate-400">{t(toast.message)}</div>
-        </div>
+        </div>,
+        document.body
       )}
     </>
   );
