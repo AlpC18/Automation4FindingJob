@@ -1,8 +1,8 @@
 "use client";
 
 import { useCallback, useEffect, useState } from "react";
-import { CheckCircle2, Clock3, FileSearch, ShieldCheck, Sparkles, WandSparkles } from "lucide-react";
-import { requestFromApi, fetchFromApi } from "@/lib/api";
+import { AlertCircle, CheckCircle2, Clock3, FileSearch, ShieldCheck, Sparkles, WandSparkles } from "lucide-react";
+import { fetchFromApi } from "@/lib/api";
 import { useLanguage } from "@/lib/i18n";
 import CvImportReview, { type CvAiAnalysis, type CvProfileFields, type CvQualityReport } from "@/components/CvImportReview";
 
@@ -34,7 +34,7 @@ export default function CvAnalysisPage() {
   const [sourceFile, setSourceFile] = useState<File | null>(null);
   const [showAutoDraft, setShowAutoDraft] = useState(false);
   const [busy, setBusy] = useState(false);
-  const [message, setMessage] = useState("");
+  const [message, setMessage] = useState<{ kind: "ok" | "error"; text: string } | null>(null);
   const [history, setHistory] = useState<CvAnalysisHistory[]>([]);
 
   const refreshHistory = useCallback(async () => {
@@ -52,9 +52,9 @@ export default function CvAnalysisPage() {
 
   async function analyzeCv(file?: File) {
     if (!file) return;
-    setMessage("");
+    setMessage(null);
     if (!/\.(pdf|docx)$/i.test(file.name)) {
-      setMessage(t("Lütfen PDF veya DOCX biçiminde bir CV seç."));
+      setMessage({ kind: "error", text: t("Lütfen PDF veya DOCX biçiminde bir CV seç.") });
       return;
     }
     setSourceFile(file);
@@ -64,9 +64,9 @@ export default function CvAnalysisPage() {
       const parsed = await requestCv(file, false);
       setResult(parsed);
       await refreshHistory();
-      setMessage(`${t("CV içeriği çıkarıldı")}: ${parsed.character_count || 0} ${t("karakter")}.`);
+      setMessage({ kind: "ok", text: `${t("CV içeriği çıkarıldı")}: ${parsed.character_count || 0} ${t("karakter")}.` });
     } catch (error: any) {
-      setMessage(error.message || t("CV dosyası okunamadı."));
+      setMessage({ kind: "error", text: error.message || t("CV dosyası okunamadı.") });
     } finally {
       setBusy(false);
     }
@@ -76,9 +76,7 @@ export default function CvAnalysisPage() {
     const formData = new FormData();
     formData.append("file", file);
     formData.append("use_ai", String(withAi));
-    const response = await requestFromApi("/setup/parse_cv", { method: "POST", body: formData });
-    const parsed = await response.json();
-    if (!response.ok) throw new Error(parsed.detail || t("CV dosyası okunamadı."));
+    const parsed = await fetchFromApi<any>("/setup/parse_cv", { method: "POST", body: formData });
     return {
       fields: parsed.fields || {},
       text: parsed.text || "",
@@ -94,15 +92,15 @@ export default function CvAnalysisPage() {
   async function runAiCheck() {
     if (!sourceFile) return;
     setBusy(true);
-    setMessage("");
+    setMessage(null);
     try {
       const parsed = await requestCv(sourceFile, true);
       setResult(parsed);
       await refreshHistory();
       setShowAutoDraft(false);
-      setMessage(parsed.ai_used ? t("AI CV kontrolü tamamlandı.") : t("AI sonucu alınamadı; yerel analiz gösteriliyor."));
+      setMessage({ kind: "ok", text: parsed.ai_used ? t("AI CV kontrolü tamamlandı.") : t("AI sonucu alınamadı; yerel analiz gösteriliyor.") });
     } catch (error: any) {
-      setMessage(error.message || t("AI CV kontrolü başarısız oldu."));
+      setMessage({ kind: "error", text: error.message || t("AI CV kontrolü başarısız oldu.") });
     } finally {
       setBusy(false);
     }
@@ -110,16 +108,16 @@ export default function CvAnalysisPage() {
 
   function showAutomaticDraft() {
     if (!result?.optimized_cv_text) {
-      setMessage(t("Otomatik düzenleme için kullanılabilir bir CV taslağı oluşturulamadı."));
+      setMessage({ kind: "error", text: t("Otomatik düzenleme için kullanılabilir bir CV taslağı oluşturulamadı.") });
       return;
     }
     setShowAutoDraft(true);
-    setMessage(t("Otomatik düzenlenmiş CV taslağı hazır. Taslağı kontrol edip indirebilirsin."));
+    setMessage({ kind: "ok", text: t("Otomatik düzenlenmiş CV taslağı hazır. Taslağı kontrol edip indirebilirsin.") });
   }
 
   async function applyFields(fields: CvProfileFields) {
     setBusy(true);
-    setMessage("");
+    setMessage(null);
     try {
       const currentResponse = await fetchFromApi("/setup/profile");
       const current = currentResponse.profile || {};
@@ -148,9 +146,9 @@ export default function CvAnalysisPage() {
         }),
       });
       setResult(null);
-      setMessage(t("Seçilen CV bilgileri profiline kaydedildi."));
+      setMessage({ kind: "ok", text: t("Seçilen CV bilgileri profiline kaydedildi.") });
     } catch (error: any) {
-      setMessage(error.message || t("CV bilgileri kaydedilemedi."));
+      setMessage({ kind: "error", text: error.message || t("CV bilgileri kaydedilemedi.") });
     } finally {
       setBusy(false);
     }
@@ -183,7 +181,21 @@ export default function CvAnalysisPage() {
             <input type="file" accept=".pdf,.docx" className="hidden" disabled={busy} onChange={async (event) => { const input = event.currentTarget; await analyzeCv(input.files?.[0]); input.value = ""; }} />
           </label>
         </div>
-        {message && <p role="status" className="mt-3 flex items-center gap-2 text-xs text-slate-300"><CheckCircle2 className="h-4 w-4 text-emerald-400" />{message}</p>}
+        {message && (
+          <p
+            role="status"
+            className={`mt-3 flex items-center gap-2 text-xs ${
+              message.kind === "error" ? "text-rose-300" : "text-emerald-300"
+            }`}
+          >
+            {message.kind === "error" ? (
+              <AlertCircle className="h-4 w-4 text-rose-400" />
+            ) : (
+              <CheckCircle2 className="h-4 w-4 text-emerald-400" />
+            )}
+            {message.text}
+          </p>
+        )}
       </section>
 
       {result && <>

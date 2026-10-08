@@ -32,6 +32,7 @@ export default function SourcesPage() {
   const [tokens, setTokens] = useState<Record<string, string>>({});
   const [busy, setBusy] = useState<string | null>(null);
   const [notice, setNotice] = useState("");
+  const [loading, setLoading] = useState(true);
   const [backupBusy, setBackupBusy] = useState(false);
   const [restoreBusy, setRestoreBusy] = useState(false);
   const [restoreConfirmation, setRestoreConfirmation] = useState("");
@@ -43,14 +44,22 @@ export default function SourcesPage() {
   const [revealBusy, setRevealBusy] = useState<string | null>(null);
 
   async function load() {
-    const result = await fetchFromApi("/scrape/sources");
-    const next: Record<string, ProviderConfig> = {};
-    for (const provider of result.sources || []) next[provider.source] = provider;
-    setConfigs(next);
-    setHealth(result.health || {});
+    setLoading(true);
+    try {
+      const result = await fetchFromApi("/scrape/sources");
+      const next: Record<string, ProviderConfig> = {};
+      for (const provider of result.sources || []) next[provider.source] = provider;
+      setConfigs(next);
+      setHealth(result.health || {});
+      setNotice("");
+    } catch (error: any) {
+      setNotice(error.message || t("Veriler yüklenemedi. Sayfayı yenileyip tekrar dene."));
+    } finally {
+      setLoading(false);
+    }
   }
 
-  useEffect(() => { load().catch((error) => setNotice(error.message)); }, []);
+  useEffect(() => { void load(); }, []);
 
   useEffect(() => {
     fetchFromApi("/scrape/apify-quota").then((result) => setQuotaAccounts(result.accounts || [])).catch(() => setQuotaAccounts([]));
@@ -165,13 +174,30 @@ export default function SourcesPage() {
         </div>
         <p className="text-xs text-slate-400">{t("Yalnızca uygulamanın indirdiği SQLite hesap yedekleri desteklenir. Şifreli otomatik yedekler için aynı uygulama şifreleme anahtarı gerekir.")}</p>
       </section>
-      {notice && <div role="status" className="rounded-xl border border-slate-700 bg-slate-900 p-3 text-sm text-slate-200">{notice}</div>}
+      {notice && (
+        <div role="status" className="flex flex-wrap items-center justify-between gap-3 rounded-xl border border-slate-700 bg-slate-900 p-3 text-sm text-slate-200">
+          <span>{notice}</span>
+          <button
+            type="button"
+            onClick={() => void load()}
+            className="rounded-lg border border-slate-700 bg-slate-800 px-3 py-1 text-xs text-white hover:bg-slate-700"
+          >
+            {t("Yenile")}
+          </button>
+        </div>
+      )}
       <CompanyBoards />
       <div className="grid gap-5">
         {providers.map((provider) => {
           const config = configs[provider.id];
           const status = health[provider.id];
-          if (!config) return <div key={provider.id} className="rounded-2xl border border-slate-800 p-5 text-slate-400">{provider.title} {t("ayarları yükleniyor…")}</div>;
+          if (!config) {
+            return (
+              <div key={provider.id} className="rounded-2xl border border-slate-800 p-5 text-slate-400">
+                {provider.title} {loading ? t("ayarları yükleniyor…") : `· ${t("Yapılandırılmadı")}`}
+              </div>
+            );
+          }
           return <section key={provider.id} className="rounded-2xl border border-slate-800 bg-slate-900/60 p-5">
             <div className="mb-5 flex items-start justify-between gap-3">
               <div><h2 className="text-lg font-semibold text-white">{provider.title}</h2><p className="mt-1 text-xs text-slate-400">{status?.configured ? t("Yapılandırılmış") : t("Kurulum gerekiyor")} · {status?.runs_7d ?? 0} {t("çalışma / 7 gün")} · {status?.successes_7d ?? 0} {t("başarılı")}</p><p className="mt-1 text-xs text-slate-400">{t("Bugünkü Actor çalışması")}{t(":")}{status?.runs_today ?? 0}/{status?.daily_run_limit ?? 0} · {t("çalışma başına en fazla ilan")}{t(":")}{status?.max_items_per_run ?? 0} · {t("çalışma başına maliyet üst sınırı")}: ${status?.max_charge_per_run_usd ?? 0}</p></div>
