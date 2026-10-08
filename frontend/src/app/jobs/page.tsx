@@ -23,6 +23,7 @@ import {
   TrendingUp,
   Building2,
   GraduationCap,
+  Globe,
 } from "lucide-react";
 import AiProviderSelect from "@/components/AiProviderSelect";
 import JobCard from "@/components/JobCard";
@@ -62,6 +63,7 @@ export default function JobsPage() {
   const [wizardWorkMode, setWizardWorkMode] = useState<string>("Remote");
   const [wizardLocationPreset, setWizardLocationPreset] = useState<string>("all");
   const [selectedDisciplineId, setSelectedDisciplineId] = useState<string>("tech");
+  const [scrapeTargetPlatforms, setScrapeTargetPlatforms] = useState<string[]>(["all"]);
 
   const [locationPresets, setLocationPresets] = useState<any[]>([]);
   const [selectedLocationId, setSelectedLocationId] = useState<string>("");
@@ -313,6 +315,21 @@ export default function JobsPage() {
     setCustomRoles(customRoles.filter((r) => !roles.includes(r)));
   }
 
+  function toggleScrapeTargetPlatform(platformId: string) {
+    if (platformId === "all") {
+      setScrapeTargetPlatforms(["all"]);
+      return;
+    }
+    let current = scrapeTargetPlatforms.filter((p) => p !== "all");
+    if (current.includes(platformId)) {
+      current = current.filter((p) => p !== platformId);
+      if (current.length === 0) current = ["all"];
+    } else {
+      current.push(platformId);
+    }
+    setScrapeTargetPlatforms(current);
+  }
+
   function handleAddCustomRole() {
     if (!customRoleInput.trim()) return;
     if (!customRoles.includes(customRoleInput.trim())) {
@@ -354,7 +371,8 @@ export default function JobsPage() {
         body: JSON.stringify({
           queries: chosenTitles,
           location_preference: locFilter,
-          remote_type: remoteFilter
+          remote_type: remoteFilter,
+          platforms: scrapeTargetPlatforms.includes("all") ? null : scrapeTargetPlatforms,
         })
       });
       if (res.status === "QUEUED" && res.job_id) {
@@ -906,6 +924,47 @@ export default function JobsPage() {
                   />
                 </div>
               </div>
+
+              {/* 2C. Platform Selection */}
+              <div className="space-y-2">
+                <span className="text-xs font-bold text-slate-200 flex items-center gap-1.5">
+                  <Globe className="w-4 h-4 text-violet-400" />
+                  {t("Scraping Yapılacak Platformlar")}
+                </span>
+                <p className="text-[11px] text-slate-400">{t("Hangi iş platformlarından tarama yapılacağını seçin. Varsayılan olarak tüm kaynaklar taranır.")}</p>
+                <div className="flex flex-wrap gap-2">
+                  {[
+                    { id: "all", label: t("Tümü (Otomatik)"), activeClass: "border-blue-500/60 bg-blue-950/40 text-blue-200" },
+                    { id: "linkedin", label: "LinkedIn", activeClass: "border-[#0a66c2]/70 bg-[#0a66c2]/20 text-blue-200" },
+                    { id: "kosovajob", label: "KosovaJob", activeClass: "border-teal-500/60 bg-teal-950/40 text-teal-200" },
+                    { id: "remote", label: t("Remote Portalları"), activeClass: "border-orange-500/60 bg-orange-950/40 text-orange-200" },
+                    { id: "techcareer", label: "Techcareer", activeClass: "border-indigo-500/60 bg-indigo-950/40 text-indigo-200" },
+                    { id: "upwork", label: "Upwork", activeClass: "border-emerald-500/60 bg-emerald-950/40 text-emerald-200" },
+                  ].map((plat) => {
+                    const isSelected = scrapeTargetPlatforms.includes(plat.id);
+                    return (
+                      <button
+                        key={plat.id}
+                        type="button"
+                        aria-pressed={isSelected}
+                        onClick={() => toggleScrapeTargetPlatform(plat.id)}
+                        className={`rounded-full border px-3 py-1.5 text-xs font-semibold transition ${
+                          isSelected
+                            ? plat.activeClass
+                            : "border-slate-800 bg-slate-900/40 text-slate-400 hover:border-slate-600 hover:text-slate-200"
+                        }`}
+                      >
+                        {plat.label}
+                      </button>
+                    );
+                  })}
+                </div>
+                <div className="text-[11px] text-slate-400 font-mono">
+                  {scrapeTargetPlatforms.includes("all")
+                    ? t("Tüm kaynaklar taranır")
+                    : `${scrapeTargetPlatforms.length} ${t("platform seçildi")}`}
+                </div>
+              </div>
             </div>
           </div>
 
@@ -915,6 +974,10 @@ export default function JobsPage() {
               {t("Arama Kapsamı")}{t(":")} <strong className="text-sky-400">{activeSearchCount} {t(internshipOnly ? "Staj araması" : "Ünvan")}</strong> {t("•")} {t("Çalışma")}{t(":")} <strong className="text-blue-300">{wizardWorkMode === "all" ? t("Tümü") : wizardWorkMode}</strong> {t("•")} {t("Konum")}{t(":")}{" "}
               <strong className="text-emerald-400">
                 {customLocationInput.trim() || (wizardLocationPreset === "all" ? t("Global") : wizardLocationPreset)}
+              </strong>
+              {" "}{t("•")} {t("Platformlar")}{t(":")}{" "}
+              <strong className="text-violet-400">
+                {scrapeTargetPlatforms.includes("all") ? t("Tümü") : scrapeTargetPlatforms.join(", ")}
               </strong>
             </div>
 
@@ -1119,14 +1182,14 @@ export default function JobsPage() {
       </div>}
       {detailJob && <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 p-4" role="dialog" aria-modal="true" aria-labelledby="job-detail-title">
         <div className="max-h-[90vh] w-full max-w-3xl overflow-y-auto rounded-2xl border border-slate-700 bg-slate-950 p-6 shadow-2xl">
-          <div className="flex items-start justify-between gap-4"><div><p className="text-xs uppercase tracking-widest text-blue-400">{t("Canlı kaynak ilanı ·")} {detailJob.platform}</p><h2 id="job-detail-title" className="mt-1 text-xl font-bold text-white">{detailJob.title}</h2><p className="mt-1 text-sm text-slate-400">{detailJob.company} · {detailJob.location}</p></div><button onClick={() => setDetailJob(null)} className="text-slate-400 hover:text-white">{t("Kapat")}</button></div>
+          <div className="flex items-start justify-between gap-4"><div><p className="text-xs uppercase tracking-widest text-blue-400">{t("Canlı kaynak ilanı ·")} {detailJob.platform}</p><h2 id="job-detail-title" className="mt-1 text-xl font-bold text-white">{detailJob.title}</h2><p className="mt-1 text-sm text-slate-400">{detailJob.company} · {detailJob.location}</p>{getExternalJobUrl(detailJob.url) && <a href={getExternalJobUrl(detailJob.url)!} target="_blank" rel="noopener noreferrer" className="mt-2 inline-flex items-center gap-1.5 rounded-lg bg-blue-600 px-3 py-1.5 text-xs font-semibold text-white hover:bg-blue-500 transition"><ExternalLink className="h-3.5 w-3.5" />{t("İlana Git")} ({detailJob.platform})</a>}</div><button onClick={() => setDetailJob(null)} className="text-slate-400 hover:text-white">{t("Kapat")}</button></div>
           <div className="mt-5 grid gap-3 sm:grid-cols-2 lg:grid-cols-4"><div className="rounded-xl border border-slate-800 bg-slate-900 p-3"><div className="text-xs text-slate-400">{t("Tahmini profil uyumu")}</div><div className="mt-1 text-lg font-bold text-emerald-400">≈ %{detailJob.match_score ?? "—"}</div></div><div className="rounded-xl border border-slate-800 bg-slate-900 p-3"><div className="text-xs text-slate-400">{t("Ghost riski")}</div><div className="mt-1 text-lg font-bold text-rose-300">%{detailJob.ghost_score ?? 0}</div></div><div className="rounded-xl border border-slate-800 bg-slate-900 p-3"><div className="text-xs text-slate-400">{t("Yayın tarihi")}</div><div className="mt-1 text-sm font-semibold text-white">{detailJob.posted_date || "Bilinmiyor"}</div></div><div className="rounded-xl border border-slate-800 bg-slate-900 p-3"><div className="text-xs text-slate-400">{t("Link durumu")}</div><div className="mt-1 text-sm font-semibold text-white">{linkLabels[linkStatus(detailJob.source_link_check)]}</div>{detailJob.source_link_check?.checked_at && <div className="mt-1 text-xs text-slate-400">{t("Son kontrol")}: {formatTimestamp(detailJob.source_link_check.checked_at, locale)}</div>}</div></div>
           <p className="mt-2 text-xs text-slate-400">{t("Bu eşleşme bir kural tabanlı tahmindir; işverenin kullandığı ATS skoru veya işe alınma olasılığı değildir.")}</p>
           {(detailJob.skill_gaps?.matched_evidence?.length > 0 || detailJob.skill_gaps?.missing_skills?.length > 0) && <section className="mt-4 rounded-xl border border-emerald-500/15 bg-emerald-500/[0.03] p-4"><h3 className="text-sm font-semibold text-white">{t("Eşleşme kanıtı ve beceri boşlukları")}</h3>{detailJob.skill_gaps?.matched_evidence?.length > 0 && <div className="mt-3"><div className="text-xs font-semibold uppercase tracking-wide text-emerald-300">{t("Profilden eşleşen beceriler")}</div><div className="mt-1 flex flex-wrap gap-1.5">{detailJob.skill_gaps.matched_evidence.map((item: any) => <span key={item.required_skill} className="rounded-full border border-emerald-500/20 px-2.5 py-1 text-xs text-emerald-200">{item.profile_evidence}</span>)}</div></div>}{detailJob.skill_gaps?.missing_skills?.length > 0 && <div className="mt-3"><div className="text-xs font-semibold uppercase tracking-wide text-amber-300">{t("İlan metninde aranıp profilde bulunmayan beceriler")}</div><div className="mt-1 flex flex-wrap gap-1.5">{detailJob.skill_gaps.missing_skills.map((item: string) => <span key={item} className="rounded-full border border-amber-500/20 px-2.5 py-1 text-xs text-amber-200">{item}</span>)}</div></div>}</section>}
           <div className="mt-3 rounded-xl border border-slate-800 bg-slate-900/60 p-3 text-xs text-slate-400">{t("Veri kaynağı")}: {detailJob.platform}{(detailJob.source_aliases || []).length > 0 ? ` · ${t("Aynı ilan şu kaynaklarda da bulundu")}: ${detailJob.source_aliases.map((alias: any) => alias.platform).join(", ")}` : ""} · {t("İlk görüldü")} {formatTimestamp(detailJob.first_seen_at, locale)} · {t("Kaynakta son görüldü")} {formatTimestamp(detailJob.last_seen_at, locale)}{detailJob.stale_at ? ` · ${t("Eskimiş olabilir: son taramada kaynak bu ilanı döndürmedi")}` : jobFreshness(detailJob).level === "aging" ? ` · ${jobFreshness(detailJob).days} ${t("gündür kaynakta yeniden doğrulanmadı")}` : ""}</div>
-          <div className="mt-5 rounded-xl border border-slate-800 bg-slate-900 p-4"><h3 className="text-sm font-semibold text-white">{t("İlan açıklaması")}</h3><p className="mt-3 whitespace-pre-wrap text-sm leading-7 text-slate-300">{detailJob.description}</p></div>
+          <div className="mt-5 rounded-xl border border-slate-800 bg-slate-900 p-4"><h3 className="text-sm font-semibold text-white flex items-center justify-between">{t("İlan açıklaması")}{getExternalJobUrl(detailJob.url) && <a href={getExternalJobUrl(detailJob.url)!} target="_blank" rel="noopener noreferrer" onClick={(e) => e.stopPropagation()} className="text-sky-400 hover:text-sky-300 underline font-mono text-xs truncate max-w-sm" title={detailJob.url}>{detailJob.url}</a>}</h3><p className="mt-3 whitespace-pre-wrap text-sm leading-7 text-slate-300">{detailJob.description}</p></div>
           {detailJob.ghost_reasons?.length > 0 && <div className="mt-3 rounded-xl border border-rose-500/20 bg-rose-500/5 p-4"><h3 className="text-sm font-semibold text-rose-300">{t("Risk nedenleri")}</h3><ul className="mt-2 list-disc space-y-1 pl-5 text-xs text-rose-200">{detailJob.ghost_reasons.map((reason: string) => <li key={reason}>{reason}</li>)}</ul></div>}
-          <div className="mt-5 flex flex-wrap items-center justify-between gap-3"><span className="text-xs text-slate-400">{t("İlanda belirtilen maaş:")}<strong className="text-white">{detailJob.salary_range || t("Belirtilmemiş")}</strong></span>{getExternalJobUrl(detailJob.url) && <a href={getExternalJobUrl(detailJob.url)!} target="_self" className="inline-flex items-center gap-2 rounded-lg bg-blue-600 px-4 py-2 text-xs font-semibold text-white hover:bg-blue-500">{t("Kaynak ilanda aç")}<ExternalLink className="h-3.5 w-3.5" /></a>}</div>
+          <div className="mt-5 flex flex-wrap items-center justify-between gap-3"><span className="text-xs text-slate-400">{t("İlanda belirtilen maaş:")}<strong className="text-white">{detailJob.salary_range || t("Belirtilmemiş")}</strong></span>{getExternalJobUrl(detailJob.url) && <a href={getExternalJobUrl(detailJob.url)!} target="_blank" rel="noopener noreferrer" className="inline-flex items-center gap-2 rounded-lg bg-blue-600 px-4 py-2 text-xs font-semibold text-white hover:bg-blue-500"><ExternalLink className="h-3.5 w-3.5" />{t("Kaynak ilanda aç")}</a>}</div>
           {detailJob.salary_benchmark?.formatted_display && <div className="mt-3 rounded-xl border border-amber-500/20 bg-amber-500/5 p-3"><div className="text-xs font-semibold text-amber-200">{t("Piyasa tahmini")}: {detailJob.salary_benchmark.formatted_display}</div><p className="mt-1 text-xs text-slate-400">{t("Bu kural tabanlı bir tahmindir; işveren tarafından bildirilmemiş veya doğrulanmamıştır.")}</p></div>}
           <section className="mt-5 rounded-xl border border-slate-800 bg-slate-900 p-4">
             <h3 className="text-sm font-semibold text-white">{t("Şirket ve ilan güvenilirliği")}</h3>

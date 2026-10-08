@@ -55,9 +55,19 @@ export default function JobCard({ job, ctx }: { job: any; ctx: any }) {
               }`}>
                 {job.platform}
               </span>
-              {sourceUrl && <a href={sourceUrl} target="_self" onClick={(event) => event.stopPropagation()} className="inline-flex items-center gap-1 rounded-full border border-emerald-500/25 bg-emerald-500/10 px-2 py-0.5 text-xs font-semibold text-emerald-300 transition hover:bg-emerald-500/20">
-                {t("Kaynak ilanda aç")}<ExternalLink className="h-3 w-3" />
-              </a>}
+              {sourceUrl && (
+                <a
+                  href={sourceUrl}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  onClick={(event) => event.stopPropagation()}
+                  className="inline-flex items-center gap-1.5 rounded-full border border-blue-500/40 bg-blue-500/10 px-3 py-0.5 text-xs font-semibold text-blue-300 transition hover:bg-blue-600 hover:text-white"
+                  title={t("Orijinal ilanı yeni sekmede aç")}
+                >
+                  <ExternalLink className="h-3 w-3" />
+                  <span>{t("İlana Git")} ({job.platform})</span>
+                </a>
+              )}
               {sourceUrl && <button type="button" onClick={() => void checkJobLink(job)} disabled={linkCheckBusy === job.id} className={`inline-flex items-center gap-1 rounded-full border px-2 py-0.5 text-xs font-semibold transition disabled:opacity-50 ${linkState === "reachable" ? "border-emerald-500/30 text-emerald-300" : ["broken", "unreachable", "invalid"].includes(linkState) ? "border-rose-500/30 text-rose-300" : "border-slate-700 text-slate-400 hover:text-white"}`}>
                 <Link2 className="h-3 w-3" /> {linkCheckBusy === job.id ? t("Kontrol ediliyor…") : linkState === "unchecked" ? t("Bağlantıyı kontrol et") : linkLabels[linkState]}
               </button>}
@@ -108,7 +118,25 @@ export default function JobCard({ job, ctx }: { job: any; ctx: any }) {
           {freshness.level === "aging" && <span className="rounded-full border border-amber-500/30 bg-amber-500/10 px-2 py-0.5 text-amber-200">{freshness.days} {t("gündür kaynakta yeniden doğrulanmadı")}</span>}
           {["broken", "unreachable"].includes(linkState) && <span className="rounded-full border border-rose-500/30 bg-rose-500/10 px-2 py-0.5 text-rose-200">{t("İlan linki açılmıyor; ilan kapanmış olabilir")}</span>}
         </div>}
-        <p className="text-xs text-slate-300 leading-relaxed line-clamp-2">{job.description}</p>
+        <p className="text-xs text-slate-300 leading-relaxed line-clamp-3">{job.description}</p>
+        {sourceUrl && (
+          <div className="flex flex-wrap items-center gap-2 pt-1 text-xs bg-slate-950/40 p-2.5 rounded-xl border border-slate-800/80">
+            <span className="font-semibold text-slate-300 flex items-center gap-1 shrink-0">
+              <ExternalLink className="w-3.5 h-3.5 text-sky-400" />
+              {t("İlan Bağlantısı:")}
+            </span>
+            <a
+              href={sourceUrl}
+              target="_blank"
+              rel="noopener noreferrer"
+              onClick={(e) => e.stopPropagation()}
+              className="text-sky-400 hover:text-sky-300 underline font-mono truncate max-w-lg"
+              title={sourceUrl}
+            >
+              {sourceUrl}
+            </a>
+          </div>
+        )}
 
         {job.ai_review && (
           <div className="rounded-xl border border-blue-500/20 bg-blue-500/[0.04] p-3">
@@ -198,6 +226,18 @@ export default function JobCard({ job, ctx }: { job: any; ctx: any }) {
           </div>
 
           <div className="flex items-center gap-2">
+            {sourceUrl && (
+              <a
+                href={sourceUrl}
+                target="_blank"
+                rel="noopener noreferrer"
+                onClick={(e) => e.stopPropagation()}
+                className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg border border-slate-700 bg-slate-900 hover:bg-slate-850 text-slate-200 font-semibold transition text-xs hover:border-blue-500/50 hover:text-blue-300"
+              >
+                <ExternalLink className="w-3.5 h-3.5 text-blue-400" />
+                <span>{t("İlana Git")}</span>
+              </a>
+            )}
             <FitReportButton jobId={job.id} />
             <button onClick={() => void prepareApplication(job)} disabled={preparingJob === job.id} className="px-4 py-1.5 rounded-lg bg-blue-600 hover:bg-blue-500 text-white font-semibold transition text-xs shadow-md shadow-blue-600/20 disabled:opacity-50">
               {preparingJob === job.id ? t("Taslak hazırlanıyor…") : t("Başvuru taslağı hazırla")}
