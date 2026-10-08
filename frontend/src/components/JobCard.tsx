@@ -2,7 +2,7 @@
 
 import FitReportButton from "@/components/FitReportButton";
 import Link from "next/link";
-import { AlertTriangle, CheckSquare, DollarSign, ExternalLink, EyeOff, Heart, Layers, Link2, ShieldAlert, Square } from "lucide-react";
+import { AlertTriangle, CheckSquare, DollarSign, ExternalLink, EyeOff, Heart, Layers, Link2, Mail, ShieldAlert, Square } from "lucide-react";
 import { getExternalJobUrl } from "@/lib/job-links";
 import { useLanguage } from "@/lib/i18n";
 import { formatTimestamp, jobFreshness, linkStatus } from "@/lib/scan-status.cjs";
@@ -10,7 +10,7 @@ import { formatTimestamp, jobFreshness, linkStatus } from "@/lib/scan-status.cjs
 /** One listing in the jobs feed. State and actions stay in the jobs page and arrive through `ctx`. */
 export default function JobCard({ job, ctx }: { job: any; ctx: any }) {
   const { locale, translate: t } = useLanguage();
-  const { selectedJobIds, toggleJobSelection, toggleJobFlag, checkJobLink, linkCheckBusy, linkLabels, prepareApplication, preparingJob, setDetailJob } = ctx;
+  const { selectedJobIds, toggleJobSelection, toggleJobFlag, checkJobLink, linkCheckBusy, linkLabels, prepareApplication, preparingJob, setDetailJob, openEmailModal } = ctx;
     const hasRedFlags = job.red_flags && job.red_flags.length > 0;
     const isGhost = job.ghost_score >= 35;
     const skillGaps = job.skill_gaps || {};
@@ -239,6 +239,24 @@ export default function JobCard({ job, ctx }: { job: any; ctx: any }) {
               </a>
             )}
             <FitReportButton jobId={job.id} />
+            {job.status === "Applied" ? (
+              <span className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg border border-emerald-500/40 bg-emerald-950/40 text-emerald-300 font-semibold text-xs">
+                ✓ {t("Başvuruldu")}
+              </span>
+            ) : (
+              <button
+                type="button"
+                onClick={(e) => {
+                  e.stopPropagation();
+                  openEmailModal?.(job);
+                }}
+                className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg border border-indigo-500/40 bg-indigo-950/30 hover:bg-indigo-900/40 text-indigo-300 font-semibold transition text-xs"
+                title={t("Doğrudan şirkete e-posta ile başvur")}
+              >
+                <Mail className="w-3.5 h-3.5 text-indigo-400" />
+                <span>{t("E-posta ile Başvur")}</span>
+              </button>
+            )}
             <button onClick={() => void prepareApplication(job)} disabled={preparingJob === job.id} className="px-4 py-1.5 rounded-lg bg-blue-600 hover:bg-blue-500 text-white font-semibold transition text-xs shadow-md shadow-blue-600/20 disabled:opacity-50">
               {preparingJob === job.id ? t("Taslak hazırlanıyor…") : t("Başvuru taslağı hazırla")}
             </button>

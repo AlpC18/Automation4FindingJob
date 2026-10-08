@@ -319,3 +319,111 @@ def download_fit_tailored_cv(job_id: str, theme: str = "navy"):
         headers={"Content-Disposition": f'attachment; filename="CV_{company}.pdf"', "Cache-Control": "no-store"},
     )
 
+
+class EmailApplicationRequest(BaseModel):
+    job_id: str
+    recipient_email: str
+    subject: str
+    body: str
+    attach_cv: bool = True
+
+
+@router.post("/apply/send_email_application")
+def send_email_application(req: EmailApplicationRequest):
+    recipient = (req.recipient_email or "").strip()
+    if not recipient or "@" not in recipient:
+        raise HTTPException(status_code=422, detail="Geçerli bir alıcı e-posta adresi giriniz.")
+
+    from backend.app.core.smtp_credentials import get_smtp_configuration
+    smtp_config = get_smtp_configuration()
+    if not smtp_config.get("host") or not smtp_config.get("from_email"):
+        raise HTTPException(status_code=503, detail="E-posta göndermek için lütfen önce Ayarlar sayfasından SMTP / E-posta sunucu bilgilerinizi kaydedin.")
+
+    conn = get_db_connection()
+    try:
+        cursor = conn.cursor()
+        cursor.execute("SELECT * FROM scraped_jobs WHERE id = ?", (req.job_id,))
+        job_row = cursor.fetchone()
+        if not job_row:
+            raise HTTPException(status_code=404, detail="İlan bulunamadı.")
+        job = dict(job_row)
+
+        profile = fetch_candidate_profile()
+
+        # Prepare EmailMessage
+        import smtplib
+        from email.message import EmailMessage
+
+        msg = EmailMessage()
+        msg["Subject"] = req.subject or f"İş Başvurusu: {job['title']} - {profile.get('full_name', '')}"
+        msg["From"] = smtp_config["from_email"]
+        msg["To"] = recipient
+        msg.set_content(req.body)
+
+        if req.attach_cv:
+            try:
+                tailored = tailored_cv_profile(
+                    build_tailored_resume_profile(profile, job)["profile"],
+                    rag_memory.documents,
+                    job,
+                )
+                pdf_bytes = ats_pdf_generator.generate_cv_pdf(tailored, theme="navy").getvalue()
+                candidate_name = (profile.get("full_name") or "Aday").replace(" ", "_")
+                msg.add_attachment(
+                    pdf_bytes,
+                    maintype="application",
+                    subtype="pdf",
+                    filename=f"CV_{candidate_name}.pdf",
+                )
+            except Exception as e:
+                agent_logger.log_event("EMAIL_APPLY", f"Could not attach PDF CV: {e}")
+
+        # Send via SMTP
+        with smtplib.SMTP(smtp_config["host"], smtp_config["port"], timeout=20) as server:
+            if smtp_config.get("use_tls", True):
+                server.starttls()
+            if smtp_config.get("username"):
+                server.login(smtp_config["username"], smtp_config["password"])
+            server.send_message(msg)
+
+        # Update job status to Applied
+        cursor.execute(
+            """UPDATE scraped_jobs SET
+                status = 'Applied',
+                applied_at = CURRENT_TIMESTAMP,
+                submission_state = 'submitted',
+                submission_confirmed = 1,
+                submission_message = ?
+            WHERE id = ?""",
+            (f"E-posta ile gönderildi: {recipient}", req.job_id),
+        )
+
+        # Record to application_status_history
+        cursor.execute(
+            """INSERT INTO application_status_history (
+                id, job_id, from_status, to_status, source, note
+            ) VALUES (?, ?, ?, 'Applied', 'email_apply', ?)""",
+            (
+                f"hist-{uuid.uuid4().hex[:8]}",
+                req.job_id,
+                job.get("status") or "Draft",
+                f"E-posta gönderildi: {recipient}. Konu: {req.subject}",
+            ),
+        )
+        conn.commit()
+
+        agent_logger.log_event("EMAIL_APPLY", f"Successfully sent application email to {recipient} for job {req.job_id}")
+        return {
+            "status": "SUCCESS",
+            "message": f"{recipient} adresine başvuru e-postanız ve özgeçmişiniz başarıyla iletildi!",
+            "job_id": req.job_id,
+        }
+    except HTTPException:
+        raise
+    except Exception as exc:
+        agent_logger.log_event("EMAIL_APPLY", f"SMTP delivery failed: {exc}")
+        raise HTTPException(status_code=500, detail=f"E-posta gönderilemedi: {str(exc)}") from exc
+    finally:
+        conn.close()
+
+

@@ -7,7 +7,14 @@ from typing import Any, Dict, List, Optional
 from fastapi import APIRouter, File, Form, HTTPException, Response, UploadFile
 from pydantic import BaseModel, Field
 
-from backend.app.api.profile import encrypt_profile_values, fetch_candidate_profile
+from backend.app.api.profile import (
+    activate_candidate_profile,
+    create_candidate_profile,
+    delete_candidate_profile,
+    encrypt_profile_values,
+    fetch_candidate_profile,
+    list_candidate_profiles,
+)
 from backend.app.core.database import get_db_connection
 from backend.app.core.file_scanner import enforce_upload_scan
 from backend.app.core.security import decrypt_secret
@@ -304,11 +311,77 @@ def update_profile(req: ProfileUpdateRequest):
             """,
             (*values, categories_json, roles_json),
         )
+    try:
+        cursor.execute(
+            """
+            UPDATE candidate_profiles SET
+                full_name = ?, email = ?, phone = ?, location = ?, target_role = ?,
+                years_of_experience = ?, skills_json = ?, experience_json = ?,
+                education_json = ?, raw_cv_text = ?, clean_ats_cv_text = ?,
+                work_preference = ?, languages_json = ?, github_url = ?, summary = ?,
+                work_style = ?, writing_tone = ?, target_categories_json = ?, target_roles_json = ?,
+                updated_at = CURRENT_TIMESTAMP
+            WHERE is_active = 1
+            """,
+            (*values, categories_json, roles_json),
+        )
+    except Exception:
+        pass
     conn.commit()
     conn.close()
     profile = fetch_candidate_profile()
     version = ensure_profile_version(profile)
     return {"status": "SUCCESS", "message": "Profile updated and ATS standardized", "profile_version": version}
+
+
+class CreateProfileRequest(BaseModel):
+    name: str
+    target_role: Optional[str] = ""
+    full_name: Optional[str] = ""
+    skills: Optional[List[str]] = None
+    location: Optional[str] = ""
+
+
+@router.get("/setup/profiles")
+def get_profiles():
+    return {"profiles": list_candidate_profiles()}
+
+
+@router.post("/setup/profiles")
+def create_profile(req: CreateProfileRequest):
+    if not req.name.strip():
+        raise HTTPException(status_code=422, detail="Profil adı zorunludur.")
+    created = create_candidate_profile(
+        name=req.name,
+        target_role=req.target_role or "",
+        full_name=req.full_name or "",
+        initial_data={"skills": req.skills or [], "location": req.location or ""},
+    )
+    return {"status": "SUCCESS", "profile": created, "profiles": list_candidate_profiles()}
+
+
+@router.post("/setup/profiles/{profile_id}/activate")
+def activate_profile(profile_id: str):
+    try:
+        result = activate_candidate_profile(profile_id)
+        # Recalculate rank scores for the newly activated profile
+        try:
+            from backend.app.modules.rank.scoring_engine import rank_and_save_all_jobs
+            rank_and_save_all_jobs()
+        except Exception:
+            pass
+        return {"status": "SUCCESS", "activated": result, "profiles": list_candidate_profiles()}
+    except ValueError as exc:
+        raise HTTPException(status_code=404, detail=str(exc)) from exc
+
+
+@router.delete("/setup/profiles/{profile_id}")
+def delete_profile(profile_id: str):
+    try:
+        delete_candidate_profile(profile_id)
+        return {"status": "SUCCESS", "profiles": list_candidate_profiles()}
+    except ValueError as exc:
+        raise HTTPException(status_code=400, detail=str(exc)) from exc
 
 
 async def _read_cv_upload(file: UploadFile) -> tuple[str, bytes, str, Optional[int]]:

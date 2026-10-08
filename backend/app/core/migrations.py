@@ -88,6 +88,7 @@ def apply_migrations(connection, cursor=None):
         ],
         "0023_saved_cv_document": [],
         "0024_page_visits": [],
+        "0025_candidate_profiles": [],
     }
     for revision, columns in migrations.items():
         if revision in applied:
@@ -302,5 +303,35 @@ def apply_migrations(connection, cursor=None):
                     uploaded_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
                 )
             """)
+        if revision == "0025_candidate_profiles":
+            cursor.execute("""
+                CREATE TABLE IF NOT EXISTS candidate_profiles (
+                    id TEXT PRIMARY KEY,
+                    name TEXT NOT NULL,
+                    is_active INTEGER NOT NULL DEFAULT 0,
+                    full_name TEXT DEFAULT '',
+                    email TEXT DEFAULT '',
+                    phone TEXT DEFAULT '',
+                    location TEXT DEFAULT '',
+                    target_role TEXT DEFAULT '',
+                    target_categories_json TEXT DEFAULT '[]',
+                    target_roles_json TEXT DEFAULT '[]',
+                    years_of_experience INTEGER DEFAULT 0,
+                    skills_json TEXT DEFAULT '[]',
+                    experience_json TEXT DEFAULT '[]',
+                    education_json TEXT DEFAULT '[]',
+                    languages_json TEXT DEFAULT '[]',
+                    github_url TEXT DEFAULT '',
+                    summary TEXT DEFAULT '',
+                    work_preference TEXT DEFAULT '',
+                    work_style TEXT DEFAULT '',
+                    writing_tone TEXT DEFAULT '',
+                    raw_cv_text TEXT DEFAULT '',
+                    clean_ats_cv_text TEXT DEFAULT '',
+                    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+                )
+            """)
+            cursor.execute("CREATE INDEX IF NOT EXISTS idx_candidate_profiles_active ON candidate_profiles(is_active)")
         cursor.execute("INSERT INTO schema_migrations(revision) VALUES (?)", (revision,))
         connection.commit()

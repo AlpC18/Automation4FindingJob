@@ -24,6 +24,11 @@ import {
   Building2,
   GraduationCap,
   Globe,
+  Download,
+  Share2,
+  Mail,
+  Send,
+  X,
 } from "lucide-react";
 import AiProviderSelect from "@/components/AiProviderSelect";
 import JobCard from "@/components/JobCard";
@@ -77,6 +82,12 @@ export default function JobsPage() {
   const [packagePreview, setPackagePreview] = useState<any>(null);
   const [preparingJob, setPreparingJob] = useState<string | null>(null);
   const [detailJob, setDetailJob] = useState<any>(null);
+  const [emailModalJob, setEmailModalJob] = useState<any | null>(null);
+  const [emailRecipient, setEmailRecipient] = useState("");
+  const [emailSubject, setEmailSubject] = useState("");
+  const [emailBody, setEmailBody] = useState("");
+  const [emailAttachCv, setEmailAttachCv] = useState(true);
+  const [emailSending, setEmailSending] = useState(false);
   const [scanRuns, setScanRuns] = useState<any[]>([]);
   const [jobFeedbackTypes, setJobFeedbackTypes] = useState<string[]>([]);
   const [jobFeedbackNote, setJobFeedbackNote] = useState("");
@@ -590,7 +601,101 @@ export default function JobsPage() {
   const activeSearchCount = internshipOnly ? 1 : selectedCount;
   const currentLoc = locationPresets.find((p) => p.id === selectedLocationId);
 
-  const cardContext = { selectedJobIds, toggleJobSelection, toggleJobFlag, checkJobLink, linkCheckBusy, linkLabels, prepareApplication, preparingJob, setDetailJob };
+  function handleExportCsv() {
+    const targetJobs = selectedJobIds.length > 0
+      ? jobs.filter((j) => selectedJobIds.includes(j.id))
+      : filteredJobs;
+    if (targetJobs.length === 0) {
+      notify(t("Dışa aktarılacak ilan bulunamadı."));
+      return;
+    }
+    const headers = ["Pozisyon", "Şirket", "Platform", "Konum", "Çalışma Şekli", "Uyum Skoru (%)", "Maaş", "İlan Linki", "Yayın Tarihi"];
+    const rows = targetJobs.map((j) => [
+      `"${(j.title || "").replace(/"/g, '""')}"`,
+      `"${(j.company || "").replace(/"/g, '""')}"`,
+      `"${(j.platform || "").replace(/"/g, '""')}"`,
+      `"${(j.location || "").replace(/"/g, '""')}"`,
+      `"${(j.remote_type || "").replace(/"/g, '""')}"`,
+      `"${j.match_score ?? ""}"`,
+      `"${(j.salary_range || "").replace(/"/g, '""')}"`,
+      `"${j.url || ""}"`,
+      `"${(j.posted_date || "").replace(/"/g, '""')}"`,
+    ]);
+    const csvContent = "\uFEFF" + [headers.join(","), ...rows.map((r) => r.join(","))].join("\r\n");
+    const blob = new Blob([csvContent], { type: "text/csv;charset=utf-8;" });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement("a");
+    link.setAttribute("href", url);
+    link.setAttribute("download", `is_ilanlari_${new Date().toISOString().slice(0, 10)}.csv`);
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    notify(`${targetJobs.length} ${t("ilan Excel/CSV olarak indirildi.")}`);
+  }
+
+  async function handleCopySummary() {
+    const targetJobs = selectedJobIds.length > 0
+      ? jobs.filter((j) => selectedJobIds.includes(j.id))
+      : filteredJobs.slice(0, 10);
+    if (targetJobs.length === 0) {
+      notify(t("Kopyalanacak ilan bulunamadı."));
+      return;
+    }
+    const lines = [
+      `📋 Otonom Kariyer - Bulunan İş İlanları (${targetJobs.length} İlan)`,
+      "--------------------------------------------------",
+      ...targetJobs.map((j, i) => `${i + 1}. ${j.title} @ ${j.company}\n   📍 Konum / Tür: ${j.location || "Remote"} (${j.remote_type || "Belirtilmemiş"})\n   ⭐ Tahmini Uyum: %${j.match_score ?? "—"} | Kaynak: ${j.platform}\n   🔗 Doğrudan Link: ${j.url || "—"}\n`),
+    ];
+    try {
+      await navigator.clipboard.writeText(lines.join("\n"));
+      notify(t("İlan listesi panoya kopyalandı! WhatsApp veya e-posta ile paylaşabilirsin."));
+    } catch {
+      notify(t("Panoya kopyalanamadı."));
+    }
+  }
+
+  function openEmailModal(job: any) {
+    const emailRegex = /([a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,})/;
+    const match = (job.description || "").match(emailRegex);
+    const detectedEmail = match ? match[1] : "";
+    setEmailModalJob(job);
+    setEmailRecipient(detectedEmail);
+    setEmailSubject(`İş Başvurusu: ${job.title} - ${job.company}`);
+    setEmailBody(
+      job.cover_letter ||
+      `Sayın ${job.company} İşe Alım Ekibi,\n\n${job.title} pozisyonunuz için başvurumu iletmekten memnuniyet duyuyorum. Pozisyonun gereksinimleri ile yetkinliklerimin güçlü bir uyum gösterdiğine inanıyorum.\n\nEkli özgeçmişimi (CV) değerlendirmenize sunar, uygun görmeniz halinde detayları görüşmekten mutluluk duyarım.\n\nSaygılarımla,`
+    );
+    setEmailAttachCv(true);
+  }
+
+  async function handleSendEmailApplication() {
+    if (!emailModalJob || !emailRecipient.trim()) {
+      notify(t("Lütfen alıcı e-posta adresini giriniz."));
+      return;
+    }
+    try {
+      setEmailSending(true);
+      const res = await fetchFromApi<any>("/apply/send_email_application", {
+        method: "POST",
+        body: JSON.stringify({
+          job_id: emailModalJob.id,
+          recipient_email: emailRecipient.trim(),
+          subject: emailSubject.trim(),
+          body: emailBody,
+          attach_cv: emailAttachCv,
+        }),
+      });
+      notify(res.message || t("Başvuru e-postanız başarıyla iletildi!"));
+      setEmailModalJob(null);
+      await loadJobs();
+    } catch (err: any) {
+      notify(err?.message || t("E-posta gönderilemedi."));
+    } finally {
+      setEmailSending(false);
+    }
+  }
+
+  const cardContext = { selectedJobIds, toggleJobSelection, toggleJobFlag, checkJobLink, linkCheckBusy, linkLabels, prepareApplication, preparingJob, setDetailJob, openEmailModal };
 
   return (
     <div className="space-y-6 max-w-6xl mx-auto">
@@ -1128,8 +1233,27 @@ export default function JobsPage() {
             : <Square className="w-4 h-4 text-slate-400" />}
           {t("Görünen ilanların tümünü seç")} ({filteredJobs.length})
         </button>
-        <div className="flex items-center gap-2">
-          <span className="text-xs text-slate-400">{selectedJobIds.length} {t("seçili")}</span>
+        <div className="flex flex-wrap items-center gap-2">
+          <button
+            type="button"
+            onClick={handleExportCsv}
+            title={t("İlanları Excel / CSV dosyası olarak indir")}
+            className="inline-flex items-center gap-1.5 rounded-lg border border-slate-700 bg-slate-900 px-3 py-1.5 text-xs font-semibold text-slate-200 hover:border-emerald-500/60 hover:text-emerald-300 transition"
+          >
+            <Download className="h-3.5 w-3.5 text-emerald-400" />
+            <span>{t("Excel / CSV İndir")}</span>
+          </button>
+          <button
+            type="button"
+            onClick={handleCopySummary}
+            title={t("WhatsApp veya Telegram'da paylaşmak için ilan özetini kopyala")}
+            className="inline-flex items-center gap-1.5 rounded-lg border border-slate-700 bg-slate-900 px-3 py-1.5 text-xs font-semibold text-slate-200 hover:border-sky-500/60 hover:text-sky-300 transition"
+          >
+            <Share2 className="h-3.5 w-3.5 text-sky-400" />
+            <span>{t("Özeti Kopyala (WhatsApp)")}</span>
+          </button>
+
+          <span className="text-xs text-slate-400 ml-2">{selectedJobIds.length} {t("seçili")}</span>
           {selectedJobIds.length > 0 && (
             <>
               <button
@@ -1189,7 +1313,24 @@ export default function JobsPage() {
           <div className="mt-3 rounded-xl border border-slate-800 bg-slate-900/60 p-3 text-xs text-slate-400">{t("Veri kaynağı")}: {detailJob.platform}{(detailJob.source_aliases || []).length > 0 ? ` · ${t("Aynı ilan şu kaynaklarda da bulundu")}: ${detailJob.source_aliases.map((alias: any) => alias.platform).join(", ")}` : ""} · {t("İlk görüldü")} {formatTimestamp(detailJob.first_seen_at, locale)} · {t("Kaynakta son görüldü")} {formatTimestamp(detailJob.last_seen_at, locale)}{detailJob.stale_at ? ` · ${t("Eskimiş olabilir: son taramada kaynak bu ilanı döndürmedi")}` : jobFreshness(detailJob).level === "aging" ? ` · ${jobFreshness(detailJob).days} ${t("gündür kaynakta yeniden doğrulanmadı")}` : ""}</div>
           <div className="mt-5 rounded-xl border border-slate-800 bg-slate-900 p-4"><h3 className="text-sm font-semibold text-white flex items-center justify-between">{t("İlan açıklaması")}{getExternalJobUrl(detailJob.url) && <a href={getExternalJobUrl(detailJob.url)!} target="_blank" rel="noopener noreferrer" onClick={(e) => e.stopPropagation()} className="text-sky-400 hover:text-sky-300 underline font-mono text-xs truncate max-w-sm" title={detailJob.url}>{detailJob.url}</a>}</h3><p className="mt-3 whitespace-pre-wrap text-sm leading-7 text-slate-300">{detailJob.description}</p></div>
           {detailJob.ghost_reasons?.length > 0 && <div className="mt-3 rounded-xl border border-rose-500/20 bg-rose-500/5 p-4"><h3 className="text-sm font-semibold text-rose-300">{t("Risk nedenleri")}</h3><ul className="mt-2 list-disc space-y-1 pl-5 text-xs text-rose-200">{detailJob.ghost_reasons.map((reason: string) => <li key={reason}>{reason}</li>)}</ul></div>}
-          <div className="mt-5 flex flex-wrap items-center justify-between gap-3"><span className="text-xs text-slate-400">{t("İlanda belirtilen maaş:")}<strong className="text-white">{detailJob.salary_range || t("Belirtilmemiş")}</strong></span>{getExternalJobUrl(detailJob.url) && <a href={getExternalJobUrl(detailJob.url)!} target="_blank" rel="noopener noreferrer" className="inline-flex items-center gap-2 rounded-lg bg-blue-600 px-4 py-2 text-xs font-semibold text-white hover:bg-blue-500"><ExternalLink className="h-3.5 w-3.5" />{t("Kaynak ilanda aç")}</a>}</div>
+          <div className="mt-5 flex flex-wrap items-center justify-between gap-3">
+            <span className="text-xs text-slate-400">{t("İlanda belirtilen maaş:")}<strong className="text-white">{detailJob.salary_range || t("Belirtilmemiş")}</strong></span>
+            <div className="flex items-center gap-2">
+              <button
+                type="button"
+                onClick={() => {
+                  const j = detailJob;
+                  setDetailJob(null);
+                  openEmailModal(j);
+                }}
+                className="inline-flex items-center gap-1.5 rounded-lg border border-indigo-500/40 bg-indigo-950/40 px-3 py-2 text-xs font-semibold text-indigo-200 hover:bg-indigo-900/50 transition"
+              >
+                <Mail className="h-3.5 w-3.5 text-indigo-400" />
+                <span>{t("E-posta ile Başvur")}</span>
+              </button>
+              {getExternalJobUrl(detailJob.url) && <a href={getExternalJobUrl(detailJob.url)!} target="_blank" rel="noopener noreferrer" className="inline-flex items-center gap-2 rounded-lg bg-blue-600 px-4 py-2 text-xs font-semibold text-white hover:bg-blue-500"><ExternalLink className="h-3.5 w-3.5" />{t("Kaynak ilanda aç")}</a>}
+            </div>
+          </div>
           {detailJob.salary_benchmark?.formatted_display && <div className="mt-3 rounded-xl border border-amber-500/20 bg-amber-500/5 p-3"><div className="text-xs font-semibold text-amber-200">{t("Piyasa tahmini")}: {detailJob.salary_benchmark.formatted_display}</div><p className="mt-1 text-xs text-slate-400">{t("Bu kural tabanlı bir tahmindir; işveren tarafından bildirilmemiş veya doğrulanmamıştır.")}</p></div>}
           <section className="mt-5 rounded-xl border border-slate-800 bg-slate-900 p-4">
             <h3 className="text-sm font-semibold text-white">{t("Şirket ve ilan güvenilirliği")}</h3>
@@ -1215,6 +1356,101 @@ export default function JobsPage() {
           </section>
         </div>
       </div>}
+      {/* Direct Email Apply Modal */}
+      {emailModalJob && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/75 p-4" role="dialog" aria-modal="true">
+          <div className="max-h-[90vh] w-full max-w-2xl overflow-y-auto rounded-2xl border border-slate-700 bg-slate-950 p-6 shadow-2xl space-y-4">
+            <div className="flex items-center justify-between border-b border-slate-800 pb-3">
+              <div className="flex items-center gap-2">
+                <Mail className="h-5 w-5 text-indigo-400" />
+                <div>
+                  <h3 className="text-base font-bold text-white">{t("E-posta ile Doğrudan Başvur")}</h3>
+                  <p className="text-xs text-slate-400">{emailModalJob.title} · {emailModalJob.company}</p>
+                </div>
+              </div>
+              <button
+                type="button"
+                onClick={() => setEmailModalJob(null)}
+                className="text-slate-400 hover:text-white"
+              >
+                <X className="h-5 w-5" />
+              </button>
+            </div>
+
+            <p className="text-xs text-slate-300 bg-indigo-950/30 p-3 rounded-xl border border-indigo-900/40">
+              {t("Başvuru e-postanız kayıtlı SMTP sunucunuz üzerinden doğrudan işverene iletilir ve özgeçmişiniz (PDF CV) ek olarak iliştirilir.")}
+            </p>
+
+            <div className="space-y-3 text-xs">
+              <div>
+                <label className="block font-semibold text-slate-300 mb-1">
+                  {t("İşveren / İK E-posta Adresi")} *
+                </label>
+                <input
+                  type="email"
+                  value={emailRecipient}
+                  onChange={(e) => setEmailRecipient(e.target.value)}
+                  placeholder={t("Örn: jobs@company.com veya hr@sirket.com")}
+                  className="w-full rounded-xl border border-slate-800 bg-slate-900 px-3 py-2 text-white placeholder:text-slate-500 focus:border-blue-500 focus:outline-none"
+                />
+              </div>
+
+              <div>
+                <label className="block font-semibold text-slate-300 mb-1">
+                  {t("E-posta Konusu")}
+                </label>
+                <input
+                  type="text"
+                  value={emailSubject}
+                  onChange={(e) => setEmailSubject(e.target.value)}
+                  className="w-full rounded-xl border border-slate-800 bg-slate-900 px-3 py-2 text-white placeholder:text-slate-500 focus:border-blue-500 focus:outline-none"
+                />
+              </div>
+
+              <div>
+                <label className="block font-semibold text-slate-300 mb-1">
+                  {t("Başvuru Ön Yazısı / Mesajı")}
+                </label>
+                <textarea
+                  rows={8}
+                  value={emailBody}
+                  onChange={(e) => setEmailBody(e.target.value)}
+                  className="w-full rounded-xl border border-slate-800 bg-slate-900 p-3 text-white placeholder:text-slate-500 focus:border-blue-500 focus:outline-none leading-relaxed"
+                />
+              </div>
+
+              <label className="flex items-center gap-2 cursor-pointer select-none">
+                <input
+                  type="checkbox"
+                  checked={emailAttachCv}
+                  onChange={(e) => setEmailAttachCv(e.target.checked)}
+                  className="rounded border-slate-700 bg-slate-900 text-blue-600 focus:ring-blue-500"
+                />
+                <span className="text-slate-300 font-semibold">{t("Özelleştirilmiş PDF CV'mi ek olarak iliştir")}</span>
+              </label>
+            </div>
+
+            <div className="flex items-center justify-end gap-2 pt-3 border-t border-slate-800">
+              <button
+                type="button"
+                onClick={() => setEmailModalJob(null)}
+                className="rounded-xl border border-slate-800 px-4 py-2 text-xs font-semibold text-slate-300 hover:bg-slate-900"
+              >
+                {t("İptal")}
+              </button>
+              <button
+                type="button"
+                disabled={emailSending || !emailRecipient.trim()}
+                onClick={() => void handleSendEmailApplication()}
+                className="inline-flex items-center gap-2 rounded-xl bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-500 hover:to-indigo-500 px-5 py-2.5 text-xs font-bold text-white transition disabled:opacity-50 shadow-lg shadow-indigo-600/30"
+              >
+                <Send className="h-3.5 w-3.5" />
+                {emailSending ? t("Gönderiliyor...") : t("E-postayı Gönder & Başvuruyu Kaydet")}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
