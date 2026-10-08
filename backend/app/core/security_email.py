@@ -11,13 +11,15 @@ def is_configured() -> bool:
         config = get_smtp_configuration()
     except RuntimeError:
         return False
-    return bool(config["host"] and config["from_email"])
+    return bool(config["host"] and config["from_email"] and (not config["username"] or config["password"]))
 
 
 def send_security_email(recipient: str, subject: str, body: str) -> None:
     config = get_smtp_configuration()
     if not config["host"] or not config["from_email"]:
         raise RuntimeError("SMTP_HOST and SMTP_FROM_EMAIL (or SMTP_USER) must be configured.")
+    if config["username"] and not config["password"]:
+        raise RuntimeError("SMTP application password must be configured.")
     message = EmailMessage()
     message["Subject"] = subject
     message["From"] = config["from_email"]

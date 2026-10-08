@@ -124,6 +124,7 @@ export default function STARPrepPage() {
               {scoreResult.is_complete && <CheckCircle2 className="w-5 h-5 text-emerald-400" />}
             </div>
             <div className="space-y-1">
+              <p className="text-xs text-slate-400">{t("Yerel kurallara dayalı yapı tahmini; teknik doğruluğu doğrulamaz. Kelime sayısı ve konuşma hızı cevap puanını etkilemez.")}</p>
               {scoreResult.feedback?.map((fb: string, i: number) => (
                 <div key={i} className="text-sm text-slate-300">{fb}</div>
               ))}

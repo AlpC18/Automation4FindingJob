@@ -48,14 +48,25 @@ def test_star_stubs_come_from_real_achievements_only():
 
 
 def test_star_answers_are_scored_by_completeness_and_metrics():
-    long_text = " ".join(["detail"] * 30)
     complete = star_framework.score_star_answer({
-        "situation": long_text, "task": long_text, "action": long_text, "result": long_text + " cut costs by 30%",
+        "situation": "During a production release, our booking team faced a concurrency problem that caused duplicate appointments.",
+        "task": "My goal was to stop the duplicate bookings without taking the service offline.",
+        "action": "I designed a Python lock, added a retry path, and wrote tests because the losing request needed a safe recovery.",
+        "result": "As a result, duplicate bookings fell from 12 per week to zero and support tickets dropped by 30%.",
     })
-    partial = star_framework.score_star_answer({"situation": "Too short", "task": " ".join(["word"] * 12), "result": "It went well"})
+    partial = star_framework.score_star_answer({"situation": "A project had a problem", "task": "My task was to help", "result": "It went well"})
 
     assert (complete["overall_score"], complete["is_complete"], complete["has_metrics"]) == (90.0, True, True)
-    assert partial["component_scores"] == {"situation": 30, "task": 60, "action": 0, "result": 30}
+    padded_complete = {
+        key: value + " additional wording" * 80 for key, value in {
+            "situation": "During a production release, our booking team faced a concurrency problem that caused duplicate appointments.",
+            "task": "My goal was to stop the duplicate bookings without taking the service offline.",
+            "action": "I designed a Python lock, added a retry path, and wrote tests because the losing request needed a safe recovery.",
+            "result": "As a result, duplicate bookings fell from 12 per week to zero and support tickets dropped by 30%.",
+        }.items()
+    }
+    assert star_framework.score_star_answer(padded_complete)["component_scores"] == complete["component_scores"]
+    assert partial["component_scores"] == {"situation": 90, "task": 60, "action": 0, "result": 30}
     assert partial["is_complete"] is False and partial["has_metrics"] is False
     assert any("metrik" in line for line in partial["feedback"])
 
@@ -272,14 +283,20 @@ def test_long_text_without_substance_no_longer_scores_well():
 
     assert result["score"] <= 30 and result["grade"] == "NEEDS_IMPROVEMENT"
     missed = {check["id"] for check in result["checks"] if not check["passed"]}
-    assert {"on_topic", "own_action", "result", "measurable"} <= missed
+    assert {"on_topic", "own_action", "result", "evidence"} <= missed
 
 
 def test_each_missing_part_costs_points_and_the_tip_names_the_biggest_gap():
-    without_numbers = STRONG_ANSWER.replace("about 12 a week to 0", "sharply").replace("by 80%", "a lot")
+    without_evidence = (
+        STRONG_ANSWER
+        .replace("covered both paths with tests", "worked on both paths")
+        .replace("support tickets", "the team")
+        .replace("about 12 a week to 0", "sharply")
+        .replace("by 80%", "a lot")
+    )
     off_topic = STRONG_ANSWER.replace("Python", "Ruby")
 
-    assert _evaluate(TECH_QUESTION, without_numbers)["score"] < _evaluate(TECH_QUESTION, STRONG_ANSWER)["score"]
+    assert _evaluate(TECH_QUESTION, without_evidence)["score"] < _evaluate(TECH_QUESTION, STRONG_ANSWER)["score"]
     off = _evaluate(TECH_QUESTION, off_topic)
     assert not next(check for check in off["checks"] if check["id"] == "on_topic")["passed"]
     assert "Python" in off["coaching_tip"]
@@ -291,3 +308,66 @@ def test_behavioural_questions_are_not_marked_down_for_naming_no_technology_and_
     assert [check["id"] for check in behavioural["checks"]].count("on_topic") == 0
     assert behavioural["score"] >= 85
     assert _evaluate(TECH_QUESTION, "   ")["score"] == 0
+
+
+def test_answer_score_does_not_change_when_only_length_changes():
+    concise = "I built a Python API for a client project. As a result tests passed and users could book reliably."
+    padded = concise + " " + "extra context " * 80
+
+    assert _evaluate(TECH_QUESTION, concise)["score"] == _evaluate(TECH_QUESTION, padded)["score"]
+    assert {check["id"] for check in _evaluate(TECH_QUESTION, concise)["checks"]} == {
+        "on_topic", "own_action", "context", "result", "evidence", "reasoning",
+    }
+
+
+@pytest.mark.parametrize("technology", ["Next.js", ".NET", "C++"])
+def test_technology_names_with_punctuation_are_not_truncated(technology):
+    from backend.app.modules.interview.interview_simulator import interview_simulator
+
+    questions = interview_simulator.generate_interview_session(
+        "Developer", "Acme", "", {"keywords_you_have": [technology]},
+    )
+    question = next(q["question"] for q in questions if q["type"] == "Technical")
+    result = _evaluate(question, f"i built a {technology} service for a client project.")
+    assert next(c for c in result["checks"] if c["id"] == "on_topic")["passed"]
+    assert next(c for c in result["checks"] if c["id"] == "own_action")["passed"]
+
+
+def test_year_and_substrings_do_not_count_as_result_evidence():
+    result = _evaluate(TECH_QUESTION, "In 2024 I built a Python catalog for a contest.")
+    assert not next(c for c in result["checks"] if c["id"] == "evidence")["passed"]
+    assert result["technical_correctness_verified"] is False
+
+
+def test_turkish_action_and_measurement_are_recognized():
+    result = _evaluate(TECH_QUESTION, "Müşteri için Python API geliştirdim. Sonuç olarak hatalar %30 azaldı.")
+    checks = {c["id"]: c["passed"] for c in result["checks"]}
+    assert checks["own_action"] and checks["evidence"] and checks["result"]
+
+
+def test_voice_content_score_matches_written_and_is_independent_of_pace_and_padding():
+    from backend.app.modules.interview.voice_coach import voice_coach
+
+    base = voice_coach.evaluate_vocal_performance(TECH_QUESTION, STRONG_ANSWER, 30)
+    slower = voice_coach.evaluate_vocal_performance(TECH_QUESTION, STRONG_ANSWER, 120)
+    padded = voice_coach.evaluate_vocal_performance(TECH_QUESTION, STRONG_ANSWER + " um extra wording" * 80, 30)
+    assert base["overall_score"] == slower["overall_score"] == padded["overall_score"] == _evaluate(TECH_QUESTION, STRONG_ANSWER)["score"]
+    assert base["wpm"] != slower["wpm"]
+    assert base["fluency_score"] != padded["fluency_score"]
+    assert base["content_evaluation"]["checks"] == slower["content_evaluation"]["checks"]
+
+
+@pytest.mark.parametrize("answer", ["", "   ", "latency database api cache async docker pipeline microservice testing scale throughput memory redis fastapi " * 30])
+def test_empty_voice_or_jargon_alone_cannot_earn_points(answer):
+    from backend.app.modules.interview.voice_coach import voice_coach
+
+    result = voice_coach.evaluate_vocal_performance(TECH_QUESTION, answer, 30)
+    assert result["overall_score"] == 0
+
+
+def test_interview_scoring_endpoints_share_the_content_rubric():
+    written = client.post("/api/interview/evaluate", json={"question": TECH_QUESTION, "answer": STRONG_ANSWER})
+    spoken = client.post("/api/interview/voice_evaluate", json={"question": TECH_QUESTION, "transcript": STRONG_ANSWER, "duration_seconds": 20})
+    assert written.status_code == spoken.status_code == 200
+    assert written.json() == spoken.json()["content_evaluation"]
+    assert spoken.json()["overall_score"] == written.json()["score"]

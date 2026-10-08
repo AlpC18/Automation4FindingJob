@@ -56,7 +56,7 @@ def get_smtp_configuration() -> dict[str, Any]:
 
 def smtp_configuration_status() -> dict[str, Any]:
     config = get_smtp_configuration()
-    configured = bool(config["host"] and config["from_email"])
+    configured = bool(config["host"] and config["from_email"] and (not config["username"] or config["password"]))
     return {
         "configured": configured,
         "source": config["source"] if configured else "not_configured",
@@ -128,6 +128,8 @@ def test_smtp_connection() -> dict[str, Any]:
     config = get_smtp_configuration()
     if not config["host"] or not config["from_email"]:
         return {"status": "not_configured", "message": "SMTP ayarları tamamlanmadı."}
+    if config["username"] and not config["password"]:
+        return {"status": "not_configured", "message": "SMTP uygulama parolası eksik. E-posta ayarlarına kaydedin."}
     try:
         with smtplib.SMTP(config["host"], config["port"], timeout=15) as server:
             server.ehlo()

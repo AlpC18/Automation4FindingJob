@@ -75,6 +75,7 @@ def test_outreach_never_reports_simulated_success_without_smtp(monkeypatch):
 def test_outreach_uses_real_smtp_adapter_when_configured(monkeypatch):
     monkeypatch.setattr(settings, "SMTP_HOST", "smtp.example.test")
     monkeypatch.setattr(settings, "SMTP_USER", "sender@example.test")
+    monkeypatch.setattr(settings, "SMTP_PASS", "test-app-password")
     monkeypatch.setattr(settings, "SMTP_FROM_EMAIL", "sender@example.test")
     sent = []
     monkeypatch.setattr("backend.app.modules.apply.email_finder.send_security_email", lambda *args: sent.append(args))
@@ -86,6 +87,7 @@ def test_outreach_uses_real_smtp_adapter_when_configured(monkeypatch):
 def test_smtp_failure_does_not_leak_server_details(monkeypatch):
     monkeypatch.setattr(settings, "SMTP_HOST", "smtp.example.test")
     monkeypatch.setattr(settings, "SMTP_USER", "sender@example.test")
+    monkeypatch.setattr(settings, "SMTP_PASS", "test-app-password")
     monkeypatch.setattr(settings, "SMTP_FROM_EMAIL", "sender@example.test")
 
     def fail_smtp(*_args):

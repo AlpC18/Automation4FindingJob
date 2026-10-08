@@ -16,7 +16,7 @@ import re
 from typing import Dict, Any, Tuple, List, Optional
 
 from backend.app.modules.setup.rag_engine import rag_memory
-from backend.app.modules.apply.claim_check import find_unsupported_claims
+from backend.app.modules.apply.claim_check import find_unsupported_claims, ongoing_education
 from backend.app.modules.apply.humanizer_engine import humanizer_engine
 from backend.app.modules.apply.company_cache import company_cache
 from backend.app.prompts.humanizer_prompts import ANTI_AI_HUMANIZER_SYSTEM_PROMPT
@@ -60,6 +60,8 @@ Years of professional experience: {years if years not in (None, '') else 'not sp
 Location: {candidate_profile.get('location') or 'not specified'}
 Languages: {', '.join(candidate_profile.get('languages') or []) or 'not specified'}
 Skills: {', '.join(str(skill) for skill in (candidate_profile.get('skills') or [])[:25])}
+Education records: {json.dumps(candidate_profile.get('education') or [], ensure_ascii=False)}
+Ongoing studies (not completed degrees): {json.dumps(ongoing_education(candidate_profile), ensure_ascii=False)}
 Projects saved in memory:
 {projects or '(none saved; rely on the CV text)'}
 CV text:
@@ -70,6 +72,7 @@ Write a cover letter of 3-4 short paragraphs for this job, signed with the candi
 - Use only facts present above. Do not invent employers, years, titles, metrics or degrees.
 - Pick the one or two projects from the CV that are most relevant to THIS job and say concretely what was built and with what.
 - If the candidate is a student or has little professional experience, say so plainly and lean on projects, coursework and learning speed; do not present them as senior.
+- A degree title alone is not proof of graduation. For ongoing studies, say "currently studying" or "pursuing"; never say "graduate", "hold a degree", or "with a degree". Do not infer a year of study, graduation, citizenship or work authorization from location.
 - If the job needs something the candidate lacks, either leave it out or acknowledge it in one honest sentence.
 - Write in the language of the job description (Turkish description -> Turkish letter, otherwise English).
 - Never use the words 'delve', 'testament', 'tapestry', 'spearheaded', 'seamless', 'delighted to apply'.

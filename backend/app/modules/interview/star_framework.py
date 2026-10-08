@@ -12,6 +12,7 @@ Extends the existing interview_simulator with deeper behavioral prep.
 """
 
 from typing import Dict, Any, List, Optional
+
 from backend.app.core.event_logger import agent_logger
 
 
@@ -251,35 +252,64 @@ class STARFramework:
         scores = {}
         feedback = []
 
-        for component in ["situation", "task", "action", "result"]:
-            text = answer.get(component, "")
-            word_count = len(text.split())
+        cue_sets = {
+            "situation": (
+                ("project", "client", "team", "company", "production", "when", "during", "proje", "müşteri", "ekip", "şirket", "sırasında"),
+                ("problem", "challenge", "issue", "needed", "blocked", "incident", "sorun", "zorluk", "gerekiyordu", "hata"),
+                "bağlamı ve karşılaşılan problemi",
+            ),
+            "task": (
+                ("my task", "my goal", "responsible", "asked to", "needed to", "aim", "görevim", "hedefim", "sorumluydum", "isteniyordu"),
+                ("deliver", "solve", "prevent", "improve", "stop", "çözmek", "önlemek", "iyileştirmek", "teslim etmek"),
+                "hedefi ve sorumluluğu",
+            ),
+            "action": (
+                ("i built", "i wrote", "i designed", "i implemented", "i led", "i changed", "i added", "i tested", "built", "implemented",
+                 "geliştirdim", "tasarladım", "uyguladım", "yazdım", "yönettim", "ekledim", "test ettim"),
+                ("because", "by ", "using", "with ", "after", "so that", "çünkü", "kullanarak", "sonra", "için"),
+                "kendi eylemini ve uygulama yöntemini",
+            ),
+            "result": (
+                ("as a result", "result", "improved", "reduced", "increased", "saved", "prevented", "went from", "sonuç", "azaldı", "arttı", "iyileşti", "sayesinde"),
+                ("%", "users", "customers", "tickets", "faster", "slower", "zero", "kullanıcı", "müşteri", "talep", "hızlandı", "sıfır"),
+                "sonucu ve etkisini",
+            ),
+        }
 
+        for component, (primary_cues, supporting_cues, label) in cue_sets.items():
+            text = str(answer.get(component, "") or "").strip()
+            lowered = text.lower()
             if not text:
                 scores[component] = 0
-                feedback.append(f"❌ {component.upper()} eksik — bu bölümü doldurun")
-            elif word_count < 10:
-                scores[component] = 30
-                feedback.append(f"⚠️ {component.upper()} çok kısa ({word_count} kelime) — daha detay ekleyin")
-            elif word_count < 25:
-                scores[component] = 60
-                feedback.append(f"🔶 {component.upper()} yeterli ama detay eklenebilir")
-            else:
+                feedback.append(f"❌ {component.upper()} eksik — {label} anlatılmalı")
+                continue
+
+            primary = any(cue in lowered for cue in primary_cues)
+            supporting = any(cue in lowered for cue in supporting_cues)
+            if primary and supporting:
                 scores[component] = 90
-                feedback.append(f"✅ {component.upper()} iyi detaylandırılmış")
+                feedback.append(f"✅ {component.upper()} için {label} açık ve somut.")
+            elif primary or supporting:
+                scores[component] = 60
+                feedback.append(f"🔶 {component.upper()} anlaşılır; {label} daha somutlaştırılabilir.")
+            else:
+                scores[component] = 30
+                feedback.append(f"⚠️ {component.upper()} var ama {label} bulunmuyor.")
 
         # Check for metrics in Result
-        result_text = answer.get("result", "")
+        result_text = str(answer.get("result", "") or "")
         has_metrics = any(c.isdigit() for c in result_text)
         if result_text and not has_metrics:
             feedback.append(
-                "💡 RESULT bölümünde sayısal metrik ekleyin "
-                "(örn: '%30 iyileşme', '2x hızlanma', '10K kullanıcı')"
+                "💡 RESULT bölümüne varsa gerçek bir metrik veya gözlenebilir etki ekleyin. "
+                "Sayı uydurmayın; nitel sonuçlar da geçerlidir."
             )
 
         overall = sum(scores.values()) / max(len(scores), 1)
 
         return {
+            "scoring_method": "local_star_rubric_v2",
+            "technical_correctness_verified": False,
             "overall_score": round(overall, 1),
             "component_scores": scores,
             "feedback": feedback,

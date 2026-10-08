@@ -1,11 +1,14 @@
 """
 Voice AI Interview Coach & Vocal Performance Engine
 Analyzes spoken interview answers: Words Per Minute (WPM),
-filler words ratio (um, uh, like, yani), STAR framework alignment, and technical depth.
+filler words ratio (um, uh, like, yani), and STAR framework signals.
+Content is evaluated separately by the same rubric as written answers.
 """
 
 import re
 from typing import Dict, Any, List
+
+from backend.app.modules.interview.interview_simulator import interview_simulator
 
 FILLER_WORDS = [
     "um", "uh", "like", "you know", "actually", "basically", "literally",
@@ -81,7 +84,7 @@ class VoiceInterviewCoach:
                 total_fillers += count
 
         filler_ratio = round((total_fillers / max(word_count, 1)) * 100, 1)
-        fluency_score = max(0, min(100, round(100 - (filler_ratio * 4))))
+        fluency_score = max(0, min(100, round(100 - (filler_ratio * 4)))) if word_count else 0
 
         # 3. STAR Framework Scoring
         star_markers = {
@@ -97,27 +100,17 @@ class VoiceInterviewCoach:
 
         star_adherence = round((sum(star_found.values()) / 4) * 100)
 
-        # 4. Technical Depth & Overall Score
-        tech_keywords = [
-            "latency", "database", "api", "cache", "async", "docker", "pipeline",
-            "microservice", "testing", "scale", "throughput", "memory", "redis", "fastapi"
-        ]
-        tech_count = sum(1 for kw in tech_keywords if kw in text_lower)
-        tech_score = min(100, tech_count * 20 + 40)
-
-        overall_score = round((fluency_score * 0.35) + (star_adherence * 0.35) + (tech_score * 0.30))
+        # Pace and filler ratios describe delivery, not answer quality. Padding or
+        # repeating technical jargon must never buy extra content points.
+        content = interview_simulator.evaluate_candidate_answer(question, clean_text)
+        overall_score = content["score"]
 
         # Actionable Suggestions
-        suggestions = []
+        suggestions = [content["coaching_tip"]]
         if total_fillers > 2:
             suggestions.append(f"Dolgu kelimeleri ({', '.join(detected_fillers.keys())}) azaltmak için düşünürken 1 saniyelik sessiz duraklamalar yapın.")
-        if not star_found["result"]:
-            suggestions.append("Cevabınızın sonuna ölçülebilir bir metrik veya sonuç ekleyin (Örn: '%30 hızlanma sağlandı').")
         if wpm < 110:
             suggestions.append("Ses tonunuza biraz daha dinamizm ve enerji katarak konuşma temponuzu artırın.")
-
-        if not suggestions:
-            suggestions.append("Cevabınız STAR metoduna uygun, net ve teknik olarak güçlü bir yapıya sahip.")
 
         return {
             "question": question,
@@ -134,6 +127,9 @@ class VoiceInterviewCoach:
             "star_adherence_percent": star_adherence,
             "star_breakdown": star_found,
             "overall_score": overall_score,
+            "scoring_method": content["scoring_method"],
+            "technical_correctness_verified": False,
+            "content_evaluation": content,
             "actionable_suggestions": suggestions
         }
 

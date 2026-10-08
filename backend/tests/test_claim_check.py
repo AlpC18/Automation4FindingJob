@@ -1,6 +1,8 @@
 """A drafted letter is checked against the CV and saved projects; what they do not back up is flagged."""
 
 from backend.app.modules.apply.claim_check import find_unsupported_claims
+import pytest
+from datetime import date
 
 PROFILE = {
     "skills": ["Python", "FastAPI", "Java", "MySQL", "MongoDB", "PostgreSQL", "Node.js", "TypeScript"],
@@ -13,6 +15,54 @@ PROJECTS = [
      "content": "Self-hosted B2B outreach engine with AES-256-GCM credential encryption at rest and GDPR compliant workflows."},
 ]
 JOB = {"title": "Back-end Developer intern - Python", "company": "Workforce Development Solutions", "description": "Python, REST APIs, Kubernetes"}
+
+
+@pytest.fixture
+def student_profile():
+    return {"raw_cv_text": "Currently a Computer Science student at university in Kosovo.", "education": [
+        {"degree": "Bachelor of Computer Science", "year": f"{date.today().year - 2} – {date.today().year + 1}"},
+        {"degree": "High School Diploma", "year": "2020 – 2023"},
+    ]}
+
+
+@pytest.mark.parametrize("letter", [
+    "As a recent Computer Science graduate, I would like to apply.",
+    "I am a Computer Science graduate.",
+    "With a Bachelor’s degree in Computer Science, I build software.",
+    "I hold a bachelor's degree in Computer Science.",
+    "Bilgisayar mühendisliği lisans mezunuyum.",
+])
+def test_ongoing_studies_cannot_be_presented_as_graduation(student_profile, letter):
+    assert any("ongoing studies" in c["reason"] for c in find_unsupported_claims(letter, student_profile, [], {}))
+
+
+@pytest.mark.parametrize("letter", [
+    "I am currently pursuing a bachelor's degree in Computer Science.",
+    "I am not a university graduate yet.",
+    "I expect to graduate next year.",
+    "I will graduate next year.",
+    "I am a high school graduate and a current university student.",
+    "The position requires a bachelor's degree.",
+    "Henüz lisans mezunu değilim.",
+])
+def test_student_wording_and_completed_school_are_not_flagged(student_profile, letter):
+    assert find_unsupported_claims(letter, student_profile, [], {}) == []
+
+
+def test_completed_bachelor_is_valid_while_studying_for_master(student_profile):
+    student_profile["education"][0]["status"] = "completed"
+    student_profile["education"].append({"degree": "Master of Computer Science", "status": "in progress"})
+    assert find_unsupported_claims("I hold a bachelor's degree in Computer Science.", student_profile, [], {}) == []
+    assert find_unsupported_claims("I hold a master's degree in Computer Science.", student_profile, [], {})
+
+
+def test_student_status_in_cv_and_prompt_is_preserved(student_profile):
+    from backend.app.modules.apply.agentic_workflow import build_cover_letter_prompt
+    prompt = build_cover_letter_prompt({}, student_profile, [])
+    assert "Ongoing studies (not completed degrees)" in prompt
+    assert student_profile["education"][0]["year"] in prompt
+    assert "never say" in prompt
+    assert find_unsupported_claims("I am a recent Computer Science graduate.", {"raw_cv_text": student_profile["raw_cv_text"]}, [], {})
 
 
 def _reasons(letter):

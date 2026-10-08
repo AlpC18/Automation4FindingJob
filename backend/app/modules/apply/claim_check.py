@@ -8,6 +8,7 @@ sentences before sending. It cannot see an invented action described in known wo
 
 import re
 import unicodedata
+from datetime import date
 from typing import Any, Dict, List
 
 # A token shaped like a technology or product name: CamelCase (FastAPI), dotted (Node.js),
@@ -55,6 +56,73 @@ def _project_text(project: Dict[str, Any]) -> str:
                      str(project.get("content") or ""), str(project.get("metrics") or "")])
 
 
+def _education_words(value: Any) -> str:
+    text = unicodedata.normalize("NFKD", str(value or "").lower().replace("ı", "i"))
+    return "".join(char for char in text if not unicodedata.combining(char))
+
+
+def _degree_level(text: str) -> str:
+    for level, pattern in (
+        ("school", r"high school|secondary school|lise"),
+        ("doctorate", r"doctorate|doctoral|ph\.?d|doktora"),
+        ("master", r"master|yuksek lisans"),
+        ("bachelor", r"bachelor|undergraduate|\blisans\b"),
+    ):
+        if re.search(pattern, text):
+            return level
+    return ""
+
+
+def ongoing_education(profile: Dict[str, Any]) -> List[Dict[str, Any]]:
+    """Only explicit ongoing status or a future study end date establishes ongoing study."""
+    entries = profile.get("education") or []
+    if not isinstance(entries, list):
+        return []
+    ongoing = []
+    for entry in entries:
+        if not isinstance(entry, dict):
+            continue
+        status = _education_words(entry.get("status"))
+        if status in {"completed", "graduated", "mezun", "tamamlandi"}:
+            continue
+        text = _education_words(" ".join(str(entry.get(key) or "") for key in ("degree", "year", "end_date", "status")))
+        years = [int(year) for year in re.findall(r"\b(?:19|20)\d{2}\b", text)]
+        if re.search(r"\b(current|present|ongoing|pursuing|enrolled|student|in progress|devam|ogrenci)\b", text) or (years and max(years) > date.today().year):
+            ongoing.append(entry)
+    return ongoing
+
+
+def _education_claim_reason(sentence: str, profile: Dict[str, Any]) -> str:
+    text = _education_words(sentence)
+    # Only completed-degree assertions, not requirements, future plans or negations.
+    if re.search(r"\b(not|never|haven't|have not|henuz|degilim)\b|mezun olmad|will graduate|expect(?:ed)? to graduate", text):
+        return ""
+    graduate = re.search(r"\b(?:i (?:am|have|graduated)|as (?:a|an)|being (?:a|an))\b.{0,90}\bgraduat(?:e|ed)\b|\bi graduated\b|mezunuyum|mezun oldum", text)
+    possession = re.search(r"\b(?:with (?:a|an)|i (?:hold|earned|completed|have|obtained|received)(?: (?:a|an))?)\s+(?:[\w’'& -]{0,65})(?:bachelor|master|doctorate|degree)\b|lisans diplomam", text)
+    if not graduate and not possession:
+        return ""
+    ongoing = ongoing_education(profile)
+    level = _degree_level(text)
+    if ongoing:
+        levels = {_degree_level(_education_words(entry.get("degree"))) for entry in ongoing}
+        completed_levels = {_degree_level(_education_words(entry.get("degree"))) for entry in profile.get("education", [])
+                            if isinstance(entry, dict) and entry not in ongoing}
+        # A completed bachelor's degree can coexist with a current master's degree.
+        if level and level not in levels:
+            return ""
+        if level and level in completed_levels:
+            return ""
+        if not level and completed_levels - {"", "school"}:
+            return ""
+    else:
+        cv = _education_words(profile.get("raw_cv_text"))
+        if not re.search(r"(?:currently|current).{0,65}\bstudent\b|\b(?:universite|lisans) ogrencisi", cv):
+            return ""
+        if level == "school":
+            return ""
+    return "graduation or a completed degree is claimed, but your profile records ongoing studies; describe yourself as a current student"
+
+
 def find_unsupported_claims(letter: str, profile: Dict[str, Any], projects: List[Dict[str, Any]], job: Dict[str, Any]) -> List[Dict[str, str]]:
     """Sentences to re-read, each with the reason. An empty list means nothing was found, not that all is true."""
     skills = [str(skill) for skill in profile.get("skills") or []]
@@ -79,6 +147,9 @@ def find_unsupported_claims(letter: str, profile: Dict[str, Any], projects: List
             elif re.match(r"\s*[-*•]", sentence):
                 subject = []  # a new list item is a new topic
             reasons = []
+            education_reason = _education_claim_reason(sentence, profile)
+            if education_reason:
+                reasons.append(education_reason)
             first_person = re.search(r"\b(I|my|we|our)\b", sentence) is not None
             if subject:
                 allowed_text = " ".join(_project_text(project) for project in subject)

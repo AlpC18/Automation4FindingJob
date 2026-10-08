@@ -68,6 +68,7 @@ function InterviewPage() {
     setQuestions(res.questions || []);
     setCurrentQIndex(0);
     setEvaluation(null);
+    setVocalEvaluation(null);
     setCandidateAnswer("");
   }
 
@@ -319,11 +320,12 @@ function InterviewPage() {
               {vocalEvaluation && (
                 <div className="p-4 rounded-xl bg-slate-950 border border-sky-500/30 space-y-3">
                   <div className="flex justify-between items-center text-xs">
-                    <span className="font-bold text-sky-300">{t("Vokal & Akıcılık Karnesi:")}</span>
+                    <span className="font-bold text-sky-300">{t("Cevap yapısı puanı ve konuşma ölçümleri")}</span>
                     <span className="font-mono font-bold text-emerald-400 bg-emerald-500/10 px-2 py-0.5 rounded border border-emerald-500/20">
                       {vocalEvaluation.overall_score} {t("/ 100")}</span>
                   </div>
 
+                  <p className="text-xs text-slate-400">{t("Yerel kurallara dayalı yapı tahmini; teknik doğruluğu doğrulamaz. Kelime sayısı ve konuşma hızı cevap puanını etkilemez.")}</p>
                   <div className="grid grid-cols-3 gap-2 text-center text-xs">
                     <div className="p-2 rounded bg-slate-900 border border-slate-800">
                       <div className="text-xs text-slate-400">{t("Konuşma Hızı")}</div>
@@ -345,6 +347,11 @@ function InterviewPage() {
                   <div className="text-xs text-slate-300 bg-slate-900/60 p-2.5 rounded-lg border border-slate-800">
                     <strong>{t("Koçluk Tavsiyesi:")}</strong> {vocalEvaluation.actionable_suggestions?.[0] || vocalEvaluation.pace_feedback}
                   </div>
+                  <ul className="text-xs text-slate-300 space-y-1 list-disc pl-4">
+                    {vocalEvaluation.content_evaluation?.feedback?.map((feedback: string, index: number) => (
+                      <li key={index}>{feedback}</li>
+                    ))}
+                  </ul>
                 </div>
               )}
 
@@ -356,6 +363,7 @@ function InterviewPage() {
                     <span className="text-xs font-bold text-emerald-400 font-mono">
                       {evaluation.grade} (%{evaluation.score}{t("/100)")}</span>
                   </div>
+                  <p className="text-xs text-slate-400">{t("Yerel kurallara dayalı yapı tahmini; teknik doğruluğu doğrulamaz. Kelime sayısı ve konuşma hızı cevap puanını etkilemez.")}</p>
                   <ul className="text-xs text-slate-300 space-y-1 list-disc pl-4">
                     {evaluation.feedback?.map((fb: string, i: number) => (
                       <li key={i}>{fb}</li>

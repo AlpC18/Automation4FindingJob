@@ -10,7 +10,7 @@ from backend.app.core.smtp_credentials import (
     get_smtp_configuration,
     save_smtp_configuration,
     smtp_configuration_status,
-    test_smtp_connection,
+    test_smtp_connection as check_smtp_connection,
 )
 
 
@@ -112,6 +112,23 @@ def test_smtp_credentials_are_isolated_per_tenant(isolated_database):
         assert get_smtp_configuration()["password"] == "a-secret"
 
 
+def test_missing_password_is_not_ready_and_does_not_attempt_login(isolated_database, monkeypatch):
+    from backend.app.core.security_email import is_configured, send_security_email
+    monkeypatch.setattr(settings, "SMTP_HOST", "smtp.gmail.com")
+    monkeypatch.setattr(settings, "SMTP_USER", "candidate@example.test")
+    monkeypatch.setattr(settings, "SMTP_FROM_EMAIL", "candidate@example.test")
+    monkeypatch.setattr("backend.app.core.smtp_credentials.smtplib.SMTP", lambda *a, **kw: pytest.fail("Incomplete configuration must not connect"))
+    status = smtp_configuration_status()
+    assert status["configured"] is False
+    assert status["source"] == "not_configured"
+    assert status["host"] == "smtp.gmail.com"
+    assert status["has_password"] is False
+    assert check_smtp_connection()["status"] == "not_configured"
+    assert is_configured() is False
+    with pytest.raises(RuntimeError, match="password"):
+        send_security_email("candidate@example.test", "Test", "Never sent")
+
+
 def test_connection_check_authenticates_but_never_sends_email(isolated_database, monkeypatch):
     _save()
     calls = {"starttls": 0, "login": 0, "send": 0}
@@ -141,7 +158,7 @@ def test_connection_check_authenticates_but_never_sends_email(isolated_database,
 
     monkeypatch.setattr("backend.app.core.smtp_credentials.smtplib.SMTP", FakeSMTP)
 
-    result = test_smtp_connection()
+    result = check_smtp_connection()
 
     assert result["status"] == "connected"
     assert calls == {"starttls": 1, "login": 1, "send": 0}

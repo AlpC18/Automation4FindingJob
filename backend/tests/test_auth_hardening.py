@@ -33,6 +33,8 @@ def test_email_verification_is_required_when_smtp_is_configured(auth_client, mon
     sent = []
     monkeypatch.setattr(settings, "SMTP_HOST", "smtp.example.test")
     monkeypatch.setattr(settings, "SMTP_FROM_EMAIL", "accounts@example.test")
+    monkeypatch.setattr(settings, "SMTP_USER", "")
+    monkeypatch.setattr(settings, "SMTP_PASS", "")
     monkeypatch.setattr(settings, "ENVIRONMENT", "production")
     monkeypatch.setattr(auth_router_module, "send_security_email", lambda recipient, subject, body: sent.append(body))
 

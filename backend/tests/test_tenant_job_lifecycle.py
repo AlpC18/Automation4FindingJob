@@ -17,6 +17,7 @@ from backend.app.tasks.job_store import create_job, get_job, list_jobs, update_j
 @pytest.fixture
 def isolated_database(monkeypatch, tmp_path):
     monkeypatch.setattr(settings, "DATA_PATH", tmp_path)
+    monkeypatch.setattr(settings, "BACKUP_DIR", None)
     monkeypatch.setattr(settings, "DATABASE_URL", f"sqlite:///{tmp_path / 'control.db'}")
     monkeypatch.setattr(settings, "MULTI_TENANT_ENABLED", True)
     init_db()

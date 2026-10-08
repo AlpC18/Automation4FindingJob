@@ -1,6 +1,8 @@
 // Turkish source text -> English. Kept apart from i18n.tsx so the provider logic stays readable.
 
 export const pageTranslations: Record<string, string> = {
+  "Cevap yapısı puanı ve konuşma ölçümleri": "Answer structure score and speaking metrics",
+  "Yerel kurallara dayalı yapı tahmini; teknik doğruluğu doğrulamaz. Kelime sayısı ve konuşma hızı cevap puanını etkilemez.": "Local rule-based structure estimate; does not verify technical correctness. Word count and speaking pace do not affect the answer score.",
   "0 ilan": "0 jobs",
   "Anahtarı düzelt": "Fix the key",
   "Bağlantı ve anahtarlar çalıştı, hata yok; ancak bu rol/konum için sonuç gelmedi.": "Connections and keys worked with no errors, but this role/location returned no results.",
