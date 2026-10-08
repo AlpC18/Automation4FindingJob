@@ -1,5 +1,6 @@
 "use client";
 import { useLanguage } from "@/lib/i18n";
+import { getExternalJobUrl } from "@/lib/job-links";
 
 import { useEffect, useState } from "react";
 import {
@@ -392,7 +393,7 @@ export default function InboxPage() {
               ) : (
                 <>
                   <a
-                    href={oauthStatus?.google?.auth_url || "#"}
+                    href={getExternalJobUrl(oauthStatus?.google?.auth_url) || "#"}
                     className="flex-1 bg-red-600 hover:bg-red-500 text-white text-xs font-semibold py-2 rounded-lg text-center transition shadow-sm"
                   >
                     {t("Google ile Bağlan")}</a>
@@ -446,7 +447,7 @@ export default function InboxPage() {
               ) : (
                 <>
                   <a
-                    href={oauthStatus?.microsoft?.auth_url || "#"}
+                    href={getExternalJobUrl(oauthStatus?.microsoft?.auth_url) || "#"}
                     className="flex-1 bg-blue-600 hover:bg-blue-500 text-white text-xs font-semibold py-2 rounded-lg text-center transition shadow-sm"
                   >
                     {t("Outlook ile Bağlan")}</a>
@@ -603,12 +604,12 @@ export default function InboxPage() {
                       </p>
 
                       {/* Detected Video Call Link */}
-                      {m.detected_meet_url && (
+                      {getExternalJobUrl(m.detected_meet_url) && (
                         <div className="flex items-center gap-2 p-2.5 rounded-lg bg-indigo-950/40 border border-indigo-500/30 text-xs">
                           <Video className="w-4 h-4 text-indigo-400 shrink-0" />
                           <span className="text-indigo-200 font-medium">{t("Tespit Edilen Toplantı Linki:")}</span>
                           <a
-                            href={m.detected_meet_url}
+                            href={getExternalJobUrl(m.detected_meet_url)!}
                             target="_blank"
                             rel="noopener noreferrer"
                             className="text-sky-400 hover:underline font-mono truncate flex items-center gap-1"

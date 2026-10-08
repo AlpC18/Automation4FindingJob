@@ -24,7 +24,8 @@ from backend.app.modules.scrape.unified_scraper import unified_scraper
 from backend.app.modules.rank.scoring_engine import rank_and_save_all_jobs
 from backend.app.tasks.scheduler_daemon import scheduler_daemon
 from backend.app.core.llm_client import LLMUnavailable
-from backend.app.core.security import APIKeyMiddleware
+from backend.app.core.security import APIKeyMiddleware, SecurityHeadersMiddleware
+from backend.app.core.rate_limiter import RateLimitMiddleware
 from backend.app.core.monitoring import RequestMetricsMiddleware, initialize_error_monitoring
 
 logging.basicConfig(
@@ -86,11 +87,16 @@ async def lifespan(_app: FastAPI):
 init_db()
 init_auth_db()
 
+is_production = settings.ENVIRONMENT.lower() == "production"
+
 app = FastAPI(
     title=settings.PROJECT_NAME,
     version=settings.VERSION,
     description="Full-stack Autonomous Career Agent Engine with Anti-AI Humanizer, Multi-Agent RAG, and Decision Maker Sourcing.",
     lifespan=lifespan,
+    docs_url=None if is_production else "/docs",
+    redoc_url=None if is_production else "/redoc",
+    openapi_url=None if is_production else "/openapi.json",
 )
 
 # Enable CORS for Next.js frontend
@@ -106,6 +112,8 @@ app.add_middleware(
     allow_methods=["GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"],
     allow_headers=["Content-Type", "X-API-Key", "Authorization", "X-CSRF-Token"],
 )
+app.add_middleware(SecurityHeadersMiddleware)
+app.add_middleware(RateLimitMiddleware)
 app.add_middleware(APIKeyMiddleware)
 app.add_middleware(RequestMetricsMiddleware)
 
@@ -126,7 +134,7 @@ def health_check():
         "version": settings.VERSION,
         "environment": settings.ENVIRONMENT,
         "runtime_config": settings.public_runtime_config(),
-        "docs_url": "/docs"
+        "docs_url": None if settings.ENVIRONMENT.lower() == "production" else "/docs",
     }
 
 if __name__ == "__main__":

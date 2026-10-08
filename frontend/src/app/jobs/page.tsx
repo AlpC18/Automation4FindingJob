@@ -1773,9 +1773,9 @@ export default function JobsPage() {
                 <div className="p-4 rounded-xl border border-slate-800 bg-slate-900/80 space-y-2">
                   <div className="flex items-center justify-between">
                     <span className="font-bold text-white">{t("LinkedIn'de Karar Vericiyi Bul")}</span>
-                    {outreachData.google_search_url && (
+                    {getExternalJobUrl(outreachData.google_search_url) && (
                       <a
-                        href={outreachData.google_search_url}
+                        href={getExternalJobUrl(outreachData.google_search_url)!}
                         target="_blank"
                         rel="noopener noreferrer"
                         className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-amber-600 hover:bg-amber-500 text-white font-bold transition text-xs shadow-md shadow-amber-600/20"

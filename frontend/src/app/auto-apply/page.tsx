@@ -5,6 +5,7 @@ import { Send, CheckCircle2, XCircle, Clock, Sparkles, RefreshCw, AlertCircle, F
 import { fetchFromApi } from "@/lib/api";
 import { getApiAuthToken, getWebSocketUrl } from "@/lib/runtime-config";
 import { useLanguage } from "@/lib/i18n";
+import { getExternalJobUrl } from "@/lib/job-links";
 
 export default function AutoApplyPage() {
   const { translate: t } = useLanguage();
@@ -282,7 +283,7 @@ export default function AutoApplyPage() {
                   )}
                   {(item.status === "approved" || item.status === "awaiting_user_submission") && (
                     <div className="flex flex-wrap items-center gap-2">
-                      {item.url && <a href={item.url} target="_blank" rel="noreferrer" className="px-4 py-1.5 bg-indigo-600 hover:bg-indigo-500 text-white rounded-lg text-xs font-semibold transition-colors">{t("İş portalını aç")}</a>}
+                      {getExternalJobUrl(item.url) && <a href={getExternalJobUrl(item.url)!} target="_blank" rel="noopener noreferrer" className="px-4 py-1.5 bg-indigo-600 hover:bg-indigo-500 text-white rounded-lg text-xs font-semibold transition-colors">{t("İş portalını aç")}</a>}
                       {item.status === "approved" ? <button onClick={() => handleSubmit(item.job_key)} className="px-4 py-1.5 border border-slate-600 text-slate-200 rounded-lg text-xs font-semibold">{t("Başvuru adımına geç")}</button> : <button onClick={() => handleConfirmSubmission(item.job_key)} className="px-4 py-1.5 bg-emerald-700 hover:bg-emerald-600 text-white rounded-lg text-xs font-semibold">{t("Gönderimi yaptım")}</button>}
                     </div>
                   )}

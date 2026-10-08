@@ -4,7 +4,7 @@ import base64
 import hmac
 import os
 import secrets
-from urllib.parse import parse_qs
+from urllib.parse import parse_qs, urlsplit
 from typing import Optional
 
 from fastapi import HTTPException, Security, status
@@ -211,3 +211,61 @@ def generate_encryption_key() -> str:
         return Fernet.generate_key().decode("ascii")
     except ImportError:
         return base64.urlsafe_b64encode(secrets.token_bytes(32)).decode("ascii")
+
+
+class SecurityHeadersMiddleware:
+    """Attach defensive HTTP security headers to all HTTP responses."""
+
+    def __init__(self, app):
+        self.app = app
+
+    async def __call__(self, scope, receive, send):
+        if scope.get("type") != "http":
+            await self.app(scope, receive, send)
+            return
+
+        async def send_wrapper(message):
+            if message.get("type") == "http.response.start":
+                headers = list(message.get("headers", []))
+                existing_keys = {h[0].lower() for h in headers}
+
+                def add_header(key: bytes, val: bytes):
+                    if key.lower() not in existing_keys:
+                        headers.append((key, val))
+
+                add_header(b"x-frame-options", b"DENY")
+                add_header(b"x-content-type-options", b"nosniff")
+                add_header(b"referrer-policy", b"strict-origin-when-cross-origin")
+                add_header(b"x-xss-protection", b"1; mode=block")
+                add_header(b"permissions-policy", b"camera=(), microphone=(), geolocation=()")
+                if settings.ENVIRONMENT.lower() == "production":
+                    add_header(b"strict-transport-security", b"max-age=31536000; includeSubDomains")
+
+                message["headers"] = headers
+            await send(message)
+
+        await self.app(scope, receive, send_wrapper)
+
+
+def sanitize_safe_url(value: Optional[str]) -> Optional[str]:
+    """
+    Validate that an external URL has an http or https scheme and a valid host.
+    Rejects javascript:, data:, vbscript:, and relative or malformed URLs.
+    """
+    if not value or not isinstance(value, str):
+        return None
+    cleaned = value.strip()
+    if not cleaned:
+        return None
+    try:
+        parsed = urlsplit(cleaned)
+        if parsed.scheme.lower() not in {"http", "https"}:
+            return None
+        if not parsed.netloc or not parsed.hostname:
+            return None
+        if any(ord(c) < 32 for c in cleaned):
+            return None
+        return cleaned
+    except Exception:
+        return None
+
