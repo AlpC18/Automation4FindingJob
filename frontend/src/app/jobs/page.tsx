@@ -17,7 +17,12 @@ import {
   Square,
   Heart,
   Plus,
-  Check
+  Check,
+  Code2,
+  Palette,
+  TrendingUp,
+  Building2,
+  GraduationCap,
 } from "lucide-react";
 import AiProviderSelect from "@/components/AiProviderSelect";
 import JobCard from "@/components/JobCard";
@@ -56,6 +61,7 @@ export default function JobsPage() {
   const [customRoles, setCustomRoles] = useState<string[]>([]);
   const [wizardWorkMode, setWizardWorkMode] = useState<string>("Remote");
   const [wizardLocationPreset, setWizardLocationPreset] = useState<string>("all");
+  const [selectedDisciplineId, setSelectedDisciplineId] = useState<string>("tech");
 
   const [locationPresets, setLocationPresets] = useState<any[]>([]);
   const [selectedLocationId, setSelectedLocationId] = useState<string>("");
@@ -298,6 +304,15 @@ export default function JobsPage() {
     }
   }
 
+  function handleSelectAllDisciplineRoles(roles: string[]) {
+    const combined = Array.from(new Set([...customRoles, ...roles]));
+    setCustomRoles(combined);
+  }
+
+  function handleClearDisciplineRoles(roles: string[]) {
+    setCustomRoles(customRoles.filter((r) => !roles.includes(r)));
+  }
+
   function handleAddCustomRole() {
     if (!customRoleInput.trim()) return;
     if (!customRoles.includes(customRoleInput.trim())) {
@@ -433,6 +448,86 @@ export default function JobsPage() {
 
     return activeList;
   }, [jobs, t]);
+
+  const careerDisciplines = useMemo(() => [
+    {
+      id: "tech",
+      label: t("Bilgisayar & Yazılım"),
+      badge: t("Mühendislik & IT"),
+      icon: Code2,
+      activeColor: "border-sky-500/70 bg-sky-950/40 text-sky-200",
+      description: t("Bilgisayar mühendisliği öğrencileri ve mezunları için yazılım geliştirme, yapay zeka, sistem, siber güvenlik ve veri rolleri."),
+      roles: [
+        "Software Engineer",
+        "Frontend Developer",
+        "Backend Developer",
+        "Full Stack Developer",
+        "AI / ML Engineer",
+        "DevOps Engineer",
+        "Data Scientist",
+        "Cybersecurity Analyst",
+        "Mobile Developer",
+        "QA Automation Engineer",
+      ],
+    },
+    {
+      id: "design",
+      label: t("Grafik Tasarım & Yaratıcı"),
+      badge: t("Tasarım & Sanat"),
+      icon: Palette,
+      activeColor: "border-purple-500/70 bg-purple-950/40 text-purple-200",
+      description: t("Grafik tasarımı ve görsel sanatlar alanında UI/UX, marka kimliği, hareketli grafik, illüstrasyon ve 3D tasarım rolleri."),
+      roles: [
+        "Graphic Designer",
+        "UI/UX Designer",
+        "Visual Designer",
+        "Brand Identity Designer",
+        "Motion Designer",
+        "Digital Illustrator",
+        "Product Designer",
+        "3D Artist",
+        "Art Director",
+      ],
+    },
+    {
+      id: "economics",
+      label: t("Ekonomi & Finans"),
+      badge: t("İş Dünyası & Analiz"),
+      icon: TrendingUp,
+      activeColor: "border-emerald-500/70 bg-emerald-950/40 text-emerald-200",
+      description: t("Ekonomi mezunları finansal analiz, pazar araştırması, veri analitiği, risk yönetimi ve yatırım bankacılığı alanlarında ilerleyebilir."),
+      roles: [
+        "Financial Analyst",
+        "Business Analyst",
+        "Market Research Analyst",
+        "Risk Analyst",
+        "Investment Banking Analyst",
+        "Economist",
+        "Accounting Specialist",
+        "Budget & Reporting Specialist",
+        "Portfolio Analyst",
+      ],
+    },
+    {
+      id: "architecture",
+      label: t("Mimarlık & Yapı Tasarımı"),
+      badge: t("Mimarlık & Tasarım"),
+      icon: Building2,
+      activeColor: "border-amber-500/70 bg-amber-950/40 text-amber-200",
+      description: t("Mimarlık ve iç mimarlık mezunları mimari proje tasarımı, BIM/Revit uzmanlığı, 3D görselleştirme ve kentsel planlama pozisyonlarına yönelebilir."),
+      roles: [
+        "Architect",
+        "Interior Architect",
+        "BIM Specialist",
+        "3D Architectural Visualizer",
+        "Project Architect",
+        "Landscape Architect",
+        "Urban Planner",
+        "Site Architect",
+        "Architectural Designer",
+      ],
+    },
+  ], [t]);
 
   function toggleJobSelection(id: string) {
     setSelectedJobIds((current) => current.includes(id) ? current.filter((item) => item !== id) : [...current, id]);
@@ -584,37 +679,102 @@ export default function JobsPage() {
                   );
                 })}
 
-                {/* Popular Role Quick Suggestion Chips */}
-                <div className="pt-2">
-                  <span className="text-[11px] font-semibold text-slate-400 block mb-1.5">{t("Popüler Roller (Hızlı Ekle):")}</span>
-                  <div className="flex flex-wrap gap-1.5">
-                    {[
-                      "Software Engineer",
-                      "Frontend Developer",
-                      "Backend Developer",
-                      "Full Stack Developer",
-                      "AI / ML Engineer",
-                      "DevOps Engineer",
-                      "Data Scientist",
-                      "Mobile Developer",
-                    ].map((pr) => {
-                      const isAdded = customRoles.includes(pr);
+                {/* CAREER FIELD / DISCIPLINE SELECTOR */}
+                <div className="pt-2 space-y-3 rounded-xl bg-slate-950/60 p-3.5 border border-slate-800">
+                  <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-1">
+                    <span className="text-xs font-bold text-slate-200 flex items-center gap-1.5">
+                      <GraduationCap className="w-4 h-4 text-sky-400" />
+                      {t("Meslek & Kariyer Alanı Seçimi")}
+                    </span>
+                    <span className="text-[11px] text-slate-400">
+                      {t("Kendiniz, aileniz veya arkadaşlarınız için hedef sektörü seçin")}
+                    </span>
+                  </div>
+
+                  {/* 4 Discipline Category Buttons */}
+                  <div className="grid grid-cols-2 gap-2">
+                    {careerDisciplines.map((disc) => {
+                      const isSelected = selectedDisciplineId === disc.id;
+                      const IconComp = disc.icon;
                       return (
                         <button
-                          key={pr}
+                          key={disc.id}
                           type="button"
-                          onClick={() => togglePopularRole(pr)}
-                          className={`text-[11px] px-2.5 py-1 rounded-lg border transition ${
-                            isAdded
-                              ? "bg-blue-600/30 text-blue-300 border-blue-500/60 font-semibold"
-                              : "bg-slate-950/60 text-slate-400 border-slate-800 hover:text-slate-200 hover:border-slate-700"
+                          onClick={() => setSelectedDisciplineId(disc.id)}
+                          className={`p-2.5 rounded-xl border text-left transition flex items-center gap-2.5 ${
+                            isSelected
+                              ? disc.activeColor
+                              : "border-slate-800 bg-slate-900/40 text-slate-400 hover:border-slate-700 hover:text-slate-200"
                           }`}
                         >
-                          {isAdded ? `✓ ${pr}` : `+ ${pr}`}
+                          <div className={`w-7 h-7 rounded-lg flex items-center justify-center shrink-0 ${
+                            isSelected ? "bg-white/10" : "bg-slate-800"
+                          }`}>
+                            <IconComp className="w-4 h-4" />
+                          </div>
+                          <div className="min-w-0">
+                            <div className="text-xs font-semibold truncate text-white">{disc.label}</div>
+                            <div className="text-[10px] text-slate-400 truncate">{disc.badge}</div>
+                          </div>
                         </button>
                       );
                     })}
                   </div>
+
+                  {/* Active Discipline Guidance Note & Roles */}
+                  {(() => {
+                    const activeDisc = careerDisciplines.find((d) => d.id === selectedDisciplineId) || careerDisciplines[0];
+                    const allSelected = activeDisc.roles.every((r) => customRoles.includes(r));
+                    return (
+                      <div className="space-y-2 pt-1 border-t border-slate-800/80">
+                        <p className="text-[11px] text-slate-300 leading-relaxed bg-slate-900/60 p-2.5 rounded-lg border border-slate-800/80">
+                          {activeDisc.description}
+                        </p>
+
+                        <div className="flex items-center justify-between text-xs pt-1">
+                          <span className="text-[11px] font-semibold text-slate-300">
+                            {t("Bu Alandaki Popüler Pozisyonlar:")}
+                          </span>
+                          <div className="flex items-center gap-2">
+                            <button
+                              type="button"
+                              onClick={() => handleSelectAllDisciplineRoles(activeDisc.roles)}
+                              className="text-[11px] text-sky-400 hover:text-sky-300 font-medium"
+                            >
+                              {allSelected ? t("Tümü Eklendi ✓") : `+ ${t("Tüm Bu Rolleri Ekle")}`}
+                            </button>
+                            <button
+                              type="button"
+                              onClick={() => handleClearDisciplineRoles(activeDisc.roles)}
+                              className="text-[11px] text-slate-400 hover:text-rose-400"
+                            >
+                              {t("Temizle")}
+                            </button>
+                          </div>
+                        </div>
+
+                        <div className="flex flex-wrap gap-1.5">
+                          {activeDisc.roles.map((r) => {
+                            const isAdded = customRoles.includes(r);
+                            return (
+                              <button
+                                key={r}
+                                type="button"
+                                onClick={() => togglePopularRole(r)}
+                                className={`text-[11px] px-2.5 py-1 rounded-lg border transition ${
+                                  isAdded
+                                    ? "bg-blue-600/30 text-blue-300 border-blue-500/60 font-semibold shadow-sm"
+                                    : "bg-slate-950/60 text-slate-400 border-slate-800 hover:text-slate-200 hover:border-slate-700"
+                                }`}
+                              >
+                                {isAdded ? `✓ ${r}` : `+ ${r}`}
+                              </button>
+                            );
+                          })}
+                        </div>
+                      </div>
+                    );
+                  })()}
                 </div>
 
                 {/* Custom Added Roles */}
@@ -704,6 +864,7 @@ export default function JobsPage() {
                   {[
                     { id: "all", label: t("Dünya Geneli (Global)") },
                     { id: "Turkey", label: t("Türkiye") },
+                    { id: "Kosovo", label: t("Kosova") },
                     { id: "Germany", label: t("Almanya") },
                     { id: "United Kingdom", label: t("Birleşik Krallık") },
                     { id: "United States", label: t("ABD") },
