@@ -16,6 +16,11 @@ JOBS = {
 
 @pytest.fixture
 def queue(monkeypatch, tmp_path):
+    from backend.app.core.database import get_db_connection
+    conn = get_db_connection()
+    conn.cursor().execute("DELETE FROM background_jobs")
+    conn.commit()
+    conn.close()
     marked = []
 
     async def draft(job_data, max_revisions=1):

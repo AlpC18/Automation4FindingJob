@@ -1,29 +1,44 @@
+# Git
+.git
+.gitignore
+
 # Python
+**/__pycache__
+**/*.pyc
+**/*.pyo
+**/*.pyd
 backend/.venv/
-backend/__pycache__/
-backend/**/__pycache__/
-backend/data/
-*.pyc
-*.pyo
+.pytest_cache/
+.coverage
+htmlcov/
 
 # Node
-frontend/node_modules/
+**/node_modules/
 frontend/.next/
+frontend/out/
+frontend/playwright-report/
+frontend/test-results/
+.npm-cache/
 
-# IDE
+# Local databases & uploads
+backend/data/*.db
+backend/data/*.sqlite*
+backend/data/chroma_db/
+backend/data/backups/
+backend/app/modules/scrape/cookies/
+
+# Local environment & settings
+.env
+.env.local
+.env.*.local
 .vscode/
 .idea/
 *.swp
 *.swo
-
-# Git
-.git/
-.gitignore
-
-# Environment
-.env
-.env.local
-
-# OS
 .DS_Store
 Thumbs.db
+
+# Documentation & tests
+frontend/tests/
+backend/tests/
+scripts/

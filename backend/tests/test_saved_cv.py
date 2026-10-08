@@ -22,6 +22,7 @@ def clean_workspace():
         conn = get_db_connection()
         conn.cursor().execute("DELETE FROM cv_documents")
         conn.cursor().execute("DELETE FROM candidate_profile")
+        conn.cursor().execute("DELETE FROM candidate_profiles")
         conn.commit()
         conn.close()
 

@@ -1,173 +1,284 @@
-# Yapay Zeka Destekli Otonom Kariyer ve Başvuru Platformu (Autonomous Career Agent Engine)
+# 🚀 Otonom İş Bulma Sistemi (Autonomous Career Agent)
 
-Bu repo; LinkedIn, Upwork, Kosovajob ve Global Remote iş portallarında otonom iş arama, başvuru yapma, Anti-AI Humanizer süzgeciyle insan elinden çıkmış belgeler üretme, karar verici yöneticileri tespit etme (Google X-Ray Dorking) ve mülakat simülasyonu sağlayan uçtan uca Web Yönetim Paneli (Job Board Dashboard) projesidir.
+[![CI Pipeline](https://github.com/AlpC18/Automation4FindingJob/actions/workflows/ci.yml/badge.svg)](https://github.com/AlpC18/Automation4FindingJob/actions/workflows/ci.yml)
+[![FastAPI](https://img.shields.io/badge/FastAPI-0.115+-009688.svg?logo=fastapi&logoColor=white)](https://fastapi.tiangolo.com)
+[![Next.js](https://img.shields.io/badge/Next.js-15.5-black.svg?logo=next.js&logoColor=white)](https://nextjs.org)
+[![Docker](https://img.shields.io/badge/Docker-Ready-2496ED.svg?logo=docker&logoColor=white)](https://www.docker.com/)
+[![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE)
+
+**Otonom İş Bulma Sistemi**, birden fazla iş platformundan (LinkedIn, KosovaJob, Upwork, Techcareer, Remote vb.) gerçek zamanlı iş ilanlarını tarayan, yapay zeka ile profilinize göre analiz eden, ATS skorları hesaplayan, CV ve ön yazı hazırlayan, STAR formatında mülakat provası yaptıran ve başvurularınızı otomatik yöneten **uçtan uca otonom kariyer platformudur.**
 
 ---
 
-## 🚀 Hızlı Başlangıç
+## 📑 İçindekiler
+1. [Öne Çıkan Özellikler](#-öne-çıkan-özellikler)
+2. [Sistem Mimarisi](#-sistem-mimarisi)
+3. [Teknoloji Yığını](#-teknoloji-yığını)
+4. [Hızlı Başlangıç (Docker ile)](#-hızlı-başlangıç-docker-ile)
+5. [Manuel Kurulum (Yerel Geliştirme)](#-manuel-kurulum-yerel-geliştirme)
+6. [Çevre Değişkenleri (.env)](#-çevre-değişkenleri)
+7. [Testler ve Kod Kalitesi](#-testler-ve-kod-kalitesi)
+8. [Proje Dizin Yapısı](#-proje-dizin-yapısı)
+9. [Katkıda Bulunma](#-katkıda-bulunma)
 
-### Tek Komutla Başlatma:
-```bash
-./start_system.sh
+---
+
+## ✨ Öne Çıkan Özellikler
+
+### 🔍 1. Çoklu Platform İş İlanı Tarama (Scraping)
+- **LinkedIn Dual-Engine Scraper:** Hem Apify Actor hem de sıfır maliyetli ve engelsiz çalışan yerel public misafir feed motoru.
+- **KosovaJob:** Kosova ve Balkan bölgesi için özel scraper entegrasyonu.
+- **Techcareer, Upwork & Global Remote:** RemoteOK, Arbeitnow ve şirket kariyer sayfaları (Greenhouse, Lever, Ashby).
+- **Esnek Platform Seçici:** Hangi platformlardan tarama yapılacağını arayüzden tek tıkla seçebilme.
+- **Tıklanabilir Orijinal İlan Linkleri:** İş kartları ve detay modallarında doğrudan platform ilanına yönlendiren harici bağlantılar.
+
+### 👥 2. Çoklu Aday Profili Yönetimi (Multi-Profile Switcher)
+- Kendiniz, aile üyeleriniz veya arkadaşlarınız için bağımsız profiller oluşturabilme (örn. *Yazılım Mühendisi*, *İç Mimar*, *Grafik Tasarımcı*, *Ekonomist*).
+- Tek tıkla aktif profil değiştirme; tüm ATS skorları, CV uyum analizleri ve aramalar seçili profile göre anında güncellenir.
+
+### 🧠 3. Yapay Zeka & ATS Analizi
+- **Akıllı ATS Skorlama:** İlan gereksinimleri ile aday becerilerini karşılaştırarak 0-100 arası uyum puanı üretir.
+- **Eksik Yetenek Analizi:** İlanda istenen ancak profilinizde eksik olan teknolojileri tespit eder ve gelişim önerileri sunar.
+- **Kişiye Özel CV ve Ön Yazı Üretimi:** Seçili ilan için anahtar kelimeleri optimize edilmiş PDF CV ve samimi ön yazı oluşturur.
+
+### 📬 4. Başvuru Yönetimi & Doğrudan E-Posta
+- **E-Posta ile Doğrudan Başvuru:** İlanda yer alan iletişim e-postasına sistem üzerinden özelleştirilmiş ön yazı ve CV ekiyle SMTP üzerinden doğrudan başvuru gönderme.
+- **Kanban Takip Panosu:** Başvurularınızı *İnceleniyor*, *Başvuruldu*, *Mülakat*, *Teklif*, *Red* aşamalarında görsel olarak sürükle-bırak yöntemiyle yönetin.
+- **Excel/CSV Export & WhatsApp Paylaşımı:** Taranan ilanları tek tıkla Türkçe Excel uyumlu CSV olarak indirme veya WhatsApp formatında özet metin kopyalama.
+
+### 🎯 5. Mülakat Simülasyonu & Diğer Modüller (30+ Sayfa)
+- **STAR Mülakat Provası:** Yapay zeka mülakatçısı ile sesli/yazılı teknik ve davranışsal soru-cevap pratiği.
+- **Maaş İstihbaratı:** Pozisyona göre küresel ve yerel maaş aralığı tahminleri.
+- **Kariyer Yol Haritası:** Hedeflediğiniz pozisyona ulaşmak için basamak basamak öğrenme planı.
+- **Otonom Gece Daemon:** Gece belirlenen saatte otomatik iş arama, sabah adaya özet ve taslak başvuru sunma.
+- **Gelen Kutusu (Inbox):** Şirketlerden gelen yanıtları ve mülakat davetlerini tek merkezden yönetme.
+
+---
+
+## 🏛️ Sistem Mimarisi
+
+```mermaid
+flowchart TD
+    subgraph Frontend ["Frontend (Next.js 15 + React 19 + Tailwind)"]
+        UI["Web Dashboard (30+ Sayfa)"]
+        Wizard["İş Arama Sihirbazı & Platform Seçici"]
+        Kanban["Kanban Başvuru Takibi"]
+        ProfileSwitch["Çoklu Profil Değiştirici"]
+    end
+
+    subgraph Backend ["Backend API (FastAPI)"]
+        API["FastAPI REST Endpoints (/api)"]
+        Auth["Güvenlik & Oturum Yönetimi"]
+        ScrapeCoord["UnifiedScraper Koordinatörü"]
+        ScoreEngine["ATS Skorlama & Eşleştirme Motoru"]
+        Scheduler["Zamanlayıcı Daemon (Gece/Gündüz)"]
+    end
+
+    subgraph Scrapers ["İş Portalı Scraper Motorları"]
+        LI["LinkedIn (Dual-Engine)"]
+        KJ["KosovaJob"]
+        TC["Techcareer"]
+        UW["Upwork"]
+        RM["Global Remote (RemoteOK, Arbeitnow)"]
+    end
+
+    subgraph AI_Engine ["Yapay Zeka & LLM"]
+        LLMs["OpenAI / Claude / Gemini / DeepSeek / Ollama"]
+        Chroma["ChromaDB Vektör Arama"]
+    end
+
+    subgraph Storage ["Kalıcı Veri Deposu"]
+        DB[("SQLite / PostgreSQL Veritabanı")]
+        Profiles[("Aday Profilleri")]
+        Jobs[("Taranan İlanlar & Başvurular")]
+    end
+
+    UI -->|HTTP / REST API| API
+    Wizard --> ScrapeCoord
+    ScrapeCoord --> LI & KJ & TC & UW & RM
+    ScrapeCoord --> Jobs
+    API --> ScoreEngine
+    ScoreEngine --> LLMs
+    ScoreEngine --> Chroma
+    API --> DB & Profiles & Jobs
+    Scheduler --> ScrapeCoord
+    ProfileSwitch --> Profiles
 ```
 
-Varsayılan geliştirme modu dış portal taramasını backend açılışında otomatik başlatmaz. İsterseniz `.env` içinde `STARTUP_SEED_ENABLED=true` kullanabilirsiniz. Üretim kurulumlarında ayrıca `API_AUTH_TOKEN`, `APP_ENCRYPTION_KEY` ve `CORS_ORIGINS` tanımlanmalıdır.
+---
 
-Mevcut yerel veritabanı bulunan kurulumlarda `scripts/bootstrap_env.py` yeni şifreleme anahtarı üretmek yerine `backend/data/.app_encryption_key` dosyasındaki korunan anahtarı kullanır; veritabanı varsa ama anahtar bulunamıyorsa işlemi durdurur. `.env` yanlışlıkla farklı bir anahtarla oluşturulduysa `backend/.venv/bin/python scripts/restore_local_env_key.py` mevcut Apify kayıtlarını doğrular ve anahtarı `.env` ile güvenli biçimde eşitler. Gizli değerler terminale yazdırılmaz.
+## 🛠️ Teknoloji Yığını
 
-`MULTI_TENANT_ENABLED=true` iken panel kayıt/giriş ekranı sunar; her hesabın uygulama verisi ayrı SQLite dosyasında veya PostgreSQL şemasında tutulur. Üretimde `.env` içine güçlü ve sabit bir `AUTH_SECRET_KEY` koyun (ör. `openssl rand -hex 32`); anahtarı deploy'lar arasında değiştirmek mevcut oturumları geçersiz kılar. LinkedIn çerezleri ve görülen ilan dosyaları da tenant klasörüne ayrılır. Eski veritabanı kurulumları açılışta sürümlü şema revizyonlarını uygular.
+| Katman | Teknolojiler |
+|---|---|
+| **Backend** | Python 3.12+, FastAPI, Pydantic v2, Uvicorn, ReportLab, PyPDF |
+| **Frontend** | Next.js 15.5 (App Router), React 19, TypeScript, Tailwind CSS, Lucide Icons |
+| **Veritabanı** | SQLite (Geliştirme) / PostgreSQL + pgvector (Üretim), ChromaDB (Vektör arama) |
+| **Yapay Zeka** | OpenAI (GPT-4o), Anthropic (Claude Sonnet 3.5), Google Gemini, DeepSeek, Yerel Ollama |
+| **Scraping** | BeautifulSoup4, HTTPX, Urllib, Apify Entegrasyonu |
+| **DevOps & Araçlar** | Docker, Docker Compose, GitHub Actions CI/CD, Pytest, Node Test Runner |
 
-Üretimde kayıt doğrulaması ve parola kurtarma için `SMTP_HOST`, `SMTP_PORT`, `SMTP_USER`, `SMTP_PASS` ve `SMTP_FROM_EMAIL` ayarlayın. Oturum-cookie kullanan değiştirici istekler CSRF başlığıyla korunur; hatalı girişler e-posta/IP bazında sınırlandırılır. Kullanıcı oturum menüsünden e-posta ve mevcut parolayı yeniden girerek hesabını ve tenant verisini silebilir. 
+---
 
-AI sağlayıcıları: `/llm` sayfasından Anthropic (Claude), OpenAI, Gemini, DeepSeek, Ollama (yerel) veya herhangi bir OpenAI-uyumlu servis (Groq, OpenRouter, Cerebras vb.) için API anahtarınızı şifreli olarak saklayabilir, bağlantıyı test edebilir veya kaldırabilirsiniz. Anahtarlar API yanıtında tekrar gösterilmez. `CUSTOM_LLM_BASE_URL`, `CUSTOM_LLM_API_KEY` ve `CUSTOM_LLM_MODEL` ile herhangi bir OpenAI-uyumlu hizmet desteklenir (ör. `https://api.groq.com/openai/v1`). `LLM_DAILY_TOKEN_BUDGET` Anthropic Token harcama sınırı olup, aşıldığında şablon motoru devralır; diğer sağlayıcılara uygulanmaz. Seçilen sağlayıcı ve günlük kullanım veri klasöründe kalıcı hale getirilir.
+## 🐳 Hızlı Başlangıç (Docker ile)
 
-Yerel geliştirmede şifreleme anahtarı `backend/data` altında özel izinle oluşturulur; üretimde sabit `APP_ENCRYPTION_KEY` değerini gizli ortam değişkeni olarak tanımlayın.
-
-Harici hata/trace izlemesi için isteğe bağlı olarak `SENTRY_DSN` ve `SENTRY_TRACES_SAMPLE_RATE` verin. PII otomatik eklenmez. Uygulama ayrıca oturum sayısı ve gecikme histogramını Prometheus formatında `/api/system/metrics` üzerinden verir (uç normal hesap oturumuyla korunur). SQLite yedeği `/api/system/backup` üzerinden indirilebilir. PostgreSQL Docker kurulumunda `postgres-backup` hizmeti her gün doğrulanmış, izinleri kısıtlı bir custom-format yedek üretir; son 14 günlük yedekler `postgres-backups` volume'ünde tutulur. Süre `BACKUP_INTERVAL_SECONDS`, saklama süresi `BACKUP_RETENTION_DAYS` ile ayarlanır. Geri yükleme hedef veritabanını değiştirir; yalnızca doğru yedek dosyasını ve hedefi kontrol ettikten sonra `CONFIRM_RESTORE=YES` ile `scripts/restore-postgres.sh` çalıştırın. Canlıya almadan önce sağlayıcı point-in-time backup'ını da etkin tutun.
-
-### Dinamik Docker kurulumu
-
-Compose dosyası servis adlarını sabitlemez; portlar, image sürümleri, worker sayıları, public URL'ler, veritabanı, Redis, scraper modu ve scheduler saatleri `.env` üzerinden değiştirilebilir. Compose varsayılan olarak PostgreSQL kullanır; veritabanı override'ı gerekiyorsa `COMPOSE_DATABASE_URL`, Redis override'ı için `COMPOSE_REDIS_URL` kullanın (`DATABASE_URL` ve `REDIS_URL` yerel geliştirme sürecine aittir). Docker çalıştırmadan önce `POSTGRES_PASSWORD`, `REDIS_PASSWORD`, `API_AUTH_TOKEN`, `AUTH_SECRET_KEY` ve `APP_ENCRYPTION_KEY` için güçlü ve kalıcı sırlar belirleyin. Gerçek verilerle başlamak için `DEMO_DATA_ENABLED=false` ve sağlayıcı ayarlarını kullanın; yerel fixture görmek için açıkça `DEMO_DATA_ENABLED=true` seçin.
-
-Canlı ilan akışında `remote` kaynağı RemoteOK, Arbeitnow, Remotive, Jobicy ve Himalayas herkese açık feed'lerini sorgulamaktadır. Apify kaynakları için `.env` dosyasında ilgili `APIFY_ACTOR_*` Actor ID'sini ve `APIFY_API_TOKEN`'ı tanımlayın; actor'a özel arama alanları gerekiyorsa `APIFY_INPUT_*` JSON'larıyla ekleyin. Her kaynak aynı normalize ilan alanlarını üretir, hatalar kaynak adıyla raporlanır. Açık API feed'lerini kullanan dağıtımlar ilan kaynağına atıf ve orijinal ilana bağlantı gösterir.
-
-Apify sağlayıcıları `/sources` ekranından tenant bazında ayarlanabilir; çalışma geçmişi ve son hata bu ekranda görünür. Arka plan iş kuyruğu `/inbox` içinden izlenir. SQLite kullanan hesaplar aynı ekrandan tutarlı veritabanı yedeği indirebilir. Yedekten dönmek için uygulamayı durdurun, arşivi ilgili `career_engine.db` (tenant kurulumunda `tenants/<tenant-id>.db`) konumuna geri koyun, sonra uygulamayı başlatın. PostgreSQL compose dağıtımlarında günlük otomatik yedekleme de etkinleşir. Worker heartbeat'i 20 dakika aşan işler kuyruk ekranında başarısız gösterilir ve yeniden denenebilir.
-
+Sistemi tüm bağımlılıklarıyla birlikte **tek komutla** ayağa kaldırmak için:
 
 ```bash
-# Her sırrı kriptografik olarak üretir, .env dosyasını 0600 izinle oluşturur.
-# Mevcut yerel geliştirme sunucularını (3000/8000) korumak için alternatif portlar kullanır.
-python3 scripts/bootstrap_env.py --isolated-ports
-docker compose up -d --build
-docker compose up -d --scale celery-worker=2
+# 1. Depoyu klonlayın
+git clone https://github.com/AlpC18/Automation4FindingJob.git
+cd Automation4FindingJob
+
+# 2. Örnek ortam değişkenlerini kopyalayın
+cp .env.example .env
+
+# 3. Docker Compose ile başlatın
+docker-compose up -d --build
 ```
 
-Oluşturulan `.env` git dışında tutulur ve yeniden çalıştırıldığında mevcut dosyanın üzerine yazılmaz. Normal 3000/8000 Docker portlarını kullanmak için `--isolated-ports` seçeneğini kaldırın. İlk hesap kaydı için çok kullanıcılı mod açıktır; e-posta doğrulama ve parola kurtarma için SMTP ayarlarını ekleyin.
-
-Tarayıcı tarafındaki API adresi image yeniden derlenmeden `PUBLIC_API_URL` ile `RUNTIME_API_URL` üzerinden `runtime-config.js` dosyasına yazılır. Sağlık ve güvenli runtime bilgisi `/api/system/health` ile `/api/system/runtime-config` uçlarından izlenebilir. OAuth callback adresleri için `BACKEND_PUBLIC_URL` ve `GOOGLE_REDIRECT_URI` / `MICROSOFT_REDIRECT_URI` değerlerini deploy edilen host adına göre ayarlayın.
-
-Servisler açıldığında:
-* **Web Yönetim Paneli (Next.js):** [http://localhost:3000](http://localhost:3000)
-* **Backend API Swagger Dokümantasyonu:** [http://localhost:8000/docs](http://localhost:8000/docs)
+Konteynerlar hazır olduğunda:
+- 🌐 **Web Arayüzü:** [http://localhost:3000](http://localhost:3000)
+- 🔌 **Backend API & Swagger Dokümantasyonu:** [http://localhost:8000/docs](http://localhost:8000/docs)
+- 📊 **Redis:** `localhost:6379`
 
 ---
 
-## 🛠️ Mimari ve Modül Kapsamı
+## 💻 Manuel Kurulum (Yerel Geliştirme)
 
-| Modül | Bölüm | Fonksiyon ve Görevi |
-| :--- | :--- | :--- |
-| **1.1 Profil & RAG** | `/setup` | Dinamik Mülakat Soruları, Format Temizleme (%100 ATS Standardı), Yazım Üslubu (Human Stylometry) ve Vektör Hafızası. |
-| **1.2 Kazıma & Güvenlik** | `/scrape` | Anahtarsız kaynaklar (KosovaJob, RemoteOK, Arbeitnow, Remotive, Jobicy, Himalayas, şirket kariyer sayfaları) ve Apify üzerinden portallar; Hayalet İlan (Ghost Job) tespiti ve Günlük Güvenlik Kotaları. Ayrıntı aşağıdaki "İlan kaynakları" bölümünde. |
-| **1.3 Algoritmik Sıralama** | `/rank` | ATS Eşleşme Skoru (%0-100), Kırmızı Çizgi (Red Flag) tespiti, Yetenek Boşluğu (Skill Gap) ve Bölgesel Maaş Skalası. |
-| **1.4 Humanizer & Multi-Agent** | `/apply` | Anti-AI Humanizer Engine, LangGraph sıralı iş akışı, Form Memory Store (Easy Apply), Micro-Case Study ve Karar Verici X-Ray Dorkları. |
-| **1.6 Takip & Analitik** | `/outcome` | Kanban başvuru takip paneli, Dönüşüm Hunisi (Conversion Funnel), A/B üslup testleri ve 7./14. gün kibar takip otomasyonu. |
+### Gereksinimler
+- Python 3.12 veya üzeri
+- Node.js 20 veya üzeri
+- Git
 
----
+### 1. Backend Kurulumu
+```bash
+# Sanal ortam oluşturun ve aktif edin
+python3 -m venv backend/.venv
+source backend/.venv/bin/activate  # Windows için: backend\.venv\Scripts\activate
 
-## 🛡️ Anti-AI Humanizer Kuralları & Yasaklı Sözcükler
+# Bağımlılıkları yükleyin
+pip install -r backend/requirements.txt
 
-Sistem, yapay zeka tespit algoritmalarını (ZeroGPT, CopyLeaks vb.) ve IK ön eleme sistemlerini aşmak için aşağıdaki buzzword'leri tamamen yasaklamıştır ve otomatik olarak doğal alternatifleriyle değiştirir:
-* `delighted to apply`, `spearheaded`, `seamless integration`, `testament to`, `fostering`, `beacon`, `realm`, `tapestry`, `in conclusion`, `furthermore`, `synergy`, `dynamic ecosystem`
+# Çevre değişkenlerini ayarlayın
+cp .env.example .env
 
-Metinler yüksek **Burstiness** (cümle boyu varyasyonu) ve zengin söz dağarcığı (TTR) ile üretilir.
+# Backend sunucusunu başlatın (Port: 18000 veya 8000)
+python -m uvicorn backend.app.main:app --host 127.0.0.1 --port 18000 --reload
+```
 
----
+### 2. Frontend Kurulumu
+```bash
+# Yeni bir terminal sekmesinde frontend dizinine geçin
+cd frontend
 
-## 🧩 Chrome Eklentisi (1-Click Ingestion)
+# Bağımlılıkları yükleyin
+npm install
 
-1. Tarayıcınızda `chrome://extensions/` adresini açın.
-2. "Geliştirici Modu"nu (Developer Mode) aktif edin.
-3. "Paketlenmemiş Öğe Yükle" (Load Unpacked) butonuna basıp projedeki `extension/` klasörünü seçin.
-4. LinkedIn, Upwork veya Kosovajob ilanlarında tek tıkla ilanı çekip panele aktarın.
+# Geliştirme sunucusunu başlatın (Port: 13000 veya 3000)
+npm run dev -- -p 13000
+```
 
----
-
-## ⚡ Entegrasyonlar ve Altyapı
-
-1. **LinkedIn Session Handshake (`cookies.json`):**
-   * Chrome Eklentisi üzerinden tek tıkla kullanıcının aktif `li_at` ve `JSESSIONID` oturum çerezlerini backend'e aktarır.
-   * Playwright Stealth Worker oturumla portalı inceler; gerçek gönderim açıkça başlatılmadıkça hiçbir başvuruyu `Applied` olarak işaretlemez ve portal onayı olmadan başarı raporlamaz.
-   * `/safety` sayfasından canlı oturum durumu izlenebilir ve manuel çerez yapıştırılabilir.
-
-2. **Kuyruk Mimarisi (Celery + Redis Worker - Dual-Mode):**
-   * Ağır kazıma (scraping), Playwright form doldurma ve ATS sıralama işlemlerini Redis mesaj kuyruğu üzerinden Celery worker'larına dağıtır.
-   * Docker ortamında (`docker-compose.yml`) otomatik Redis ve Celery Worker ayağa kalkar; yerel hafif geliştirmede ise otomatik Asenkron Yerel Mod'a geçerek sıfır bağımlılıkla çalışır.
-   * `/inbox` ve `/safety` üzerinden canlı kuyruk durumu izlenebilir.
-   * Tarama ve gerçek portal gönderim işleri tenant DB'sinde kalıcı tutulur: `GET /api/tasks/jobs` listeyi, `GET /api/tasks/jobs/{job_id}` ayrıntıyı verir; başarısız desteklenen işler `POST /api/tasks/jobs/{job_id}/retry` ile yeniden denenebilir. Tarama isteklerinde `Idempotency-Key` kullanmak aynı işin yinelenmesini önler.
-
-   * Auto-apply akışı iki aşamalıdır: taslak onayı ve açık browser gönderim adımı. Tarayıcı veya portal gönderimi doğrulanmadıkça ilan gerçek başvuru olarak raporlanmaz.
-   * Kanban `Applied` aşaması ile dış portal gönderimi ayrıdır: `submission_state=pending_confirmation` simülasyon/iş akışını, `/api/outcome/confirm_submission` ise doğrulanmış gönderimi kaydeder; `application_execution_mode` bunun `simulation` veya `live` olduğunu açıkça belirtir.
-
-3. **Resmi E-posta OAuth2 Entegrasyonu (Gmail & Outlook):**
-   * Google Cloud Console (Gmail REST API) ve Microsoft Azure AD (Graph API) üzerinden tek tıkla resmi OAuth2 yetkilendirmesi.
-   * Uygulama şifresi (App Password) ihtiyacını ortadan kaldırır. Gelen e-postaları otonom olarak çekip Inbox AI sınıflayıcısına ve Kanban durum makinesine aktarır.
-
-   * `OPENAI_API_KEY` yoksa arayüz tarayıcı Speech API fallback'ini kullanır; sunucu uçları açıkça `503` döner.
-   * Gmail ve Microsoft OAuth senkronizasyonu unread mesajları çekip Inbox Agent'a aktarır; provider message ID deduplication ile aynı e-posta tekrar işlenmez. OAuth access token'ları süresi dolduğunda refresh token ile yenilenir.
-
-5. **Üretim veri katmanı seçeneği:**
-   * Geliştirme varsayılanı SQLite'tır. Docker Compose varsayılan olarak PostgreSQL + pgvector ile başlar; `DATABASE_URL=sqlite:///...` ile yerel fallback korunur.
-   * Geçiş geriye dönük qmark SQL uyumluluk katmanıyla kademeli yapılabilir; PostgreSQL modunda seen-job kayıtları ve semantic search aynı veritabanında tutulur. SQLite modunda Chroma fallback'i korunur.
-   * Compose ayrıca `daemon-worker` servisini çalıştırır. Bu servis web API'den bağımsız olarak 24/7 scheduler'ı yürütür: 03:30 gece taraması, 08:00 taslak hazırlığı ve Telegram bildirimi. Yerel API sürecinde aynı daemon'ı çalıştırmak isterseniz `AUTO_START_DAEMON=true` kullanabilirsiniz; ikisini aynı anda etkinleştirmeyin.
-   * PDF doğrulama katmanı `pypdf` ile text-layer ve ATS keyword kontrollerini container içinde harici Poppler kurulumu olmadan yapabilir.
-
-6. **Yedekleme ve kurtarma:**
-   * SQLite modunda çalışma verisi uygulama başlarken ve `BACKUP_INTERVAL_SECONDS` aralığında (varsayılan 1 gün) şifreli arşivlenir; varsayılan saklama süresi 14 gündür.
-   * `BACKUP_DIR` tanımlanırsa oraya, yoksa veri klasörüne yedekler kaydedilir. `BACKUP_RETENTION_DAYS` ve `BACKUP_MAX_SIZE_MB` ile saklama ve boyut sınırı ayarlanabilir. Şifreli yedekler mevcut `APP_ENCRYPTION_KEY` ile açılır; bu anahtar yedeğin içine konmaz, ayrı ve güvenli saklanmalıdır.
-   * `scripts/backup-data.sh` el ile yedek almayı sağlar. İlan kaynakları ekranındaki geri yükleme önce mevcut verinin güvenlik kopyasını alır ve yalnızca oturum açmış hesabın SQLite çalışma alanını değiştirir. 
-   * PostgreSQL Docker kurulumunda `postgres-backup` servisi günlük doğrulanmış özel format yedekler üretir; son 14 günlük yedekler `postgres-backups` volume'ünde tutulur. `scripts/restore-postgres.sh` ile geri yükleme yapılır; `CONFIRM_RESTORE=YES` olmadan hiçbir şey değişmez.
+Tarayıcınızdan `http://localhost:13000` adresine giderek sistemi kullanmaya başlayabilirsiniz.
 
 ---
 
-## 🌐 İlan kaynakları
+## 🔑 Çevre Değişkenleri
 
-| Kaynak | Yöntem | Gerekli |
-| :--- | :--- | :--- |
-| RemoteOK, Arbeitnow, Remotive, Jobicy, Himalayas | Açık API | Yok |
-| KosovaJob, TechCareer | Doğrudan web taraması | Yok |
-| Greenhouse, Lever, Ashby kullanan şirketler | Açık kariyer sayfası API'si | `/sources` ekranından şirket ekle ya da `COMPANY_BOARDS=greenhouse:stripe,lever:spotify` |
-| LinkedIn, Upwork, Indeed, Glassdoor, Kariyer.net | Apify Actor (hazır Actor tanımlı) | Apify API token |
-| Fiverr, Freelancer, Toptal, GjirafaWork, Wellfound | Apify Actor | `/sources` ekranında Actor ID ve Apify API token |
+Yapılandırma dosyası `.env.example` içinde detaylı açıklamalar yer almaktadır. Başlıca ayarlar:
 
-**Platform denetimi:** `SCRAPER_PLATFORMS` (varsayılan: `linkedin,upwork,kosovajob,techcareer,remote`) hangi kaynakların etkin olduğunu belirler. Gece otomatik taraması (`SCHEDULER_NIGHTLY_TIME: 03:30`) yalnızca `NIGHTLY_SCAN_PLATFORMS` (varsayılan: `remote,kosovajob,techcareer`) listesindeki kaynaklardır; Apify ücretli kaynakları gece taramasına dahil edilmez. Apify Token olmayan kaynaklar başında tanımlı token reuse'ı kullanır.
+| Değişken | Açıklama | Varsayılan |
+|---|---|---|
+| `API_PORT` | Backend dinleme portu | `18000` |
+| `ENVIRONMENT` | Çalışma ortamı (`development` / `production`) | `development` |
+| `DATABASE_URL` | Veritabanı adresi (SQLite veya PostgreSQL) | `sqlite:///backend/data/career_engine.db` |
+| `OPENAI_API_KEY` | OpenAI API anahtarı (İsteğe bağlı) | Boş |
+| `ANTHROPIC_API_KEY` | Claude API anahtarı (İsteğe bağlı) | Boş |
+| `APIFY_API_TOKEN` | Apify Actor token (İsteğe bağlı) | Boş |
+| `SMTP_HOST` & `SMTP_USER` | E-posta ile başvuru için e-posta bilgileri | Gmail / Outlook |
 
-Bot koruması olan portallar (Indeed, Glassdoor, Kariyer.net) doğrudan taranmaz; yalnızca Apify Actor veya Chrome eklentisiyle tek tek aktarılabilir.
+> **Not:** LLM anahtarları girilmediğinde sistem tamamen **kendi yerel kural ve eşleştirme motoruyla** kesintisiz çalışmaya devam eder.
 
-## ⚠️ Bilinen sınırlar
+---
 
-* Eşleşme puanı kural tabanlı bir tahmindir (beceri örtüşmesi 50, ilan başlığının hedef role benzerliği 30, deneyim 20); işveren ATS puanı değildir.
-* Yapay zekâ sağlayıcısı yanıt vermezse niyet mektubu genel bir şablondan üretilir. Bu durum Kanban'da "Şablon metin" uyarısıyla işaretlenir; böyle bir metin gönderilmeden önce yeniden üretilmelidir.
-* "Sistem kontrolü" ekranı bir anahtarın girilmiş olmasına bakar, sağlayıcının gerçekten yanıt verdiğini sınamaz.
-* Son başvuru tarihi yalnızca kaynak yayınlıyorsa bilinir (KosovaJob, Himalayas, bazı Greenhouse ilanları).
+## 🧪 Testler ve Kod Kalitesi
 
-## 🧪 Testlerin Çalıştırılması
-
-Backend testleri yalıtılmış ortamda çalışmalı; düz `pytest` yerel `.env` dosyasını ve gerçek DB'i kullanır:
+Tüm backend birim testlerini ve frontend testlerini tek komutla çalıştırmak için:
 
 ```bash
-# Yalıtılmış backend testleri (CI ile aynı)
-# Sağlayıcı anahtarları boş geçilir; aksi halde yerel .env içindeki gerçek anahtarlar testlere sızar.
-T=$(mktemp -d) && PYTHONPATH=. ENVIRONMENT=test MULTI_TENANT_ENABLED=false API_AUTH_TOKEN= \
-  CORS_ORIGINS=http://localhost:3000 DATA_PATH="$T" DATABASE_URL="sqlite:///$T/ci.db" \
-  ACTIVE_LLM_PROVIDER=auto ANTHROPIC_API_KEY= GEMINI_API_KEY= CUSTOM_LLM_API_KEY= APIFY_API_TOKEN= BACKUP_DIR= \
-  ./backend/.venv/bin/python -m pytest -q backend/tests
-
-# Frontend testleri, linting ve build
-npm --prefix frontend test
-npm --prefix frontend run lint
-npm --prefix frontend run build
-
-# E2E testleri (Playwright)
-npm --prefix frontend run e2e:install
-npm --prefix frontend run e2e
+# Birleşik test çalıştırıcı
+./scripts/run-tests.sh
 ```
 
-GitHub Actions CI aynı backend regresyon testlerini (yalıtılmış ortamda) ve frontend test/lint/build kontrollerini push ve PR'lerde çalıştırır. Chromium kurulumunda başarılıysa CV analiz, iş arama ve analitik ekranları için kritik tarayıcı test akışları da çalışır.
-
-Yerel servisler çalışırken hızlı sağlık kontrolü:
-
+Ayrı ayrı test çalıştırmak için:
 ```bash
-./scripts/smoke_local.sh
+# Backend pytest + kod kapsamı (coverage) raporu
+./backend/.venv/bin/python -m pytest backend/tests/ -v --cov=backend/app --cov-report=term-missing
+
+# Frontend birim ve güvenlik testleri
+cd frontend && npm test
+
+# Frontend TypeScript ve Build kontrolü
+cd frontend && npm run build
 ```
 
-Bu komut sistem sağlığı, ilanlar, CV analiz geçmişi, ana sayfa ve analitik ekranlarının erişilebilirliğini doğrular. İlan kaynağı URL'leri ayrıca `/jobs` ekranında on-demand doğrulanır (SSRF koruması nedeniyle yerel/özel ağ adresleri engellenir).
+---
+
+## 📂 Proje Dizin Yapısı
+
+```
+Otonom İş Bulma Sistemi/
+├── .github/
+│   └── workflows/
+│       ├── ci.yml                 # GitHub Actions test & build pipeline
+│       └── docker-publish.yml     # GHCR Docker imaj yayınlama
+├── backend/
+│   ├── Dockerfile                 # Multi-stage Python backend imajı
+│   ├── requirements.txt           # Python bağımlılıkları (pytest-cov dahil)
+│   ├── tests/                     # Pytest birim ve entegrasyon testleri
+│   │   ├── conftest.py
+│   │   ├── test_config.py
+│   │   ├── test_health.py
+│   │   ├── test_profile.py
+│   │   └── test_scrapers.py
+│   └── app/
+│       ├── main.py                # FastAPI ana sunucusu
+│       ├── core/                  # DB, config, security, migration
+│       ├── api/routers/           # 16 API router modülü
+│       └── modules/
+│           ├── scrape/            # 5 platform scraper motoru
+│           ├── rank/              # ATS skor ve eşleştirme
+│           ├── apply/             # CV, cover letter & başvuru
+│           └── interview/         # STAR mülakat simülatörü
+├── frontend/
+│   ├── Dockerfile                 # Multi-stage Next.js frontend imajı
+│   ├── package.json
+│   ├── tests/                     # Frontend birim ve güvenlik testleri
+│   └── src/
+│       ├── app/                   # Next.js 15 App Router sayfaları (30+ sayfa)
+│       ├── components/            # Yeniden kullanılabilir UI bileşenleri
+│       └── lib/                   # API istemcisi, i18n çevirileri
+├── scripts/
+│   └── run-tests.sh               # Otomatik birleşik test betiği
+├── docker-compose.yml             # Yerel Docker Compose ortamı
+├── docker-compose.prod.yml        # Üretim Docker Compose yapılandırması
+├── .env.example                   # Örnek çevre değişkenleri şablonu
+├── pytest.ini                     # Pytest yapılandırması
+├── .coveragerc                    # Kod kapsamı (coverage) yapılandırması
+└── README.md                      # Proje dokümantasyonu
+```
+
+---
+
+## 🤝 Katkıda Bulunma
+
+1. Bu depoyu Fork edin (`fork`).
+2. Özellik dalınızı oluşturun (`git checkout -b feature/YeniOzellik`).
+3. Değişikliklerinizi commit edin (`git commit -m 'feat: Yeni özellik eklendi'`).
+4. Dalınıza push edin (`git push origin feature/YeniOzellik`).
+5. Bir **Pull Request** açın.
+
+---
+
+## 📄 Lisans
+
+Bu proje [MIT Lisansı](LICENSE) kapsamında lisanslanmıştır.

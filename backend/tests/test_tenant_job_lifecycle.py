@@ -138,6 +138,7 @@ def test_versioned_migrations_create_durable_job_table(isolated_database):
         "0022_saved_search_remote_type",
         "0023_saved_cv_document",
         "0024_page_visits",
+        "0025_candidate_profiles",
             ]
         cursor.execute("SELECT name FROM sqlite_master WHERE type = 'table' AND name = 'background_jobs'")
         assert cursor.fetchone() is not None

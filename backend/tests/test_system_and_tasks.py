@@ -16,6 +16,20 @@ from backend.app.tasks.job_store import create_job, get_job, update_job
 client = TestClient(app)
 
 
+@pytest.fixture(autouse=True)
+def clean_jobs():
+    from backend.app.core.database import get_db_connection
+    conn = get_db_connection()
+    conn.cursor().execute("DELETE FROM background_jobs")
+    conn.commit()
+    conn.close()
+    yield
+    conn = get_db_connection()
+    conn.cursor().execute("DELETE FROM background_jobs")
+    conn.commit()
+    conn.close()
+
+
 def test_health_and_runtime_config_expose_no_secrets():
     health = client.get("/api/system/health").json()
     runtime = client.get("/api/system/runtime-config").json()

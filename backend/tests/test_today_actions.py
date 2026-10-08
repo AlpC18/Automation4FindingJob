@@ -42,7 +42,7 @@ def test_actions_are_ordered_by_urgency_and_link_to_the_right_screen():
     )
 
     assert [(a["kind"], a["href"]) for a in result["actions"]] == [
-        ("inbox_reply", "/inbox"),
+        ("inbox_reply", "/inbox?id=1"),
         ("follow_up_due", "/follow-up"),
         ("confirm_submission", "/auto-apply"),
         ("confirm_submission", "/kanban"),

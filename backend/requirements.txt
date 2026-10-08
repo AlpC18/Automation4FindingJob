@@ -19,3 +19,4 @@ pgvector>=0.5.0
 celery>=5.3.6
 redis>=5.0.3
 sentry-sdk[fastapi]>=2.19.0
+pytest-cov>=5.0.0

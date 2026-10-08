@@ -48,3 +48,4 @@ frontend/playwright-report/
 
 # Local Claude Code settings
 .claude/settings.local.json
+.coverage

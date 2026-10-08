@@ -1,0 +1,21 @@
+[run]
+source = backend/app
+omit =
+    */tests/*
+    */__pycache__/*
+    backend/app/modules/scrape/cookies/*
+branch = True
+
+[report]
+show_missing = True
+skip_covered = False
+exclude_lines =
+    pragma: no cover
+    def __repr__
+    if self.debug:
+    raise AssertionError
+    raise NotImplementedError
+    if __name__ == .__main__.:
+    if TYPE_CHECKING:
+    pass
+fail_under = 25
