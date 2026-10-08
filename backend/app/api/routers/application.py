@@ -20,8 +20,10 @@ from backend.app.modules.apply.cultural_engine import cultural_engine
 from backend.app.modules.apply.decision_maker import decision_maker_engine
 from backend.app.modules.apply.fit_report import build_fit_report, tailored_cv_profile
 from backend.app.modules.apply.form_automator import form_automator
+import urllib.parse
 from backend.app.modules.setup.rag_engine import rag_memory
 from backend.app.modules.setup.pdf_generator import ats_pdf_generator
+from backend.app.modules.outcome.follow_up_cadence import follow_up_cadence_engine
 
 
 router = APIRouter()
@@ -425,5 +427,103 @@ def send_email_application(req: EmailApplicationRequest):
         raise HTTPException(status_code=500, detail=f"E-posta gönderilemedi: {str(exc)}") from exc
     finally:
         conn.close()
+
+
+@router.get("/apply/jobs/{job_id}/tailored_cv_pdf")
+def get_job_tailored_cv_pdf(job_id: str, theme: str = "navy"):
+    """Download a targeted 1-page ATS-optimized PDF CV specifically tailored to this job."""
+    return download_fit_tailored_cv(job_id=job_id, theme=theme)
+
+
+class OutreachDraftRequest(BaseModel):
+    job_id: Optional[str] = None
+    company: Optional[str] = None
+    title: Optional[str] = None
+    location: Optional[str] = "Remote"
+
+
+@router.post("/apply/outreach/draft")
+def generate_outreach_draft(req: OutreachDraftRequest):
+    """
+    Generate Google X-Ray Dork link, 3-sentence hiring manager outreach,
+    and micro-case study for strategic cold application.
+    """
+    company = req.company or ""
+    title = req.title or ""
+    location = req.location or "Remote"
+
+    if req.job_id:
+        conn = get_db_connection()
+        try:
+            row = conn.cursor().execute("SELECT company, title, location FROM scraped_jobs WHERE id = ?", (req.job_id,)).fetchone()
+            if row:
+                company = row["company"] or company
+                title = row["title"] or title
+                location = row["location"] or location
+        finally:
+            conn.close()
+
+    if not company:
+        raise HTTPException(status_code=400, detail="Şirket adı belirtilmelidir.")
+
+    profile = fetch_candidate_profile()
+    dork_query = decision_maker_engine.generate_xray_dork(company, location)
+    google_url = f"https://www.google.com/search?q={urllib.parse.quote_plus(dork_query)}"
+
+    # Get primary project from memory
+    from backend.app.modules.setup.rag_engine import rag_memory
+    primary_project = rag_memory.documents[0] if rag_memory.documents else None
+
+    cold_msg = decision_maker_engine.draft_three_sentence_outreach(
+        company_name=company,
+        job_title=title or "Açık Pozisyon",
+        candidate_profile=profile,
+        rag_project=primary_project,
+    )
+
+    micro_portfolio = decision_maker_engine.synthesize_micro_portfolio(
+        job_title=title or "Pozisyon",
+        company=company,
+        rag_projects=rag_memory.documents,
+    )
+
+    # Predicted email patterns for domain
+    clean_domain = company.lower().replace(" ", "").replace(",", "").replace(".", "") + ".com"
+    email_patterns = [
+        f"ad.soyad@{clean_domain}",
+        f"ad@{clean_domain}",
+        f"hr@{clean_domain}",
+        f"careers@{clean_domain}",
+    ]
+
+    return {
+        "company": company,
+        "title": title,
+        "location": location,
+        "dork_query": dork_query,
+        "google_search_url": google_url,
+        "cold_outreach_message": cold_msg,
+        "micro_portfolio": micro_portfolio,
+        "predicted_email_formats": email_patterns,
+    }
+
+
+@router.get("/apply/jobs/{job_id}/follow_up_cadence")
+def get_job_follow_up_cadence(job_id: str):
+    """Generate 3-stage follow-up cadence messages (Touch 1, Touch 2, Touch 3)."""
+    conn = get_db_connection()
+    try:
+        row = conn.cursor().execute("SELECT company, title FROM scraped_jobs WHERE id = ?", (job_id,)).fetchone()
+    finally:
+        conn.close()
+
+    if not row:
+        raise HTTPException(status_code=404, detail="Job not found.")
+
+    company = row["company"] or "Şirket"
+    title = row["title"] or "Pozisyon"
+    cadence = follow_up_cadence_engine.generate_cadence_messages(company, title)
+    return cadence
+
 
 

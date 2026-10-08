@@ -36,6 +36,12 @@ def start_interview_simulation(req: InterviewStartRequest):
     return {"job": job, "questions": questions}
 
 
+@router.get("/interview/jobs/{job_id}/predicted_questions")
+def get_job_predicted_questions(job_id: str):
+    """Retrieve predicted technical and behavioral STAR interview questions for this job."""
+    return start_interview_simulation(InterviewStartRequest(job_id=job_id))
+
+
 class InterviewEvaluateRequest(BaseModel):
     question: str
     answer: str

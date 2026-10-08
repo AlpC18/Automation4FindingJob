@@ -325,3 +325,44 @@ def get_page_usage(days: int = 14):
         conn.close()
     return {"days": days, "pages": [dict(row) for row in rows]}
 
+
+class TelegramConfigRequest(BaseModel):
+    bot_token: str
+    chat_id: str
+    is_enabled: bool = True
+    min_match_score: int = 75
+    notify_on_new_jobs: bool = True
+    notify_on_interview: bool = True
+
+
+@router.get("/system/telegram")
+def get_telegram_config():
+    """Retrieve Telegram notification bot configuration."""
+    from backend.app.modules.outcome.telegram_bot import get_telegram_settings
+    return get_telegram_settings()
+
+
+@router.post("/system/telegram")
+def save_telegram_config(req: TelegramConfigRequest):
+    """Save Telegram bot configuration and notification preferences."""
+    from backend.app.modules.outcome.telegram_bot import update_telegram_settings
+    return update_telegram_settings(
+        bot_token=req.bot_token,
+        chat_id=req.chat_id,
+        is_enabled=req.is_enabled,
+        min_match_score=req.min_match_score,
+        notify_on_new_jobs=req.notify_on_new_jobs,
+        notify_on_interview=req.notify_on_interview,
+    )
+
+
+@router.post("/system/telegram/test")
+def test_telegram_connection():
+    """Send test notification to verify Telegram bot setup."""
+    from backend.app.modules.outcome.telegram_bot import send_test_notification
+    res = send_test_notification()
+    if not res.get("success"):
+        raise HTTPException(status_code=400, detail=res.get("error", "Telegram test failed."))
+    return res
+
+

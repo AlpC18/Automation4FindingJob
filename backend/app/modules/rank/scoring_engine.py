@@ -200,4 +200,14 @@ def rank_and_save_all_jobs(candidate_profile: Dict[str, Any]):
     
     # Sort descending by match_score
     ranked_jobs.sort(key=lambda x: x["match_score"], reverse=True)
+
+    # Dispatch Telegram notifications for high-matching fresh jobs
+    try:
+        from backend.app.modules.outcome.telegram_bot import send_job_alert
+        for item in ranked_jobs:
+            if item.get("match_score", 0) >= 75 and item.get("status") in ("Draft", "New", ""):
+                send_job_alert(item, item.get("match_score"))
+    except Exception:
+        pass
+
     return ranked_jobs

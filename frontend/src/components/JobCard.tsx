@@ -2,7 +2,7 @@
 
 import FitReportButton from "@/components/FitReportButton";
 import Link from "next/link";
-import { AlertTriangle, CheckSquare, DollarSign, ExternalLink, EyeOff, Heart, Layers, Link2, Mail, ShieldAlert, Square } from "lucide-react";
+import { AlertTriangle, CheckSquare, DollarSign, ExternalLink, EyeOff, FileText, Heart, HelpCircle, Layers, Link2, Mail, MessageSquare, ShieldAlert, Square, Target } from "lucide-react";
 import { getExternalJobUrl } from "@/lib/job-links";
 import { useLanguage } from "@/lib/i18n";
 import { formatTimestamp, jobFreshness, linkStatus } from "@/lib/scan-status.cjs";
@@ -10,7 +10,21 @@ import { formatTimestamp, jobFreshness, linkStatus } from "@/lib/scan-status.cjs
 /** One listing in the jobs feed. State and actions stay in the jobs page and arrive through `ctx`. */
 export default function JobCard({ job, ctx }: { job: any; ctx: any }) {
   const { locale, translate: t } = useLanguage();
-  const { selectedJobIds, toggleJobSelection, toggleJobFlag, checkJobLink, linkCheckBusy, linkLabels, prepareApplication, preparingJob, setDetailJob, openEmailModal } = ctx;
+  const {
+    selectedJobIds,
+    toggleJobSelection,
+    toggleJobFlag,
+    checkJobLink,
+    linkCheckBusy,
+    linkLabels,
+    prepareApplication,
+    preparingJob,
+    setDetailJob,
+    openEmailModal,
+    openOutreachModal,
+    openQuestionsModal,
+    openFollowUpModal,
+  } = ctx;
     const hasRedFlags = job.red_flags && job.red_flags.length > 0;
     const isGhost = job.ghost_score >= 35;
     const skillGaps = job.skill_gaps || {};
@@ -239,10 +253,58 @@ export default function JobCard({ job, ctx }: { job: any; ctx: any }) {
               </a>
             )}
             <FitReportButton jobId={job.id} />
+            <button
+              type="button"
+              onClick={(e) => {
+                e.stopPropagation();
+                openOutreachModal?.(job);
+              }}
+              className="inline-flex items-center gap-1 px-2.5 py-1.5 rounded-lg border border-amber-500/40 bg-amber-950/30 hover:bg-amber-900/40 text-amber-300 font-semibold transition text-xs"
+              title={t("Karar Verici & Soğuk Outreach")}
+            >
+              <Target className="w-3.5 h-3.5 text-amber-400" />
+              <span>{t("Karar Verici & Soğuk E-posta")}</span>
+            </button>
+            <a
+              href={`/api/apply/jobs/${job.id}/tailored_cv_pdf`}
+              download
+              onClick={(e) => e.stopPropagation()}
+              className="inline-flex items-center gap-1 px-2.5 py-1.5 rounded-lg border border-cyan-500/40 bg-cyan-950/30 hover:bg-cyan-900/40 text-cyan-300 font-semibold transition text-xs"
+              title={t("İlana Özel ATS CV İndir")}
+            >
+              <FileText className="w-3.5 h-3.5 text-cyan-400" />
+              <span>{t("İlana Özel ATS CV İndir")}</span>
+            </a>
+            <button
+              type="button"
+              onClick={(e) => {
+                e.stopPropagation();
+                openQuestionsModal?.(job);
+              }}
+              className="inline-flex items-center gap-1 px-2.5 py-1.5 rounded-lg border border-purple-500/40 bg-purple-950/30 hover:bg-purple-900/40 text-purple-300 font-semibold transition text-xs"
+              title={t("Mülakat Soruları Tahmini")}
+            >
+              <HelpCircle className="w-3.5 h-3.5 text-purple-400" />
+              <span>{t("Mülakat Soruları Tahmini")}</span>
+            </button>
             {job.status === "Applied" ? (
-              <span className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg border border-emerald-500/40 bg-emerald-950/40 text-emerald-300 font-semibold text-xs">
-                ✓ {t("Başvuruldu")}
-              </span>
+              <>
+                <span className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg border border-emerald-500/40 bg-emerald-950/40 text-emerald-300 font-semibold text-xs">
+                  ✓ {t("Başvuruldu")}
+                </span>
+                <button
+                  type="button"
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    openFollowUpModal?.(job);
+                  }}
+                  className="inline-flex items-center gap-1 px-2.5 py-1.5 rounded-lg border border-blue-500/40 bg-blue-950/30 hover:bg-blue-900/40 text-blue-300 font-semibold transition text-xs"
+                  title={t("Takip E-postası (Follow-Up)")}
+                >
+                  <MessageSquare className="w-3.5 h-3.5 text-blue-400" />
+                  <span>{t("Takip E-postası (Follow-Up)")}</span>
+                </button>
+              </>
             ) : (
               <button
                 type="button"

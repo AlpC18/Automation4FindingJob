@@ -29,6 +29,12 @@ import {
   Mail,
   Send,
   X,
+  Bell,
+  Copy,
+  FileText,
+  HelpCircle,
+  MessageSquare,
+  Target,
 } from "lucide-react";
 import AiProviderSelect from "@/components/AiProviderSelect";
 import JobCard from "@/components/JobCard";
@@ -88,6 +94,31 @@ export default function JobsPage() {
   const [emailBody, setEmailBody] = useState("");
   const [emailAttachCv, setEmailAttachCv] = useState(true);
   const [emailSending, setEmailSending] = useState(false);
+
+  // Telegram Notification Bot Modal State
+  const [telegramModalOpen, setTelegramModalOpen] = useState(false);
+  const [telegramBotToken, setTelegramBotToken] = useState("");
+  const [telegramChatId, setTelegramChatId] = useState("");
+  const [telegramEnabled, setTelegramEnabled] = useState(false);
+  const [telegramMinScore, setTelegramMinScore] = useState(75);
+  const [telegramTesting, setTelegramTesting] = useState(false);
+  const [telegramSaving, setTelegramSaving] = useState(false);
+
+  // Decision Maker & Cold Outreach Modal State
+  const [outreachModalJob, setOutreachModalJob] = useState<any | null>(null);
+  const [outreachData, setOutreachData] = useState<any | null>(null);
+  const [outreachLoading, setOutreachLoading] = useState(false);
+
+  // Predicted Interview Questions Modal State
+  const [questionsModalJob, setQuestionsModalJob] = useState<any | null>(null);
+  const [questionsData, setQuestionsData] = useState<any | null>(null);
+  const [questionsLoading, setQuestionsLoading] = useState(false);
+
+  // Follow-Up Cadence Modal State
+  const [followUpModalJob, setFollowUpModalJob] = useState<any | null>(null);
+  const [followUpData, setFollowUpData] = useState<any | null>(null);
+  const [followUpLoading, setFollowUpLoading] = useState(false);
+
   const [scanRuns, setScanRuns] = useState<any[]>([]);
   const [jobFeedbackTypes, setJobFeedbackTypes] = useState<string[]>([]);
   const [jobFeedbackNote, setJobFeedbackNote] = useState("");
@@ -695,7 +726,123 @@ export default function JobsPage() {
     }
   }
 
-  const cardContext = { selectedJobIds, toggleJobSelection, toggleJobFlag, checkJobLink, linkCheckBusy, linkLabels, prepareApplication, preparingJob, setDetailJob, openEmailModal };
+  async function openTelegramModal() {
+    setTelegramModalOpen(true);
+    try {
+      const cfg = await fetchFromApi<any>("/system/telegram");
+      setTelegramBotToken(cfg.bot_token || "");
+      setTelegramChatId(cfg.chat_id || "");
+      setTelegramEnabled(Boolean(cfg.is_enabled));
+      setTelegramMinScore(Number(cfg.min_match_score || 75));
+    } catch {
+      // Keep defaults
+    }
+  }
+
+  async function handleSaveTelegram() {
+    setTelegramSaving(true);
+    try {
+      await fetchFromApi("/system/telegram", {
+        method: "POST",
+        body: JSON.stringify({
+          bot_token: telegramBotToken.trim(),
+          chat_id: telegramChatId.trim(),
+          is_enabled: telegramEnabled,
+          min_match_score: telegramMinScore,
+        }),
+      });
+      notify(t("Telegram ayarları başarıyla kaydedildi."));
+      setTelegramModalOpen(false);
+    } catch (err: any) {
+      notify(err?.message || t("Kaydedilemedi."));
+    } finally {
+      setTelegramSaving(false);
+    }
+  }
+
+  async function handleTestTelegram() {
+    setTelegramTesting(true);
+    try {
+      const res = await fetchFromApi<any>("/system/telegram/test", { method: "POST" });
+      notify(res.message || t("Test mesajı başarıyla gönderildi!"));
+    } catch (err: any) {
+      notify(err?.message || t("Telegram test mesajı gönderilemedi."));
+    } finally {
+      setTelegramTesting(false);
+    }
+  }
+
+  async function openOutreachModal(job: any) {
+    setOutreachModalJob(job);
+    setOutreachLoading(true);
+    try {
+      const data = await fetchFromApi<any>("/apply/outreach/draft", {
+        method: "POST",
+        body: JSON.stringify({
+          job_id: job.id,
+          company: job.company,
+          title: job.title,
+          location: job.location,
+        }),
+      });
+      setOutreachData(data);
+    } catch {
+      setOutreachData(null);
+    } finally {
+      setOutreachLoading(false);
+    }
+  }
+
+  async function openQuestionsModal(job: any) {
+    setQuestionsModalJob(job);
+    setQuestionsLoading(true);
+    try {
+      const data = await fetchFromApi<any>(`/interview/jobs/${job.id}/predicted_questions`);
+      setQuestionsData(data?.questions || []);
+    } catch {
+      setQuestionsData([]);
+    } finally {
+      setQuestionsLoading(false);
+    }
+  }
+
+  async function openFollowUpModal(job: any) {
+    setFollowUpModalJob(job);
+    setFollowUpLoading(true);
+    try {
+      const data = await fetchFromApi<any>(`/apply/jobs/${job.id}/follow_up_cadence`);
+      setFollowUpData(data?.cadence || []);
+    } catch {
+      setFollowUpData([]);
+    } finally {
+      setFollowUpLoading(false);
+    }
+  }
+
+  async function copyText(text: string) {
+    try {
+      await navigator.clipboard.writeText(text);
+      notify(t("Metin panoya kopyalandı!"));
+    } catch {
+      notify(t("Panoya kopyalanamadı."));
+    }
+  }
+
+  const cardContext = {
+    selectedJobIds,
+    toggleJobSelection,
+    toggleJobFlag,
+    checkJobLink,
+    linkCheckBusy,
+    linkLabels,
+    prepareApplication,
+    preparingJob,
+    setDetailJob,
+    openEmailModal,
+    openOutreachModal,
+    openQuestionsModal,
+    openFollowUpModal,
+  };
 
   return (
     <div className="space-y-6 max-w-6xl mx-auto">
@@ -711,8 +858,16 @@ export default function JobsPage() {
           </p>
         </div>
 
-        {/* Quick Search toggle */}
+        {/* Quick Search toggle & Telegram */}
         <div className="flex items-center gap-2">
+          <button
+            onClick={openTelegramModal}
+            className="flex items-center gap-1.5 bg-[#0088cc]/20 hover:bg-[#0088cc]/30 text-sky-300 text-xs font-semibold px-3 py-2 rounded-xl transition border border-[#0088cc]/40 shadow-sm"
+            title={t("Telegram Bildirim Botu Ayarları")}
+          >
+            <Bell className="w-3.5 h-3.5 text-sky-400" />
+            {t("Telegram Bildirimleri")}
+          </button>
           <button
             onClick={() => setShowWizard(!showWizard)}
             className="flex items-center gap-1.5 bg-slate-800 hover:bg-slate-700 text-slate-200 text-xs font-semibold px-3 py-2 rounded-xl transition border border-slate-700"
@@ -1328,6 +1483,52 @@ export default function JobsPage() {
                 <Mail className="h-3.5 w-3.5 text-indigo-400" />
                 <span>{t("E-posta ile Başvur")}</span>
               </button>
+              <button
+                type="button"
+                onClick={() => {
+                  const targetJob = detailJob;
+                  setDetailJob(null);
+                  openOutreachModal(targetJob);
+                }}
+                className="inline-flex items-center gap-1.5 rounded-lg border border-amber-500/40 bg-amber-950/40 px-3 py-2 text-xs font-semibold text-amber-200 hover:bg-amber-900/50 transition"
+              >
+                <Target className="h-3.5 w-3.5 text-amber-400" />
+                <span>{t("Karar Verici & Soğuk E-posta")}</span>
+              </button>
+              <a
+                href={`/api/apply/jobs/${detailJob.id}/tailored_cv_pdf`}
+                download
+                className="inline-flex items-center gap-1.5 rounded-lg border border-cyan-500/40 bg-cyan-950/40 px-3 py-2 text-xs font-semibold text-cyan-200 hover:bg-cyan-900/50 transition"
+              >
+                <FileText className="h-3.5 w-3.5 text-cyan-400" />
+                <span>{t("İlana Özel ATS CV İndir")}</span>
+              </a>
+              <button
+                type="button"
+                onClick={() => {
+                  const targetJob = detailJob;
+                  setDetailJob(null);
+                  openQuestionsModal(targetJob);
+                }}
+                className="inline-flex items-center gap-1.5 rounded-lg border border-purple-500/40 bg-purple-950/40 px-3 py-2 text-xs font-semibold text-purple-200 hover:bg-purple-900/50 transition"
+              >
+                <HelpCircle className="h-3.5 w-3.5 text-purple-400" />
+                <span>{t("Mülakat Soruları Tahmini")}</span>
+              </button>
+              {detailJob.status === "Applied" && (
+                <button
+                  type="button"
+                  onClick={() => {
+                    const targetJob = detailJob;
+                    setDetailJob(null);
+                    openFollowUpModal(targetJob);
+                  }}
+                  className="inline-flex items-center gap-1.5 rounded-lg border border-blue-500/40 bg-blue-950/40 px-3 py-2 text-xs font-semibold text-blue-200 hover:bg-blue-900/50 transition"
+                >
+                  <MessageSquare className="h-3.5 w-3.5 text-blue-400" />
+                  <span>{t("Takip E-postası (Follow-Up)")}</span>
+                </button>
+              )}
               {getExternalJobUrl(detailJob.url) && <a href={getExternalJobUrl(detailJob.url)!} target="_blank" rel="noopener noreferrer" className="inline-flex items-center gap-2 rounded-lg bg-blue-600 px-4 py-2 text-xs font-semibold text-white hover:bg-blue-500"><ExternalLink className="h-3.5 w-3.5" />{t("Kaynak ilanda aç")}</a>}
             </div>
           </div>
@@ -1446,6 +1647,340 @@ export default function JobsPage() {
               >
                 <Send className="h-3.5 w-3.5" />
                 {emailSending ? t("Gönderiliyor...") : t("E-postayı Gönder & Başvuruyu Kaydet")}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* 1. Telegram Settings Modal */}
+      {telegramModalOpen && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/75 p-4" role="dialog" aria-modal="true">
+          <div className="max-h-[90vh] w-full max-w-lg overflow-y-auto rounded-2xl border border-slate-700 bg-slate-950 p-6 shadow-2xl space-y-4">
+            <div className="flex items-center justify-between border-b border-slate-800 pb-3">
+              <div className="flex items-center gap-2">
+                <Bell className="h-5 w-5 text-sky-400" />
+                <h3 className="text-base font-bold text-white">{t("Telegram Bildirim Botu Ayarları")}</h3>
+              </div>
+              <button type="button" onClick={() => setTelegramModalOpen(false)} className="text-slate-400 hover:text-white">
+                <X className="h-5 w-5" />
+              </button>
+            </div>
+
+            <p className="text-xs text-slate-300 bg-sky-950/30 p-3 rounded-xl border border-sky-900/40">
+              {t("Yeni yüksek uyumlu iş ilanları yayınlandığında anında Telegram hesabınıza bildirim gelsin.")}
+            </p>
+
+            <div className="space-y-3 text-xs">
+              <div>
+                <label className="block font-semibold text-slate-300 mb-1">{t("Bot Token")}</label>
+                <input
+                  type="text"
+                  value={telegramBotToken}
+                  onChange={(e) => setTelegramBotToken(e.target.value)}
+                  placeholder="123456789:ABCdefGhIJKlmNoPQRsTUVwxyZ"
+                  className="w-full rounded-xl border border-slate-800 bg-slate-900 px-3 py-2 text-white placeholder:text-slate-500 focus:border-blue-500 focus:outline-none font-mono"
+                />
+              </div>
+
+              <div>
+                <label className="block font-semibold text-slate-300 mb-1">{t("Chat ID")}</label>
+                <input
+                  type="text"
+                  value={telegramChatId}
+                  onChange={(e) => setTelegramChatId(e.target.value)}
+                  placeholder="123456789"
+                  className="w-full rounded-xl border border-slate-800 bg-slate-900 px-3 py-2 text-white placeholder:text-slate-500 focus:border-blue-500 focus:outline-none font-mono"
+                />
+              </div>
+
+              <div>
+                <label className="block font-semibold text-slate-300 mb-1">{t("Minimum Uyum Skoru")}</label>
+                <input
+                  type="number"
+                  min="50"
+                  max="100"
+                  value={telegramMinScore}
+                  onChange={(e) => setTelegramMinScore(Number(e.target.value))}
+                  className="w-full rounded-xl border border-slate-800 bg-slate-900 px-3 py-2 text-white focus:border-blue-500 focus:outline-none"
+                />
+              </div>
+
+              <label className="flex items-center gap-2 cursor-pointer select-none pt-1">
+                <input
+                  type="checkbox"
+                  checked={telegramEnabled}
+                  onChange={(e) => setTelegramEnabled(e.target.checked)}
+                  className="rounded border-slate-700 bg-slate-900 text-sky-600 focus:ring-sky-500"
+                />
+                <span className="text-slate-300 font-semibold">{t("Bildirimleri Etkinleştir")}</span>
+              </label>
+            </div>
+
+            <div className="flex items-center justify-between pt-3 border-t border-slate-800">
+              <button
+                type="button"
+                disabled={telegramTesting || !telegramBotToken.trim() || !telegramChatId.trim()}
+                onClick={() => void handleTestTelegram()}
+                className="rounded-xl border border-sky-500/40 bg-sky-950/30 px-3 py-2 text-xs font-semibold text-sky-300 hover:bg-sky-900/40 disabled:opacity-50"
+              >
+                {telegramTesting ? t("İşleniyor...") : t("Test Bildirimi Gönder")}
+              </button>
+              <div className="flex items-center gap-2">
+                <button
+                  type="button"
+                  onClick={() => setTelegramModalOpen(false)}
+                  className="rounded-xl border border-slate-800 px-3 py-2 text-xs font-semibold text-slate-300 hover:bg-slate-900"
+                >
+                  {t("İptal")}
+                </button>
+                <button
+                  type="button"
+                  disabled={telegramSaving}
+                  onClick={() => void handleSaveTelegram()}
+                  className="rounded-xl bg-sky-600 hover:bg-sky-500 px-4 py-2 text-xs font-bold text-white transition disabled:opacity-50 shadow-md shadow-sky-600/30"
+                >
+                  {telegramSaving ? t("İşleniyor...") : t("Ayarları Kaydet")}
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* 2. Outreach & Decision Maker Modal */}
+      {outreachModalJob && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/75 p-4" role="dialog" aria-modal="true">
+          <div className="max-h-[90vh] w-full max-w-2xl overflow-y-auto rounded-2xl border border-slate-700 bg-slate-950 p-6 shadow-2xl space-y-4">
+            <div className="flex items-center justify-between border-b border-slate-800 pb-3">
+              <div className="flex items-center gap-2">
+                <Target className="h-5 w-5 text-amber-400" />
+                <div>
+                  <h3 className="text-base font-bold text-white">{t("Karar Verici & Soğuk Outreach")}</h3>
+                  <p className="text-xs text-slate-400">{outreachModalJob.title} · {outreachModalJob.company}</p>
+                </div>
+              </div>
+              <button type="button" onClick={() => setOutreachModalJob(null)} className="text-slate-400 hover:text-white">
+                <X className="h-5 w-5" />
+              </button>
+            </div>
+
+            {outreachLoading ? (
+              <div className="p-8 text-center text-xs text-slate-400">{t("İşleniyor...")}</div>
+            ) : outreachData ? (
+              <div className="space-y-4 text-xs">
+                {/* Google X-Ray Search */}
+                <div className="p-4 rounded-xl border border-slate-800 bg-slate-900/80 space-y-2">
+                  <div className="flex items-center justify-between">
+                    <span className="font-bold text-white">{t("LinkedIn'de Karar Vericiyi Bul")}</span>
+                    {outreachData.google_search_url && (
+                      <a
+                        href={outreachData.google_search_url}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-amber-600 hover:bg-amber-500 text-white font-bold transition text-xs shadow-md shadow-amber-600/20"
+                      >
+                        <ExternalLink className="w-3.5 h-3.5" />
+                        <span>{t("Google X-Ray Dork")}</span>
+                      </a>
+                    )}
+                  </div>
+                  <p className="text-slate-400 font-mono text-[11px] break-all bg-slate-950 p-2.5 rounded-lg border border-slate-800">
+                    {outreachData.dork_query}
+                  </p>
+                </div>
+
+                {/* 3-Sentence Outreach */}
+                <div className="p-4 rounded-xl border border-slate-800 bg-slate-900/80 space-y-2">
+                  <div className="flex items-center justify-between">
+                    <span className="font-bold text-white">{t("3 Cümlelik Soğuk Outreach")}</span>
+                    <button
+                      type="button"
+                      onClick={() => void copyText(outreachData.cold_outreach_message)}
+                      className="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg border border-slate-700 bg-slate-800 hover:bg-slate-700 text-slate-200 font-semibold"
+                    >
+                      <Copy className="w-3 h-3 text-slate-400" />
+                      <span>{t("Metni Kopyala")}</span>
+                    </button>
+                  </div>
+                  <p className="text-slate-200 leading-relaxed bg-slate-950 p-3 rounded-lg border border-slate-800">
+                    {outreachData.cold_outreach_message}
+                  </p>
+                </div>
+
+                {/* Predicted Emails */}
+                {outreachData.predicted_email_formats?.length > 0 && (
+                  <div className="p-4 rounded-xl border border-slate-800 bg-slate-900/80 space-y-2">
+                    <span className="font-bold text-white block">{t("Tahmini E-posta Formatları")}</span>
+                    <div className="flex flex-wrap gap-2">
+                      {outreachData.predicted_email_formats.map((em: string) => (
+                        <button
+                          key={em}
+                          type="button"
+                          onClick={() => void copyText(em)}
+                          className="font-mono text-[11px] px-2.5 py-1 rounded-lg bg-slate-950 border border-slate-800 text-slate-300 hover:border-amber-500/50 hover:text-amber-300 transition"
+                        >
+                          {em}
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+                )}
+
+                {/* Micro-Portfolio */}
+                {outreachData.micro_portfolio && (
+                  <div className="p-4 rounded-xl border border-slate-800 bg-slate-900/80 space-y-2">
+                    <div className="flex items-center justify-between">
+                      <span className="font-bold text-white">{t("Mikro-Vaka Analizi")}</span>
+                      <button
+                        type="button"
+                        onClick={() => void copyText(outreachData.micro_portfolio)}
+                        className="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg border border-slate-700 bg-slate-800 hover:bg-slate-700 text-slate-200 font-semibold"
+                      >
+                        <Copy className="w-3 h-3 text-slate-400" />
+                        <span>{t("Metni Kopyala")}</span>
+                      </button>
+                    </div>
+                    <pre className="text-slate-300 font-sans whitespace-pre-wrap leading-relaxed text-[11px] bg-slate-950 p-3 rounded-lg border border-slate-800 max-h-48 overflow-y-auto">
+                      {outreachData.micro_portfolio}
+                    </pre>
+                  </div>
+                )}
+              </div>
+            ) : null}
+
+            <div className="flex justify-end pt-3 border-t border-slate-800">
+              <button
+                type="button"
+                onClick={() => setOutreachModalJob(null)}
+                className="rounded-xl border border-slate-800 px-4 py-2 text-xs font-semibold text-slate-300 hover:bg-slate-900"
+              >
+                {t("Kapat")}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* 3. Predicted Interview Questions Modal */}
+      {questionsModalJob && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/75 p-4" role="dialog" aria-modal="true">
+          <div className="max-h-[90vh] w-full max-w-2xl overflow-y-auto rounded-2xl border border-slate-700 bg-slate-950 p-6 shadow-2xl space-y-4">
+            <div className="flex items-center justify-between border-b border-slate-800 pb-3">
+              <div className="flex items-center gap-2">
+                <HelpCircle className="h-5 w-5 text-purple-400" />
+                <div>
+                  <h3 className="text-base font-bold text-white">{t("Şirket & Pozisyon Mülakat Soruları")}</h3>
+                  <p className="text-xs text-slate-400">{questionsModalJob.title} · {questionsModalJob.company}</p>
+                </div>
+              </div>
+              <button type="button" onClick={() => setQuestionsModalJob(null)} className="text-slate-400 hover:text-white">
+                <X className="h-5 w-5" />
+              </button>
+            </div>
+
+            {questionsLoading ? (
+              <div className="p-8 text-center text-xs text-slate-400">{t("İşleniyor...")}</div>
+            ) : questionsData?.length > 0 ? (
+              <div className="space-y-3 text-xs">
+                {questionsData.map((item: any, idx: number) => (
+                  <div key={idx} className="p-3.5 rounded-xl border border-slate-800 bg-slate-900/80 space-y-2">
+                    <div className="flex items-center justify-between gap-2">
+                      <span className="text-[11px] px-2 py-0.5 rounded font-semibold border border-purple-500/30 bg-purple-500/10 text-purple-300">
+                        {item.type || "STAR Question"}
+                      </span>
+                    </div>
+                    <p className="text-slate-100 font-medium leading-relaxed">{item.question}</p>
+                    {item.key_points?.length > 0 && (
+                      <div className="flex flex-wrap gap-1.5 pt-1">
+                        {item.key_points.map((pt: string, pIdx: number) => (
+                          <span key={pIdx} className="text-[10px] px-2 py-0.5 rounded-full bg-slate-950 border border-slate-800 text-slate-400">
+                            • {pt}
+                          </span>
+                        ))}
+                      </div>
+                    )}
+                  </div>
+                ))}
+              </div>
+            ) : (
+              <div className="p-6 text-center text-xs text-slate-400">{t("Henüz durum geçmişi yok")}</div>
+            )}
+
+            <div className="flex items-center justify-between pt-3 border-t border-slate-800">
+              <Link
+                href={`/interview?job=${questionsModalJob.id}`}
+                onClick={() => setQuestionsModalJob(null)}
+                className="inline-flex items-center gap-1.5 rounded-xl bg-purple-600 hover:bg-purple-500 px-4 py-2 text-xs font-bold text-white transition shadow-md shadow-purple-600/30"
+              >
+                <span>{t("STAR Mülakat Provasına Başla")}</span>
+              </Link>
+              <button
+                type="button"
+                onClick={() => setQuestionsModalJob(null)}
+                className="rounded-xl border border-slate-800 px-4 py-2 text-xs font-semibold text-slate-300 hover:bg-slate-900"
+              >
+                {t("Kapat")}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* 4. Follow-Up Cadence Modal */}
+      {followUpModalJob && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/75 p-4" role="dialog" aria-modal="true">
+          <div className="max-h-[90vh] w-full max-w-2xl overflow-y-auto rounded-2xl border border-slate-700 bg-slate-950 p-6 shadow-2xl space-y-4">
+            <div className="flex items-center justify-between border-b border-slate-800 pb-3">
+              <div className="flex items-center gap-2">
+                <MessageSquare className="h-5 w-5 text-blue-400" />
+                <div>
+                  <h3 className="text-base font-bold text-white">{t("Takip E-postası (Follow-Up)")}</h3>
+                  <p className="text-xs text-slate-400">{followUpModalJob.title} · {followUpModalJob.company}</p>
+                </div>
+              </div>
+              <button type="button" onClick={() => setFollowUpModalJob(null)} className="text-slate-400 hover:text-white">
+                <X className="h-5 w-5" />
+              </button>
+            </div>
+
+            {followUpLoading ? (
+              <div className="p-8 text-center text-xs text-slate-400">{t("İşleniyor...")}</div>
+            ) : followUpData?.length > 0 ? (
+              <div className="space-y-3 text-xs">
+                {followUpData.map((item: any, idx: number) => (
+                  <div key={idx} className="p-4 rounded-xl border border-slate-800 bg-slate-900/80 space-y-2">
+                    <div className="flex items-center justify-between">
+                      <div className="flex items-center gap-2">
+                        <span className="font-bold text-white">{item.stage}</span>
+                        <span className="text-[11px] text-slate-400">({item.purpose})</span>
+                      </div>
+                      <button
+                        type="button"
+                        onClick={() => void copyText(item.body)}
+                        className="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg border border-slate-700 bg-slate-800 hover:bg-slate-700 text-slate-200 font-semibold"
+                      >
+                        <Copy className="w-3 h-3 text-slate-400" />
+                        <span>{t("Metni Kopyala")}</span>
+                      </button>
+                    </div>
+                    <pre className="text-slate-200 font-sans whitespace-pre-wrap leading-relaxed bg-slate-950 p-3 rounded-lg border border-slate-800">
+                      {item.body}
+                    </pre>
+                  </div>
+                ))}
+              </div>
+            ) : (
+              <div className="p-6 text-center text-xs text-slate-400">{t("Henüz durum geçmişi yok")}</div>
+            )}
+
+            <div className="flex justify-end pt-3 border-t border-slate-800">
+              <button
+                type="button"
+                onClick={() => setFollowUpModalJob(null)}
+                className="rounded-xl border border-slate-800 px-4 py-2 text-xs font-semibold text-slate-300 hover:bg-slate-900"
+              >
+                {t("Kapat")}
               </button>
             </div>
           </div>
