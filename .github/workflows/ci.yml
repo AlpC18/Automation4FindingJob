@@ -35,7 +35,7 @@ jobs:
           python -m pytest backend/ -v --cov=backend/app --cov-report=xml --cov-report=term
 
       - name: Upload Backend Coverage Report
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         if: always()
         with:
           name: backend-coverage-report
